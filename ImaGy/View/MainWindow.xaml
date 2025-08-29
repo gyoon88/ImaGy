@@ -1,0 +1,69 @@
+﻿<Window x:Class="ImaGy.View.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ImaGy"
+        mc:Ignorable="d"
+        Title="ImaGy" Height="900" Width="1600" MinHeight="700" MinWidth="1000"
+        Background="{StaticResource BackgroundBrush}">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="250" />
+        </Grid.ColumnDefinitions>
+
+        <Border Grid.Column="0" BorderBrush="#FF4A4A4A" BorderThickness="1" Margin="10" Background="#FF1E1E1E">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                <Image Source="{Binding CurrentImage}" Stretch="Uniform" />
+            </ScrollViewer>
+        </Border>
+        <Border Grid.Column="1" BorderBrush="#FF4A4A4A" BorderThickness="1" Margin="10" Background="#FF1E1E1E">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                <Image Source="{Binding CurrentImage}" Stretch="Uniform" />
+            </ScrollViewer>
+        </Border>
+
+        <Grid Grid.Column="2" Margin="10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0" Margin="10,10,10,0">
+                <Label Content="파일 작업" HorizontalAlignment="Center"/>
+                <Button Content="이미지 열기" Command="{Binding OpenImageCommand}" />
+                <Button Content="이미지 저장" Command="{Binding SaveImageCommand}" />
+
+                <Separator Margin="10"/>
+                
+                <Label Content="기본 영상 처리" HorizontalAlignment="Center"/>
+                <Button Content="확대" />
+                <Button Content="축소" />
+                <Button Content="이진화" Command="{Binding BinarizeCommand}" />
+                <Button Content="평활화" />
+
+                <Separator Margin="10"/>
+                <Label Content="필터링" HorizontalAlignment="Center"/>
+                <Button Content="가우시안 필터" />
+                <Button Content="라플라스 필터" />
+                <Button Content="소벨 필터" />
+                <Button Content="FFT" />
+
+                <Separator Margin="10"/>
+                <Label Content="형태학적 처리" HorizontalAlignment="Center"/>
+                <Button Content="팽창" />
+                <Button Content="수축" />
+                <Separator />
+            </StackPanel>
+            <Separator Margin="10"/>
+            <StackPanel Grid.Row="1" Margin="0,10,0,0">
+                <Label Content="미리보기" FontWeight="Bold" HorizontalAlignment="Center" />
+                <Border BorderBrush="Gray" BorderThickness="1" Height="250" Width="200" HorizontalAlignment="Center">
+                    <Image x:Name="PreviewImage" Stretch="Uniform" />
+                </Border>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>
