@@ -16,7 +16,7 @@
             <MenuItem Header="_파일">
                 <MenuItem Header="열기" Command="{Binding OpenImageCommand}"/>
                 <MenuItem Header="저장" Command="{Binding SaveImageCommand}"/>
-                <Separator />
+                <Separator Margin="3"/>
                 <MenuItem Header="종료"/>
             </MenuItem>
             <MenuItem Header="_편집">
@@ -63,7 +63,7 @@
             </Grid.ColumnDefinitions>
 
             <!-- Original Image View -->
-            <Border Grid.Column="0" BorderThickness="1" Margin="10">
+            <Border Grid.Column="0" BorderThickness="1" Margin="10,10,0,10">
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                     <Image Source="{Binding LeftCurrentImage}" Stretch="Uniform" />
                 </ScrollViewer>
@@ -72,7 +72,7 @@
             <GridSplitter Grid.Column="1" />
 
             <!-- Processed Image View -->
-            <Border Grid.Column="2" BorderThickness="1" Margin="10">
+            <Border Grid.Column="2" BorderThickness="1" Margin="10,10,10,10">
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                     <Image Source="{Binding RightCurrentImage}" Stretch="Uniform" />
                 </ScrollViewer>
@@ -81,42 +81,59 @@
             <GridSplitter Grid.Column="3" />
 
             <!-- Right Side Panel -->
-            <Grid Grid.Column="4" Margin="5">
+            <Grid Grid.Column="4" Margin="10,10,10,10">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
-                    <RowDefinition Height="200" />
+                    <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
                 <!-- Button Groups -->
                 <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
                     <StackPanel>
-                        <GroupBox Header="기본 기능">
+                        <!--<GroupBox Header="기본 기능">
                             <StackPanel>
                                 <Button Content="확대/축소" Margin="2"/>
                                 <Button Content="자르기" Margin="2"/>
                             </StackPanel>
-                        </GroupBox>
-                        <GroupBox Header="기본 영상 처리">
+                        </GroupBox>-->
+                        <GroupBox Header="Colour | Contrast">
                             <StackPanel>
-                                <Button Content="이진화" Command="{Binding BinarizeCommand}" Margin="2"/>
-                                <Button Content="평활화" Margin="2"/>
+                                <Button Content="Binarization" Command="{Binding BinarizeCommand}" Margin="2"/>
+                                <Button Content="Flattenization" Margin="2"/>
                             </StackPanel>
                         </GroupBox>
-                        <GroupBox Header="필터링">
+
+                        <GroupBox Header="Filterring">
                             <StackPanel>
-                                <Button Content="샤프닝" Margin="2"/>
-                                <Button Content="블러" Margin="2"/>
-                                <Button Content="엠보싱" Margin="2"/>
+
+                                <GroupBox Header="Edge Detection">
+                                    <StackPanel>
+                                        <Button Content="Differential" Margin="2"/>
+                                        <Button Content="Sobel" Margin="2"/>
+                                        <Button Content="Laplacian" Margin="2"/>
+                                        <Button Content="FFT" Margin="2"/>
+                                    </StackPanel>
+                                </GroupBox>
+
+                                <GroupBox Header="Blur">
+                                    <StackPanel>
+                                        <Button Content="Average" Margin="2"/>
+                                        <Button Content="Gaussian" Margin="2"/>
+                                    </StackPanel>
+                                </GroupBox>
+
                             </StackPanel>
                         </GroupBox>
-                        <GroupBox Header="형태학적 처리">
+
+                        <GroupBox Header="Morphosogy">
                             <StackPanel>
                                 <Button Content="팽창" Margin="2"/>
-                                <Button Content="침식" Margin="2"/>
+                                <Button Content="수축" Margin="2"/>
                             </StackPanel>
                         </GroupBox>
-                         <GroupBox Header="템플릿 매칭">
+                            
+                        <GroupBox Header="Image Matching">
                             <StackPanel>
                                 <Button Content="NCC" Margin="2"/>
                                 <Button Content="SAD" Margin="2"/>
@@ -133,7 +150,7 @@
 
                 <!-- Log -->
                 <GroupBox Grid.Row="2" Header="로그">
-                    <TextBox Text="{Binding LogText}" IsReadOnly="True" VerticalScrollBarVisibility="Auto" />
+                    <TextBox Text="{Binding LogText}" IsReadOnly="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" />
                 </GroupBox>
             </Grid>
         </Grid>

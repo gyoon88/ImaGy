@@ -181,6 +181,7 @@ namespace ImaGy.ViewModel
             CommandManager.InvalidateRequerySuggested();
         }
 
+        // Undo the last process
         private void ExecuteUndo(object parameter)
         {
             if (undoStack.Count > 0)
