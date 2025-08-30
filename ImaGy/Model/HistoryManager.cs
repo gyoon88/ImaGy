@@ -8,5 +8,7 @@ namespace ImaGy.Model
 {
     internal class HistoryManager
     {
+        // logging
+        // history 
     }
 }

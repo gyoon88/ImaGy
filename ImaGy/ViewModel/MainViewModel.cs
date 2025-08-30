@@ -15,45 +15,60 @@ namespace ImaGy.ViewModel
 {
     internal class MainViewModel : BaseViewModel
     {
-        private BitmapSource currentImage;
-        public BitmapSource CurrentImage
+        // Field
+        private BitmapSource leftCurrentImage;
+        private BitmapSource rightCurrentImage;
+
+        // Property
+        public BitmapSource LeftCurrentImage
         {
-            get => currentImage;
+            get => leftCurrentImage;
             set
             {
-                currentImage = value;
+                leftCurrentImage = value;
+                OnPropertyChanged();
+            }
+        }
+        public BitmapSource RightCurrentImage
+        {
+            get => rightCurrentImage;
+            set
+            {
+                rightCurrentImage = value;
                 OnPropertyChanged();
             }
         }
 
+        // Model Class Imstance
         private readonly ImageDocument imageDocument;
+        private readonly HistoryManager historyManager;
 
-        // ViewModel에서 사용할 Command 정의
-        public ICommand OpenImageCommand { get; }
-        public ICommand SaveImageCommand { get; }
+        // MainViewModel에서 사용할 Command 정의
+        public ICommand ImageDocumentCommand { get; }
+
+        public ICommand ImangeTransferCommand { get; }
         public ICommand BinarizeCommand { get; }
         public ICommand OpenPreviewCommand { get; }
 
+        // Constructor
         public MainViewModel()
         {
             imageDocument = new ImageDocument();
+            historyManager = new HistoryManager();
 
             // Command와 실행 메서드 연결
-            OpenImageCommand = new RelayCommand(ExecuteOpenImage);
-            SaveImageCommand = new RelayCommand(ExecuteSaveImage);
+            ImageDocumentCommand = new RelayCommand(ExecuteOpenImage);
+            ImangeTransferCommand = new RelayCommand(ExecuteSaveImage);
+
             BinarizeCommand = new RelayCommand(ExecuteBinarize);
             OpenPreviewCommand = new RelayCommand(ExecuteOpenPreview);
         }
 
         private void ExecuteOpenImage(object parameter)
         {
-            OpenFileDialog openDialog = new OpenFileDialog();
-            openDialog.Filter = "Image Files|*.bmp;*.jpg;*.jpeg;*.png";
+            string? command = parameter.ToString();
+ 
 
-            if (openDialog.ShowDialog() == true)
-            {
-                CurrentImage = new BitmapImage(new Uri(openDialog.FileName));
-            }
         }
 
         private void ExecuteSaveImage(object parameter)
@@ -87,8 +102,8 @@ namespace ImaGy.ViewModel
         {
             if (CurrentImage == null) return;
             // ImageProcessor를 통해 이미지를 처리하고 결과 이미지를 CurrentImage에 할당
-            // CurrentImage = _imageProcessor.ApplyBinarization(CurrentImage, 128);
-            // _previewWindow.SetImage(CurrentImage);
+            // LeftCurrentImage = _imageProcessor.ApplyBinarization(LeftCurrentImage, 128);
+            // _previewWindow.SetImage(LeftCurrentImage);
         }
 
         private void ExecuteOpenPreview(object parameter)
