@@ -10,7 +10,6 @@ namespace ImaGy.Model
 {
     internal class ImageDocument
     {
-
         private BitmapImage OpenImage(object parameter)
         {
             OpenFileDialog openDialog = new OpenFileDialog();
