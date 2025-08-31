@@ -17,9 +17,13 @@ namespace ImaGy.View
     /// </summary>
     public partial class MainWindow : Window
     {
+        private Point? lastMousePosition; // 마지막 마우스 위치 (이미지 이동용)
+
         public MainWindow()
         {
             InitializeComponent();
         }
+
+
     }
 }
