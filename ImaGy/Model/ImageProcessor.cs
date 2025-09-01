@@ -68,91 +68,42 @@ namespace ImaGy.Model
         // Blur process
         public BitmapSource ApplyAverageBlur(BitmapSource source)
         {
-            BitmapSource? result;
-            if (source != null)
-            {
-                result = source;
-                return result;
-            }
-            result = source;
-            return result;
+            return source;
         }
 
         public BitmapSource ApplyGaussianBlur(BitmapSource source)
         {
-            BitmapSource? result;
-            if (source != null)
-            {
-                result = source;
-                return result;
-            }
-            result = source;
-            return result;
+            return source;
         }
 
 
         // Mophorogy
         public BitmapSource ApplyDilation(BitmapSource source)
         {
-            BitmapSource? result;
-            if (source != null)
-            {
-                result = source;
-                return result;
-            }
-            result = source;
-            return result;
+            return source;
 
         }
 
         public BitmapSource ApplyErosion(BitmapSource source)
         {
-            BitmapSource? result;
-            if (source != null)
-            {
-                result = source;
-                return result;
-            }
-            result = source;
-            return result;
+            return source;
         }
 
 
         // Image Matching
         public BitmapSource ApplyNCC(BitmapSource source)
         {
-            BitmapSource? result;
-            if (source != null)
-            {
-                result = source;
-                return result;
-            }
-            result = source;
-            return result;
+            return source;
         }
 
         public BitmapSource ApplySAD(BitmapSource source)
         {
-            BitmapSource? result;
-            if (source != null)
-            {
-                result = source;
-                return result;
-            }
-            result = source;
-            return result;
+            return source;
         }
 
         public BitmapSource ApplySSD(BitmapSource source)
         {
-            BitmapSource? result;
-            if (source != null)
-            {
-                result = source;
-                return result;
-            }
-            result = source;
-            return result;
+            return source;
         }
     }
 
