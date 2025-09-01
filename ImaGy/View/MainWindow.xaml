@@ -130,8 +130,8 @@
                         <StackPanel>
                             <Expander Header="Colour | Contrast" Foreground="White">
                                 <StackPanel>
-                                    <Button Content="Binarization" Command="{Binding BinarizeCommand}" Margin="2"/>
-                                    <Button Content="Equalization" Margin="2"/>
+                                    <Button Content="Binarization" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Bin"/>
+                                    <Button Content="Equalization" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Equal" />
                                 </StackPanel>
                             </Expander>
 
@@ -140,17 +140,17 @@
 
                                     <GroupBox Header="Edge Detection">
                                         <StackPanel>
-                                            <Button Content="Differential" Margin="2"/>
-                                            <Button Content="Sobel" Margin="2"/>
-                                            <Button Content="Laplacian" Margin="2"/>
-                                            <Button Content="FFT" Margin="2"/>
+                                            <Button Content="Differential" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Diff" />
+                                            <Button Content="Sobel" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Diff"/>
+                                            <Button Content="Laplacian" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Diff"/>
+                                            <Button Content="FFT" Margin="2" />
                                         </StackPanel>
                                     </GroupBox>
 
                                     <GroupBox Header="Blur">
                                         <StackPanel>
-                                            <Button Content="Average" Margin="2"/>
-                                            <Button Content="Gaussian" Margin="2"/>
+                                            <Button Content="Average" Margin="2"  Command="{Binding FilterringCommand}" CommandParameter="Average"/>
+                                            <Button Content="Gaussian" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Gaussian"/>
                                         </StackPanel>
                                     </GroupBox>
 
@@ -159,16 +159,16 @@
 
                             <Expander Header="Morphorogy" Foreground="White">
                                 <StackPanel>
-                                    <Button Content="팽창" Margin="2"/>
-                                    <Button Content="수축" Margin="2"/>
+                                    <Button Content="팽창" Margin="2" Command="{Binding MophorogyCommand}" CommandParameter="Dilation"/>
+                                    <Button Content="수축" Margin="2" Command="{Binding MophorogyCommand}" CommandParameter="Erosion"/>
                                 </StackPanel>
                             </Expander>
 
                             <Expander Header="Image Matching" Foreground="White">
                                 <StackPanel>
-                                    <Button Content="NCC" Margin="2"/>
-                                    <Button Content="SAD" Margin="2"/>
-                                    <Button Content="SSD" Margin="2"/>
+                                    <Button Content="NCC" Margin="2" Command="{Binding ImageMatchingCommand}" CommandParameter="NCC"/>
+                                    <Button Content="SAD" Margin="2" Command="{Binding ImageMatchingCommand}" CommandParameter="SAD"/>
+                                    <Button Content="SSD" Margin="2" Command="{Binding ImageMatchingCommand}" CommandParameter="SSD"/>
                                 </StackPanel>
                             </Expander>
                         </StackPanel>

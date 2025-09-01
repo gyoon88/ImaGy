@@ -61,11 +61,6 @@ namespace ImaGy.ViewModel
             get => processingTime;
             set { processingTime = value; OnPropertyChanged(); }
         }
-        public ObservableCollection<string> HistoryItems
-        {
-            get => historyItems;
-            set { historyItems = value; OnPropertyChanged(); }
-        }
         public string LogText
         {
             get => logText;
@@ -76,40 +71,43 @@ namespace ImaGy.ViewModel
         //private readonly ImageDocument imageDocument;
         //private readonly HistoryManager historyManager;
         private readonly ImageProcessor imageProcessor;
+        private readonly UndoRedoService<BitmapSource> undoRedoService;
+        private readonly HistoryService historyService;
+        private readonly LoggingService loggingService;
+        public ObservableCollection<string> HistoryItems => historyService.HistoryItems;
 
         // Commands
         public ICommand OpenImageCommand { get; }
         public ICommand SaveImageCommand { get; }
         public ICommand UndoCommand { get; }
         public ICommand RedoCommand { get; }
-        public ICommand BinarizeCommand { get; }
-        //public ICommand BinarizeCommand { get; }
-        //public ICommand BinarizeCommand { get; }
-        //public ICommand BinarizeCommand { get; }
-        //public ICommand BinarizeCommand { get; }
-        //public ICommand BinarizeCommand { get; }
-        //public ICommand BinarizeCommand { get; }
-
+        public ICommand ColorContrastCommand { get; }
+        public ICommand FilterringCommand { get; }
+        public ICommand MorphorogyCommand { get; }
+        public ICommand ImageMatchingCommand { get; }
 
         // Constructor
         public MainViewModel()
         {
-            //imageDocument = new ImageDocument();
-            //historyManager = new HistoryManager();
+            undoRedoService = new UndoRedoService<BitmapSource>();
+            loggingService = new LoggingService();
             imageProcessor = new ImageProcessor();
-
-            undoStack = new Stack<BitmapSource>();
-            redoStack = new Stack<BitmapSource>();
+            historyService = new HistoryService();
 
             // Commands
             OpenImageCommand = new RelayCommand(ExecuteOpenImage);
             SaveImageCommand = new RelayCommand(ExecuteSaveImage, _ => AfterImage != null);
-            UndoCommand = new RelayCommand(ExecuteUndo, _ => undoStack.Count > 0);
-            RedoCommand = new RelayCommand(ExecuteRedo, _ => redoStack.Count > 0);
-            BinarizeCommand = new RelayCommand(ExecuteBinarize, _ => BeforeImage != null);
+            UndoCommand = new RelayCommand(ExecuteUndo, _ => undoRedoService.CanUndo);
+            RedoCommand = new RelayCommand(ExecuteRedo, _ => undoRedoService.CanRedo);
+
+            ColorContrastCommand = new RelayCommand(ExecuteColorContrast, _ => BeforeImage != null);
+            FilterringCommand = new RelayCommand(ExecuteFilterring, _ => BeforeImage != null);
+            MorphorogyCommand = new RelayCommand(ExecuteMorphorogy, _ => BeforeImage != null);
+            ImageMatchingCommand = new RelayCommand(ExecuteImageMatching, _ => BeforeImage != null);
+
+            loggingService.PropertyChanged += (s, e) => OnPropertyChanged(e.PropertyName);
 
             // Initialize Properties
-            HistoryItems = new ObservableCollection<string>();
             LogText = "";
             FileName = "No file loaded";
             ImageResolution = "N/A";
@@ -141,13 +139,13 @@ namespace ImaGy.ViewModel
                         ImageResolution = $"{bitmap.PixelWidth}x{bitmap.PixelHeight}";
 
                         // Clear history for new image
-                        undoStack.Clear();
-                        redoStack.Clear();
-                        HistoryItems.Clear();
+                        undoRedoService.Clear();
+                        historyService.Clear();
+                        loggingService.AddLog($"Image loaded: {FileName}");
                         CommandManager.InvalidateRequerySuggested();
                     });
                     ProcessingTime = $"Load Time: {elapsedMs:F2} ms";
-                    AddLog($"Image loaded: {FileName} ({elapsedMs:F2} ms)");
+
                 }
                 catch(Exception ex ) 
                 {
@@ -165,376 +163,163 @@ namespace ImaGy.ViewModel
             saveDialog.Filter = "PNG Image|*.png|JPEG Image|*.jpg|BMP Image|*.bmp";
 
             if (saveDialog.ShowDialog() == true)
-            {
-                BitmapEncoder? encoder = null;
-                string extension = Path.GetExtension(saveDialog.FileName).ToLower();
-
-                switch (extension)
+            { 
+                try
                 {
-                    case ".png":
-                        encoder = new PngBitmapEncoder();
-                        break;
-                    case ".jpg":
-                    case ".jpeg":
-                        encoder = new JpegBitmapEncoder();
-                        break;
-                    case ".bmp":
-                        encoder = new BmpBitmapEncoder();
-                        break;
-                }
+                    BitmapEncoder? encoder = null;
+                    string extension = Path.GetExtension(saveDialog.FileName).ToLower();
 
-                if (encoder != null)
-                {
-                    encoder.Frames.Add(BitmapFrame.Create(AfterImage));
-                    using (var fileStream = new FileStream(saveDialog.FileName, FileMode.Create)) // 파일스트림을 직접 저장
+                    switch (extension)
                     {
-                        encoder.Save(fileStream);
-                        AddLog($"Image saved: {Path.GetFileName(saveDialog.FileName)}");
+                        case ".png":
+                            encoder = new PngBitmapEncoder();
+                            break;
+                        case ".jpg":
+                        case ".jpeg":
+                            encoder = new JpegBitmapEncoder();
+                            break;
+                        case ".bmp":
+                            encoder = new BmpBitmapEncoder();
+                            break;
+                    }
+
+                    if (encoder != null)
+                    {
+                        encoder.Frames.Add(BitmapFrame.Create(AfterImage));
+                        using (var fileStream = new FileStream(saveDialog.FileName, FileMode.Create)) // 파일스트림을 직접 저장
+                        {
+                            encoder.Save(fileStream);
+                            loggingService.AddLog($"Image saved: {Path.GetFileName(saveDialog.FileName)}");
+                        }
                     }
                 }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"이미지를 저장하는 중 오류가 발생했습니다.\n\n오류: {ex.Message}",
+                     "오류", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+
             }
         }
 
-        // Image Processing ExecuteMethod
-        private void ExecuteBinarize(object parameter)
+        // 모든 필터 적용 메서드를 하나의 헬퍼 메서드로 통합하여 중복 제거
+        private void ApplyProcessing(string historyMessage, Func<BitmapSource, BitmapSource> processFunction)
         {
-            if (BeforeImage !=null)
+            if (BeforeImage == null) return;
+            try
             {
-                try
-                {
-                    int threshold = 128;
-                    undoStack.Push(BeforeImage);
-                    redoStack.Clear(); // Clear redo stack on new action
-                    var (processedImage, elapsedMs) = ProcessTime.Measure(() =>
-                    {// tuple 형태로 반환
-                        return imageProcessor.ApplyBinarization(BeforeImage, 128);
-                    });
-                    AfterImage = processedImage;
-                    ProcessingTime = $"Binarization: {elapsedMs:F2} ms";
-                    AddHistory($"Binarization applied (threshold: {threshold})\n{ProcessingTime}");
-                    CommandManager.InvalidateRequerySuggested();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"이미지 처리 중 오류가 발생했습니다.\n\n오류: {ex.Message}", "오류", 
-                        MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }            
+                // 1. Undo를 위해 현재 상태를 저장
+                undoRedoService.AddState(BeforeImage);
+
+                // 2. 시간 측정 및 이미지 처리
+                var (processedImage, elapsedMs) = ProcessTime.Measure(() => processFunction(BeforeImage));
+
+                // 3. 결과 업데이트
+                AfterImage = processedImage;
+                ProcessingTime = $"{historyMessage}: {elapsedMs:F2} ms";
+
+                // 4. 히스토리 및 로그 기록 (서비스에 위임)
+                historyService.AddHistory(historyMessage, elapsedMs);
+                loggingService.AddLog($"{historyMessage} applied.");
+
+                // CommandManager.InvalidateRequerySuggested()는 RelayCommand가 자동으로 처리해줌
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"이미지 처리 중 오류가 발생했습니다.\n\n오류: {ex.Message}", "오류",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            
         }
 
-        private void ExecuteEqualize(object parameter)
+        // 각 필터 Command는 새로 만든 헬퍼 메서드를 호출하기만 함
+        // Color | Contrast
+        private void ExecuteColorContrast(object parameter)
         {
-            if (BeforeImage !=null)
+            string processCommand = parameter.ToString();
+            switch (processCommand)
             {
-                try
-                {
-                    int threshold = 128;
-                    undoStack.Push(BeforeImage);
-                    redoStack.Clear(); // Clear redo stack on new action
-                    var (processedImage, elapsedMs) = ProcessTime.Measure(() =>
-                    {// tuple 형태로 반환
-                        return imageProcessor.ApplyEqualization(BeforeImage);
-                    });
-                    AfterImage = processedImage;
-                    ProcessingTime = $"Equalization: {elapsedMs:F2} ms";
-                    AddHistory($"Equalization applied (threshold: {threshold})\n{ProcessingTime}");
-                    CommandManager.InvalidateRequerySuggested();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"이미지 처리 중 오류가 발생했습니다.\n\n오류: {ex.Message}", "오류", 
-                        MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }            
-        }
-        private void ExecuteDifferential(object parameter)
-        {
-            if (BeforeImage !=null)
-            {
-                try
-                {
-                    int threshold = 128;
-                    undoStack.Push(BeforeImage);
-                    redoStack.Clear(); // Clear redo stack on new action
-                    var (processedImage, elapsedMs) = ProcessTime.Measure(() =>
-                    {// tuple 형태로 반환
-                        return imageProcessor.ApplyDifferential(BeforeImage);
-                    });
-                    AfterImage = processedImage;
-                    ProcessingTime = $"Differential: {elapsedMs:F2} ms";
-                    AddHistory($"Differential applied (threshold: {threshold})\n{ProcessingTime}");
-                    CommandManager.InvalidateRequerySuggested();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"이미지 처리 중 오류가 발생했습니다.\n\n오류: {ex.Message}", "오류", 
-                        MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }            
-        }
-        private void ExecuteSobel(object parameter)
-        {
-            if (BeforeImage !=null)
-            {
-                try
-                {
-                    int threshold = 128;
-                    undoStack.Push(BeforeImage);
-                    redoStack.Clear(); // Clear redo stack on new action
-                    var (processedImage, elapsedMs) = ProcessTime.Measure(() =>
-                    {// tuple 형태로 반환
-                        return imageProcessor.ApplySobel(BeforeImage);
-                    });
-                    AfterImage = processedImage;
-                    ProcessingTime = $"Sobel: {elapsedMs:F2} ms";
-                    AddHistory($"Sobel applied (threshold: {threshold})\n{ProcessingTime}");
-                    CommandManager.InvalidateRequerySuggested();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"이미지 처리 중 오류가 발생했습니다.\n\n오류: {ex.Message}", "오류", 
-                        MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }            
-        }
-        private void ExecuteLaplacian(object parameter)
-        {
-            if (BeforeImage !=null)
-            {
-                try
-                {
-                    int threshold = 128;
-                    undoStack.Push(BeforeImage);
-                    redoStack.Clear(); // Clear redo stack on new action
-                    var (processedImage, elapsedMs) = ProcessTime.Measure(() =>
-                    {// tuple 형태로 반환
-                        return imageProcessor.ApplyLaplacian(BeforeImage);
-                    });
-                    AfterImage = processedImage;
-                    ProcessingTime = $"Laplacian: {elapsedMs:F2} ms";
-                    AddHistory($"Laplacian applied (threshold: {threshold})\n{ProcessingTime}");
-                    CommandManager.InvalidateRequerySuggested();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"이미지 처리 중 오류가 발생했습니다.\n\n오류: {ex.Message}", "오류", 
-                        MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }            
-        }
-        private void ExecuteAverageBlur(object parameter)
-        {
-            if (BeforeImage !=null)
-            {
-                try
-                {
-                    int threshold = 128;
-                    undoStack.Push(BeforeImage);
-                    redoStack.Clear(); // Clear redo stack on new action
-                    var (processedImage, elapsedMs) = ProcessTime.Measure(() =>
-                    {// tuple 형태로 반환
-                        return imageProcessor.ApplyAverageBlur(BeforeImage);
-                    });
-                    AfterImage = processedImage;
-                    ProcessingTime = $"AverageBlur: {elapsedMs:F2} ms";
-                    AddHistory($"AverageBlur applied (threshold: {threshold})\n{ProcessingTime}");
-                    CommandManager.InvalidateRequerySuggested();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"이미지 처리 중 오류가 발생했습니다.\n\n오류: {ex.Message}", "오류", 
-                        MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }            
-        }
-        private void ExecuteGaussianBlur(object parameter)
-        {
-            if (BeforeImage !=null)
-            {
-                try
-                {
-                    int threshold = 128;
-                    undoStack.Push(BeforeImage);
-                    redoStack.Clear(); // Clear redo stack on new action
-                    var (processedImage, elapsedMs) = ProcessTime.Measure(() =>
-                    {// tuple 형태로 반환
-                        return imageProcessor.ApplyGaussianBlur(BeforeImage);
-                    });
-                    AfterImage = processedImage;
-                    ProcessingTime = $"GaussianBlur: {elapsedMs:F2} ms";
-                    AddHistory($"GaussianBlur applied (threshold: {threshold})\n{ProcessingTime}");
-                    CommandManager.InvalidateRequerySuggested();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"이미지 처리 중 오류가 발생했습니다.\n\n오류: {ex.Message}", "오류", 
-                        MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }            
-        }
-        private void ExecuteDilation(object parameter)
-        {
-            if (BeforeImage !=null)
-            {
-                try
-                {
-                    int threshold = 128;
-                    undoStack.Push(BeforeImage);
-                    redoStack.Clear(); // Clear redo stack on new action
-                    var (processedImage, elapsedMs) = ProcessTime.Measure(() =>
-                    {// tuple 형태로 반환
-                        return imageProcessor.ApplyDilation(BeforeImage);
-                    });
-                    AfterImage = processedImage;
-                    ProcessingTime = $"Dilation: {elapsedMs:F2} ms";
-                    AddHistory($"Dilation applied (threshold: {threshold})\n{ProcessingTime}");
-                    CommandManager.InvalidateRequerySuggested();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"이미지 처리 중 오류가 발생했습니다.\n\n오류: {ex.Message}", "오류", 
-                        MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }            
-        }
-        private void ExecuteErosion(object parameter)
-        {
-            if (BeforeImage !=null)
-            {
-                try
-                {
-                    int threshold = 128;
-                    undoStack.Push(BeforeImage);
-                    redoStack.Clear(); // Clear redo stack on new action
-                    var (processedImage, elapsedMs) = ProcessTime.Measure(() =>
-                    {// tuple 형태로 반환
-                        return imageProcessor.ApplyErosion(BeforeImage);
-                    });
-                    AfterImage = processedImage;
-                    ProcessingTime = $"Erosion: {elapsedMs:F2} ms";
-                    AddHistory($"Erosion applied (threshold: {threshold})\n{ProcessingTime}");
-                    CommandManager.InvalidateRequerySuggested();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"이미지 처리 중 오류가 발생했습니다.\n\n오류: {ex.Message}", "오류", 
-                        MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }            
-        }
-        private void ExecuteNCC(object parameter)
-        {
-            if (BeforeImage != null)
-            {
-                try
-                {
-                    int threshold = 128;
-                    undoStack.Push(BeforeImage);
-                    redoStack.Clear(); // Clear redo stack on new action
-                    var (processedImage, elapsedMs) = ProcessTime.Measure(() =>
-                    {// tuple 형태로 반환
-                        return imageProcessor.ApplyNCC(BeforeImage);
-                    });
-                    AfterImage = processedImage;
-                    ProcessingTime = $"NCC: {elapsedMs:F2} ms";
-                    AddHistory($"NCC applied (threshold: {threshold})\n{ProcessingTime}");
-                    CommandManager.InvalidateRequerySuggested();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"이미지 처리 중 오류가 발생했습니다.\n\n오류: {ex.Message}", "오류",
-                        MessageBoxButton.OK, MessageBoxImage.Error);
-                }
+                case "Bin":
+                    ApplyProcessing("Binarization", image => imageProcessor.ApplyBinarization(image, 128));
+                    break;
+
+                case "Equal":
+                    ApplyProcessing("Equalization", image => imageProcessor.ApplyEqualization(image));
+                    break;
             }
         }
-        private void ExecuteSAD(object parameter)
+
+        private void ExecuteFilterring(object parameter)
         {
-            if (BeforeImage != null)
+            string processCommand = parameter.ToString();
+            switch (processCommand)
             {
-                try
-                {
-                    int threshold = 128;
-                    undoStack.Push(BeforeImage);
-                    redoStack.Clear(); // Clear redo stack on new action
-                    var (processedImage, elapsedMs) = ProcessTime.Measure(() =>
-                    {// tuple 형태로 반환
-                        return imageProcessor.ApplySAD(BeforeImage);
-                    });
-                    AfterImage = processedImage;
-                    ProcessingTime = $"SAD: {elapsedMs:F2} ms";
-                    AddHistory($"SAD applied (threshold: {threshold})\n{ProcessingTime}");
-                    CommandManager.InvalidateRequerySuggested();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"이미지 처리 중 오류가 발생했습니다.\n\n오류: {ex.Message}", "오류",
-                        MessageBoxButton.OK, MessageBoxImage.Error);
-                }
+                case "Diff":
+                    ApplyProcessing("Differentail", image => imageProcessor.ApplyDifferential(image));
+                    break;
+
+                case "Sobel":
+                    ApplyProcessing("Sobel", image => imageProcessor.ApplySobel(image));
+                    break;
+                case "Laplace":
+                    ApplyProcessing("Laplacian", image => imageProcessor.ApplyLaplacian(image));
+                    break;
+                case "Average":
+                    ApplyProcessing("Average Blur", image => imageProcessor.ApplyAverageBlur(image));
+                    break;
+                case "Gaussian":
+                    ApplyProcessing("Gaussian", image => imageProcessor.ApplyGaussianBlur(image));
+                    break;
+                //case "FFT":
+                //    ApplyProcessing("Laplacian", image => imageProcessor.ApplyFFT(image));
+                //    break;
+            }
+
+        }
+        private void ExecuteMorphorogy(object parameter)
+        {
+            string processCommand = parameter.ToString();
+            switch (processCommand)
+            {
+                case "Dilation":
+                    ApplyProcessing("Dilation", image => imageProcessor.ApplyDilation(image));
+                    break;
+
+                case "Erosion":
+                    ApplyProcessing("Erosion", image => imageProcessor.ApplyErosion(image));
+                    break;
             }
         }
-        private void ExecuteSSD(object parameter)
+        private void ExecuteImageMatching(object parameter)
         {
-            if (BeforeImage !=null)
+            string processCommand = parameter.ToString();
+            switch (processCommand)
             {
-                try
-                {
-                    int threshold = 128;
-                    undoStack.Push(BeforeImage);
-                    redoStack.Clear(); // Clear redo stack on new action
-                    var (processedImage, elapsedMs) = ProcessTime.Measure(() =>
-                    {// tuple 형태로 반환
-                        return imageProcessor.ApplySSD(BeforeImage);
-                    });
-                    AfterImage = processedImage;
-                    ProcessingTime = $"SSD: {elapsedMs:F2} ms";
-                    AddHistory($"SSD applied (threshold: {threshold})\n{ProcessingTime}");
-                    CommandManager.InvalidateRequerySuggested();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"이미지 처리 중 오류가 발생했습니다.\n\n오류: {ex.Message}", "오류", 
-                        MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }            
+                case "NCC":
+                    ApplyProcessing("NCC", image => imageProcessor.ApplyNCC(image));
+                    break;
+
+                case "SAD":
+                    ApplyProcessing("SAD", image => imageProcessor.ApplySAD(image));
+                    break;
+                case "SSD":
+                    ApplyProcessing("SSD", image => imageProcessor.ApplySSD(image));
+                    break;
+            }
         }
+        
 
         // Undo the last process
         private void ExecuteUndo(object parameter)
         {
-            if (undoStack.Count > 0)
-            {
-                redoStack.Push(AfterImage);
-                AfterImage = undoStack.Pop();
-                AddLog("Undo executed");
-                HistoryItems.RemoveAt(0); // A simple way to remove last history item
-                CommandManager.InvalidateRequerySuggested();
-            }
+            var previousState = undoRedoService.Undo(AfterImage);
+            if (previousState != null) AfterImage = previousState;
         }
 
         private void ExecuteRedo(object parameter)
         {
-            if (redoStack.Count > 0)
-            {
-                undoStack.Push(AfterImage);
-                AfterImage = redoStack.Pop();
-                AddLog("Redo executed");
-                // This is tricky, we need to get the history message back
-                // For now, let's just add a generic message
-                AddHistory("Redo action"); 
-                CommandManager.InvalidateRequerySuggested();
-            }
-        }
-
-        private void AddHistory(string message)
-        {
-            string timestamp = DateTime.Now.ToString("[HH:mm:ss]");
-            HistoryItems.Insert(0, $"{timestamp} {message}");
-        }
-
-        private void AddLog(string message)
-        {
-            string timestamp = DateTime.Now.ToString("[yyyy-MM-dd HH:mm:ss]");
-            LogText += $"{timestamp} [INFO] {message}\n";
+            var nextState = undoRedoService.Redo(AfterImage);
+            if (nextState != null) AfterImage = nextState;
         }
     }
 }
