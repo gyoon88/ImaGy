@@ -6,9 +6,7 @@ using System.Threading.Tasks;
 
 namespace ImaGy.Model
 {
-    internal class HistoryManager
+    public class ServeHistogram
     {
-        // logging
-        // history 
     }
 }

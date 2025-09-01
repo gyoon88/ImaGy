@@ -6,10 +6,9 @@ namespace ImaGy.Model
 {
     public class ImageProcessor
     {
+        // Colour | contrast
         public BitmapSource ApplyBinarization(BitmapSource source, byte threshold)
         {
-            if (source == null) return null;
-
             // Convert to grayscale
             FormatConvertedBitmap grayBitmap = new FormatConvertedBitmap();
             grayBitmap.BeginInit();
@@ -42,5 +41,119 @@ namespace ImaGy.Model
             result.Freeze(); // Improve performance
             return result;
         }
+
+        public BitmapSource ApplyEqualization(BitmapSource source)
+        {
+            return source;
+        }
+
+
+        // Edge detect process
+        public BitmapSource ApplyDifferential(BitmapSource source)
+        {
+            return source;
+        }
+
+        public BitmapSource ApplySobel(BitmapSource source)
+        {
+            return source;
+        }
+
+        public BitmapSource ApplyLaplacian(BitmapSource source)
+        {
+            return source;
+        }
+
+
+        // Blur process
+        public BitmapSource ApplyAverageBlur(BitmapSource source)
+        {
+            BitmapSource? result;
+            if (source != null)
+            {
+                result = source;
+                return result;
+            }
+            result = source;
+            return result;
+        }
+
+        public BitmapSource ApplyGaussianBlur(BitmapSource source)
+        {
+            BitmapSource? result;
+            if (source != null)
+            {
+                result = source;
+                return result;
+            }
+            result = source;
+            return result;
+        }
+
+
+        // Mophorogy
+        public BitmapSource ApplyDilation(BitmapSource source)
+        {
+            BitmapSource? result;
+            if (source != null)
+            {
+                result = source;
+                return result;
+            }
+            result = source;
+            return result;
+
+        }
+
+        public BitmapSource ApplyErosion(BitmapSource source)
+        {
+            BitmapSource? result;
+            if (source != null)
+            {
+                result = source;
+                return result;
+            }
+            result = source;
+            return result;
+        }
+
+
+        // Image Matching
+        public BitmapSource ApplyNCC(BitmapSource source)
+        {
+            BitmapSource? result;
+            if (source != null)
+            {
+                result = source;
+                return result;
+            }
+            result = source;
+            return result;
+        }
+
+        public BitmapSource ApplySAD(BitmapSource source)
+        {
+            BitmapSource? result;
+            if (source != null)
+            {
+                result = source;
+                return result;
+            }
+            result = source;
+            return result;
+        }
+
+        public BitmapSource ApplySSD(BitmapSource source)
+        {
+            BitmapSource? result;
+            if (source != null)
+            {
+                result = source;
+                return result;
+            }
+            result = source;
+            return result;
+        }
     }
+
 }
