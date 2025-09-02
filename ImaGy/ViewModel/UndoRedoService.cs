@@ -8,13 +8,13 @@ namespace ImaGy.ViewModel
 {
     public class UndoRedoService<T> : BaseViewModel
     {
-        private readonly Stack<T> undoStack = new Stack<T>();
-        private readonly Stack<T> redoStack = new Stack<T>();
+        private readonly Stack<T?> undoStack = new Stack<T?>();
+        private readonly Stack<T?> redoStack = new Stack<T?>();
 
         public bool CanUndo => undoStack.Any();
         public bool CanRedo => redoStack.Any();
 
-        public void AddState(T state)
+        public void AddState(T? state)
         {
             undoStack.Push(state);
             redoStack.Clear();
@@ -23,12 +23,12 @@ namespace ImaGy.ViewModel
             OnPropertyChanged(nameof(CanRedo));
         }
 
-        public T? Undo(T currentState)
+        public T? Undo(T? currentState)
         {
             if (!CanUndo) return default;
 
             redoStack.Push(currentState);
-            T previousState = undoStack.Pop();
+            T? previousState = undoStack.Pop();
 
             OnPropertyChanged(nameof(CanUndo));
             OnPropertyChanged(nameof(CanRedo));
@@ -36,12 +36,12 @@ namespace ImaGy.ViewModel
             return previousState;
         }
 
-        public T? Redo(T currentState)
+        public T? Redo(T? currentState)
         {
             if (!CanRedo) return default;
 
             undoStack.Push(currentState);
-            T nextState = redoStack.Pop();
+            T? nextState = redoStack.Pop();
 
             OnPropertyChanged(nameof(CanUndo));
             OnPropertyChanged(nameof(CanRedo));

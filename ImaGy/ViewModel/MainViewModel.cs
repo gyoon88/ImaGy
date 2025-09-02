@@ -1,17 +1,12 @@
 using ImaGy.Model;
 using Microsoft.Win32;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
+using ImaGy.View;
 
 namespace ImaGy.ViewModel
 {
@@ -24,54 +19,43 @@ namespace ImaGy.ViewModel
         private string? imageResolution;
         private string? zoomLevel;
         private string? processingTime;
-        private ObservableCollection<string>? historyItems;
-        private string? logText;
-
-        private Stack<BitmapSource> undoStack;
-        private Stack<BitmapSource> redoStack;
 
         // Properties
         public BitmapSource? BeforeImage
         {
             get => beforeImage;
-            set { beforeImage = value; OnPropertyChanged(); }
+            set => SetProperty(ref beforeImage, value);
         }
         public BitmapSource? AfterImage
         {
             get => afterImage;
-            set { afterImage = value; OnPropertyChanged(); }
+            set => SetProperty(ref afterImage, value);
         }
         public string? FileName
         {
             get => fileName;
-            set { fileName = value; OnPropertyChanged(); }
+            set => SetProperty(ref fileName, value);
         }
         public string? ImageResolution
         {
             get => imageResolution;
-            set { imageResolution = value; OnPropertyChanged(); }
+            set => SetProperty(ref imageResolution, value);
         }
         public string? ZoomLevel
         {
             get => zoomLevel;
-            set { zoomLevel = value; OnPropertyChanged(); }
+            set => SetProperty(ref zoomLevel, value);
         }
         public string? ProcessingTime
         {
             get => processingTime;
-            set { processingTime = value; OnPropertyChanged(); }
+            set => SetProperty(ref processingTime, value);
         }
-        public string LogText
-        {
-            get => logText;
-            set { logText = value; OnPropertyChanged(); }
-        }
+        public string LogText => loggingService.LogText;
 
         // Model Class Instances
-        //private readonly ImageDocument imageDocument;
-        //private readonly HistoryManager historyManager;
         private readonly ImageProcessor imageProcessor;
-        private readonly UndoRedoService<BitmapSource> undoRedoService;
+        private readonly UndoRedoService<BitmapSource?> undoRedoService;
         private readonly HistoryService historyService;
         private readonly LoggingService loggingService;
         public ObservableCollection<string> HistoryItems => historyService.HistoryItems;
@@ -85,11 +69,15 @@ namespace ImaGy.ViewModel
         public ICommand FilterringCommand { get; }
         public ICommand MorphorogyCommand { get; }
         public ICommand ImageMatchingCommand { get; }
+        public ICommand ViewHistogramCommand { get; }
+
+        public Action<BitmapSource>? ImageLoadedCallback { get; set; }
 
         // Constructor
         public MainViewModel()
         {
-            undoRedoService = new UndoRedoService<BitmapSource>();
+            // Service Initialization
+            undoRedoService = new UndoRedoService<BitmapSource?>();
             loggingService = new LoggingService();
             imageProcessor = new ImageProcessor();
             historyService = new HistoryService();
@@ -104,11 +92,18 @@ namespace ImaGy.ViewModel
             FilterringCommand = new RelayCommand(ExecuteFilterring, _ => BeforeImage != null);
             MorphorogyCommand = new RelayCommand(ExecuteMorphorogy, _ => BeforeImage != null);
             ImageMatchingCommand = new RelayCommand(ExecuteImageMatching, _ => BeforeImage != null);
+            ViewHistogramCommand = new RelayCommand(ExecuteViewHistogram, _ => AfterImage != null);
 
-            loggingService.PropertyChanged += (s, e) => OnPropertyChanged(e.PropertyName);
+            // Event Subscription
+            loggingService.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(LoggingService.LogText))
+                {
+                    OnPropertyChanged(nameof(LogText));
+                }
+            };
 
             // Initialize Properties
-            LogText = "";
             FileName = "No file loaded";
             ImageResolution = "N/A";
             ZoomLevel = "100%";
@@ -117,10 +112,12 @@ namespace ImaGy.ViewModel
 
 
         // Image Open-Save
-        private void ExecuteOpenImage(object parameter)
+        private void ExecuteOpenImage(object? parameter)
         {
-            OpenFileDialog openDialog = new OpenFileDialog();
-            openDialog.Filter = "Image files (*.png;*.jpeg;*.jpg;*.bmp)|*.png;*.jpeg;*.jpg;*.bmp|All files (*.*)|*.*";
+            OpenFileDialog openDialog = new OpenFileDialog
+            {
+                Filter = "Image files (*.png;*.jpeg;*.jpg;*.bmp)|*.png;*.jpeg;*.jpg;*.bmp|All files (*.*)|*.*"
+            };
             if (openDialog.ShowDialog() == true)
             {
                 try
@@ -130,13 +127,17 @@ namespace ImaGy.ViewModel
                         var bitmap = new BitmapImage();
                         bitmap.BeginInit();
                         bitmap.UriSource = new Uri(openDialog.FileName);
-                        bitmap.CacheOption = BitmapCacheOption.OnLoad; // 메모리에 올리고 파일 잠금 해제
+                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
                         bitmap.EndInit();
-                        bitmap.Freeze(); // UI 스레드 외에서 접근할 경우를 대비해 동결
+                        bitmap.Freeze();
+
                         BeforeImage = bitmap;
-                        AfterImage = null;
+                        AfterImage = bitmap; // Set AfterImage to the new image
                         FileName = Path.GetFileName(openDialog.FileName);
                         ImageResolution = $"{bitmap.PixelWidth}x{bitmap.PixelHeight}";
+
+                        // Notify the View to reset zoom
+                        ImageLoadedCallback?.Invoke(bitmap);
 
                         // Clear history for new image
                         undoRedoService.Clear();
@@ -145,101 +146,91 @@ namespace ImaGy.ViewModel
                         CommandManager.InvalidateRequerySuggested();
                     });
                     ProcessingTime = $"Load Time: {elapsedMs:F2} ms";
-
                 }
-                catch(Exception ex ) 
+                catch (Exception ex)
                 {
-                    MessageBox.Show($"이미지를 불러오는 중 오류가 발생했습니다.\n\n오류: {ex.Message}", 
-                        "오류", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"Failed to load the image.\n\nError: {ex.Message}",
+                        "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
 
-        private void ExecuteSaveImage(object parameter)
+        private void ExecuteSaveImage(object? parameter)
         {
             if (AfterImage == null) return;
 
-            SaveFileDialog saveDialog = new SaveFileDialog();
-            saveDialog.Filter = "PNG Image|*.png|JPEG Image|*.jpg|BMP Image|*.bmp";
+            SaveFileDialog saveDialog = new SaveFileDialog
+            {
+                Filter = "PNG Image|*.png|JPEG Image|*.jpg|BMP Image|*.bmp"
+            };
 
             if (saveDialog.ShowDialog() == true)
-            { 
+            {
                 try
                 {
-                    BitmapEncoder? encoder = null;
-                    string extension = Path.GetExtension(saveDialog.FileName).ToLower();
-
-                    switch (extension)
+                    BitmapEncoder? encoder = Path.GetExtension(saveDialog.FileName).ToLower() switch
                     {
-                        case ".png":
-                            encoder = new PngBitmapEncoder();
-                            break;
-                        case ".jpg":
-                        case ".jpeg":
-                            encoder = new JpegBitmapEncoder();
-                            break;
-                        case ".bmp":
-                            encoder = new BmpBitmapEncoder();
-                            break;
-                    }
+                        ".png" => new PngBitmapEncoder(),
+                        ".jpg" or ".jpeg" => new JpegBitmapEncoder(),
+                        ".bmp" => new BmpBitmapEncoder(),
+                        _ => null
+                    };
 
                     if (encoder != null)
                     {
                         encoder.Frames.Add(BitmapFrame.Create(AfterImage));
-                        using (var fileStream = new FileStream(saveDialog.FileName, FileMode.Create)) // 파일스트림을 직접 저장
-                        {
-                            encoder.Save(fileStream);
-                            loggingService.AddLog($"Image saved: {Path.GetFileName(saveDialog.FileName)}");
-                        }
+                        using var fileStream = new FileStream(saveDialog.FileName, FileMode.Create);
+                        encoder.Save(fileStream);
+                        loggingService.AddLog($"Image saved: {Path.GetFileName(saveDialog.FileName)}");
                     }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"이미지를 저장하는 중 오류가 발생했습니다.\n\n오류: {ex.Message}",
-                     "오류", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"Failed to save the image.\n\nError: {ex.Message}",
+                     "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
-
             }
         }
 
-        // 모든 필터 적용 메서드를 하나의 헬퍼 메서드로 통합하여 중복 제거
+        // Applies an image processing function to the current image
         private void ApplyProcessing(string historyMessage, Func<BitmapSource, BitmapSource> processFunction)
         {
-            if (BeforeImage == null) return;
+            var imageToProcess = AfterImage ?? BeforeImage;
+            if (imageToProcess == null) return;
+
             try
             {
-                // 1. Undo를 위해 현재 상태를 저장
-                undoRedoService.AddState(BeforeImage);
+                // 1. Add current state to undo stack
+                undoRedoService.AddState(imageToProcess);
 
-                // 2. 시간 측정 및 이미지 처리
-                var (processedImage, elapsedMs) = ProcessTime.Measure(() => processFunction(BeforeImage));
+                // 2. Process image and measure time
+                var (processedImage, elapsedMs) = ProcessTime.Measure(() => processFunction(imageToProcess));
 
-                // 3. 결과 업데이트
+                // 3. Update UI
                 AfterImage = processedImage;
                 ProcessingTime = $"{historyMessage}: {elapsedMs:F2} ms";
 
-                // 4. 히스토리 및 로그 기록 (서비스에 위임)
+                // 4. Add to history and log
                 historyService.AddHistory(historyMessage, elapsedMs);
                 loggingService.AddLog($"{historyMessage} applied.");
-
-                // CommandManager.InvalidateRequerySuggested()는 RelayCommand가 자동으로 처리해줌
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"이미지 처리 중 오류가 발생했습니다.\n\n오류: {ex.Message}", "오류",
+                MessageBox.Show($"An error occurred during image processing.\n\nError: {ex.Message}", "Error",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            
         }
 
-        // 각 필터 Command는 새로 만든 헬퍼 메서드를 호출하기만 함
-        // Color | Contrast
-        private void ExecuteColorContrast(object parameter)
+        // Command Implementations
+        private void ExecuteColorContrast(object? parameter)
         {
-            string processCommand = parameter.ToString();
+            string? processCommand = parameter?.ToString();
             switch (processCommand)
             {
                 case "Bin":
+                    ApplyProcessing("Binarization", image => imageProcessor.ApplyBinarization(image, 128));
+                    break;
+                case "Bin_SSE":
                     ApplyProcessing("Binarization", image => imageProcessor.ApplyBinarization(image, 128));
                     break;
 
@@ -249,15 +240,14 @@ namespace ImaGy.ViewModel
             }
         }
 
-        private void ExecuteFilterring(object parameter)
+        private void ExecuteFilterring(object? parameter)
         {
-            string processCommand = parameter.ToString();
+            string? processCommand = parameter?.ToString();
             switch (processCommand)
             {
                 case "Diff":
-                    ApplyProcessing("Differentail", image => imageProcessor.ApplyDifferential(image));
+                    ApplyProcessing("Differential", image => imageProcessor.ApplyDifferential(image));
                     break;
-
                 case "Sobel":
                     ApplyProcessing("Sobel", image => imageProcessor.ApplySobel(image));
                     break;
@@ -270,15 +260,11 @@ namespace ImaGy.ViewModel
                 case "Gaussian":
                     ApplyProcessing("Gaussian", image => imageProcessor.ApplyGaussianBlur(image));
                     break;
-                //case "FFT":
-                //    ApplyProcessing("Laplacian", image => imageProcessor.ApplyFFT(image));
-                //    break;
             }
-
         }
-        private void ExecuteMorphorogy(object parameter)
+        private void ExecuteMorphorogy(object? parameter)
         {
-            string processCommand = parameter.ToString();
+            string? processCommand = parameter?.ToString();
             switch (processCommand)
             {
                 case "Dilation":
@@ -290,9 +276,9 @@ namespace ImaGy.ViewModel
                     break;
             }
         }
-        private void ExecuteImageMatching(object parameter)
+        private void ExecuteImageMatching(object? parameter)
         {
-            string processCommand = parameter.ToString();
+            string? processCommand = parameter?.ToString();
             switch (processCommand)
             {
                 case "NCC":
@@ -307,19 +293,35 @@ namespace ImaGy.ViewModel
                     break;
             }
         }
-        
 
-        // Undo the last process
-        private void ExecuteUndo(object parameter)
+        private void ExecuteViewHistogram(object? parameter)
         {
-            var previousState = undoRedoService.Undo(AfterImage);
-            if (previousState != null) AfterImage = previousState;
+            if (AfterImage == null) return;
+
+            int[] histogramData = ServeHistogram.CalculateGrayscaleHistogram(AfterImage);
+            HistogramViewModel histogramViewModel = new HistogramViewModel(histogramData);
+
+            HistogramWindow histogramWindow = new HistogramWindow
+            {
+                DataContext = histogramViewModel
+            };
+            histogramWindow.Show();
         }
 
-        private void ExecuteRedo(object parameter)
+        // Undo/Redo
+        private void ExecuteUndo(object? parameter)
         {
-            var nextState = undoRedoService.Redo(AfterImage);
-            if (nextState != null) AfterImage = nextState;
+            AfterImage = undoRedoService.Undo(AfterImage);
+        }
+
+        private void ExecuteRedo(object? parameter)
+        {
+            AfterImage = undoRedoService.Redo(AfterImage);
+        }
+
+        public void UpdateZoomLevel(double scale)
+        {
+            ZoomLevel = $"{scale * 100:F0}%";
         }
     }
 }
