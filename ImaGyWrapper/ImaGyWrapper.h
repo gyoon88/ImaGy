@@ -22,6 +22,9 @@ namespace ImaGy
         public:
             // Takes a .NET BitmapSource, processes it using native C++, and returns a new BitmapSource
             static void ApplyBinarization(IntPtr pixels, int width, int height, int stride, Byte threshold);
+            static void ApplyEqualization(IntPtr pixels, int width, int height, int stride, Byte threshold);
+            static void ApplyDifferential(IntPtr pixels, int width, int height, int stride, Byte threshold);
+            static void ApplyAverageBlur(IntPtr pixels, int width, int height, int stride, Byte threshold);
 
             // TODO: Add other function declarations here later
         };

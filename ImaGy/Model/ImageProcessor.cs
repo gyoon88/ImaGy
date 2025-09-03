@@ -100,7 +100,10 @@ namespace ImaGy.Model
         // Edge detect process
         public BitmapSource ApplyDifferential(BitmapSource source)
         {
-            return source;
+            return ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride, threshold) =>
+            {
+                NativeProcessor.ApplyDifferential(pixelPtr, width, height, stride, threshold);
+            }, 128);
         }
 
         public BitmapSource ApplySobel(BitmapSource source)

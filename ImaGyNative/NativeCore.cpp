@@ -1,7 +1,7 @@
 // NativeCore.cpp
 #include "pch.h"
 #include "NativeCore.h"
-#include "math.h"
+#include <cmath>
 
 namespace ImaGyNative
 {
@@ -48,11 +48,15 @@ namespace ImaGyNative
         {
             for (int x = 0; x < width; ++x)
             {
-                // Assuming Gray8 format, so each pixel is 1 byte
-                int centerIndex = y * stride + x;
-                int indexPx = y * stride +(x + 1);
-                int indexPy = (y + 1) * stride + x;
-                pixelData[centerIndex] = abs(pixelData[centerIndex] * -1 + pixelData[indexPy]) + abs(pixelData[centerIndex] * -1 + pixelData[indexPx]);
+                if (x == height || x == width) {
+                    
+                }
+                else {
+                    int centerIndex = y * stride + x;
+                    int indexPx = y * stride + (x + 1);
+                    int indexPy = (y + 1) * stride + x;
+                    pixelData[centerIndex] = abs(pixelData[centerIndex] * -1 + pixelData[indexPy]) + abs(pixelData[centerIndex] * -1 + pixelData[indexPx]);
+                }
             }
         }
     }
@@ -70,7 +74,6 @@ namespace ImaGyNative
                 int indexPy1 = (y + 1) * stride + x;
                 int indexPx1 = y * stride + (x + 1);
                 int indexPy1Px1 = (y + 1) * stride + x;
-
 
                 pixelData[centerIndex] = (pixelData[centerIndex] > threshold) ? 255 : 0;
             }
