@@ -108,54 +108,81 @@ namespace ImaGy.Model
 
         public BitmapSource ApplySobel(BitmapSource source)
         {
-            return source;
+            return ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride, threshold) =>
+            {
+                NativeProcessor.ApplySobel(pixelPtr, width, height, stride, threshold);
+            }, 128);
         }
 
         public BitmapSource ApplyLaplacian(BitmapSource source)
         {
-            return source;
+            return ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride, threshold) =>
+            {
+                NativeProcessor.ApplyLaplacian(pixelPtr, width, height, stride, threshold);
+            }, 128);
         }
 
 
         // Blur process
         public BitmapSource ApplyAverageBlur(BitmapSource source)
         {
-            return source;
+            return ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride, threshold) =>
+            {
+                NativeProcessor.ApplyAverageBlur(pixelPtr, width, height, stride, threshold);
+            }, 128);
         }
 
         public BitmapSource ApplyGaussianBlur(BitmapSource source)
         {
-            return source;
+            return ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride, threshold) =>
+            {
+                NativeProcessor.ApplyGaussianBlur(pixelPtr, width, height, stride, threshold);
+            }, 128);
         }
 
 
         // Mophorogy
         public BitmapSource ApplyDilation(BitmapSource source)
         {
-            return source;
+            return ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride, threshold) =>
+            {
+                NativeProcessor.ApplyDilation(pixelPtr, width, height, stride, threshold);
+            }, 128);
 
         }
 
         public BitmapSource ApplyErosion(BitmapSource source)
         {
-            return source;
+            return ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride, threshold) =>
+            {
+                NativeProcessor.ApplyErosion(pixelPtr, width, height, stride, threshold);
+            }, 128);
         }
 
 
         // Image Matching
         public BitmapSource ApplyNCC(BitmapSource source)
         {
-            return source;
+            return ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride, threshold) =>
+            {
+                NativeProcessor.ApplyNCC(pixelPtr, width, height, stride, threshold);
+            }, 128);
         }
 
         public BitmapSource ApplySAD(BitmapSource source)
         {
-            return source;
+            return ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride, threshold) =>
+            {
+                NativeProcessor.ApplySAD(pixelPtr, width, height, stride, threshold);
+            }, 128);
         }
 
         public BitmapSource ApplySSD(BitmapSource source)
         {
-            return source;
+            return ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride, threshold) =>
+            {
+                NativeProcessor.ApplySSD(pixelPtr, width, height, stride, threshold);
+            }, 128);
         }
     }
 

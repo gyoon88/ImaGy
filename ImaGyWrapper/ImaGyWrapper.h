@@ -20,11 +20,27 @@ namespace ImaGy
         public ref class NativeProcessor
         {
         public:
-            // Takes a .NET BitmapSource, processes it using native C++, and returns a new BitmapSource
+            // // Color Contrast
             static void ApplyBinarization(IntPtr pixels, int width, int height, int stride, Byte threshold);
             static void ApplyEqualization(IntPtr pixels, int width, int height, int stride, Byte threshold);
+
+            // EdgeDetect
             static void ApplyDifferential(IntPtr pixels, int width, int height, int stride, Byte threshold);
+            static void ApplySobel(IntPtr pixels, int width, int height, int stride, Byte threshold);
+            static void ApplyLaplacian(IntPtr pixels, int width, int height, int stride, Byte threshold);
+
+            // Blurring
             static void ApplyAverageBlur(IntPtr pixels, int width, int height, int stride, Byte threshold);
+            static void ApplyGaussianBlur(IntPtr pixels, int width, int height, int stride, Byte threshold);
+
+            // Morphorogy
+            static void ApplyDilation(IntPtr pixels, int width, int height, int stride, Byte threshold);
+            static void ApplyErosion(IntPtr pixels, int width, int height, int stride, Byte threshold);
+
+            // Image Matching
+            static void ApplyNCC(IntPtr pixels, int width, int height, int stride, Byte threshold);
+            static void ApplySAD(IntPtr pixels, int width, int height, int stride, Byte threshold);
+            static void ApplySSD(IntPtr pixels, int width, int height, int stride, Byte threshold);
 
             // TODO: Add other function declarations here later
         };

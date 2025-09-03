@@ -15,7 +15,25 @@ namespace ImaGyNative
         // Applies binarization to grayscale pixel data.
         static void ApplyBinarization(void* pixels, int width, int height, int stride, unsigned char threshold);
         static void ApplyEqualization(void* pixels, int width, int height, int stride, unsigned char threshold);
+        
+        // Edge Detection
         static void ApplyDifferential(void* pixels, int width, int height, int stride, unsigned char threshold);
+        static void ApplySobel(void* pixels, int width, int height, int stride, unsigned char threshold);
+        static void ApplyLaplacian (void* pixels, int width, int height, int stride, unsigned char threshold);
+        
+        // Blurring
         static void ApplyAverageBlur(void* pixels, int width, int height, int stride, unsigned char threshold);
+        static void ApplyGaussianBlur(void* pixels, int width, int height, int stride, unsigned char threshold);
+
+        // Morphorogy
+        static void ApplyDilation(void* pixels, int width, int height, int stride, unsigned char threshold);
+        static void ApplyErosion(void* pixels, int width, int height, int stride, unsigned char threshold);
+
+        // Image Matching
+        static void ApplyNCC(void* pixels, int width, int height, int stride, unsigned char threshold);
+        static void ApplySAD(void* pixels, int width, int height, int stride, unsigned char threshold);
+        static void ApplySSD(void* pixels, int width, int height, int stride, unsigned char threshold);
+
+
     };
 }

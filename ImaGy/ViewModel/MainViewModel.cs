@@ -132,7 +132,7 @@ namespace ImaGy.ViewModel
                         bitmap.Freeze();
 
                         BeforeImage = bitmap;
-                        //AfterImage = bitmap; // Set AfterImage to the new image
+                        AfterImage = bitmap; // Set AfterImage to the new image
                         FileName = Path.GetFileName(openDialog.FileName);
                         ImageResolution = $"{bitmap.PixelWidth}x{bitmap.PixelHeight}";
 
