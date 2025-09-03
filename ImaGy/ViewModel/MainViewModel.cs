@@ -128,11 +128,11 @@ namespace ImaGy.ViewModel
                         bitmap.BeginInit();
                         bitmap.UriSource = new Uri(openDialog.FileName);
                         bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                        bitmap.EndInit();
+                        bitmap.EndInit(); // 파일을 프로그램으로 업로드하여 다른 프로그램에서 접근 하지 못하는 현상을 제거
                         bitmap.Freeze();
 
                         BeforeImage = bitmap;
-                        AfterImage = bitmap; // Set AfterImage to the new image
+                        //AfterImage = bitmap; // Set AfterImage to the new image
                         FileName = Path.GetFileName(openDialog.FileName);
                         ImageResolution = $"{bitmap.PixelWidth}x{bitmap.PixelHeight}";
 
@@ -195,7 +195,7 @@ namespace ImaGy.ViewModel
         // Applies an image processing function to the current image
         private void ApplyProcessing(string historyMessage, Func<BitmapSource, BitmapSource> processFunction)
         {
-            var imageToProcess = AfterImage ?? BeforeImage;
+            var imageToProcess = AfterImage ?? BeforeImage; // After 가 널이면 before 이미지를 사용
             if (imageToProcess == null) return;
 
             try

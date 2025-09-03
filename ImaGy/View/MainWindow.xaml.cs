@@ -17,11 +17,11 @@ namespace ImaGy.View
     /// </summary>
     public partial class MainWindow : Window
     {
-        private ScaleTransform _beforeScaleTransform;
-        private ScaleTransform _afterScaleTransform;
-        private Point _lastMousePosition;
-        private bool _isPanning;
-        private MainViewModel _viewModel;
+        private ScaleTransform beforeScaleTransform;
+        private ScaleTransform afterScaleTransform;
+        private Point lastMousePosition;
+        private bool isPanning;
+        private MainViewModel viewModel;
 
         public Action<BitmapSource>? OnImageLoadedCallback;
 
@@ -33,21 +33,21 @@ namespace ImaGy.View
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            _beforeScaleTransform = (ScaleTransform)BeforeImageControl.LayoutTransform;
-            _afterScaleTransform = (ScaleTransform)AfterImageControl.LayoutTransform;
-            _viewModel = (MainViewModel)this.DataContext;
+            beforeScaleTransform = (ScaleTransform)BeforeImageControl.LayoutTransform;
+            afterScaleTransform = (ScaleTransform)AfterImageControl.LayoutTransform;
+            viewModel = (MainViewModel)this.DataContext;
 
             // Set the callback for the ViewModel
-            _viewModel.ImageLoadedCallback = ResetImageZoom;
+            viewModel.ImageLoadedCallback = ResetImageZoom;
 
             // Initial update of ZoomLevel and fit image
-            if (_viewModel.BeforeImage != null)
+            if (viewModel.BeforeImage != null)
             {
-                ResetImageZoom(_viewModel.BeforeImage);
+                ResetImageZoom(viewModel.BeforeImage);
             }
             else
             {
-                _viewModel.UpdateZoomLevel(_beforeScaleTransform.ScaleX);
+                viewModel.UpdateZoomLevel(beforeScaleTransform.ScaleX);
             }
         }
 
@@ -60,23 +60,23 @@ namespace ImaGy.View
             double scaleYBefore = BeforeImageScrollViewer.ActualHeight / imageSource.PixelHeight;
             double initialScaleBefore = Math.Min(scaleXBefore, scaleYBefore);
 
-            _beforeScaleTransform.ScaleX = initialScaleBefore;
-            _beforeScaleTransform.ScaleY = initialScaleBefore;
+            beforeScaleTransform.ScaleX = initialScaleBefore;
+            beforeScaleTransform.ScaleY = initialScaleBefore;
 
             // Calculate scale for AfterImageControl (assuming it will display the same image initially)
             double scaleXAfter = AfterImageScrollViewer.ActualWidth / imageSource.PixelWidth;
             double scaleYAfter = AfterImageScrollViewer.ActualHeight / imageSource.PixelHeight;
             double initialScaleAfter = Math.Min(scaleXAfter, scaleYAfter);
 
-            _afterScaleTransform.ScaleX = initialScaleAfter;
-            _afterScaleTransform.ScaleY = initialScaleAfter;
+            afterScaleTransform.ScaleX = initialScaleAfter;
+            afterScaleTransform.ScaleY = initialScaleAfter;
 
             // Reset scroll positions
             BeforeImageScrollViewer.ScrollToHome();
             AfterImageScrollViewer.ScrollToHome();
 
             // Update ViewModel's ZoomLevel
-            _viewModel.UpdateZoomLevel(initialScaleBefore);
+            viewModel.UpdateZoomLevel(initialScaleBefore);
         }
 
         private void ImageControl_MouseWheel(object sender, MouseWheelEventArgs e)
@@ -85,7 +85,7 @@ namespace ImaGy.View
 
             Image imageControl = (Image)sender;
             ScrollViewer scrollViewer = (ScrollViewer)imageControl.Parent; // Get parent ScrollViewer
-            ScaleTransform scaleTransform = (imageControl == BeforeImageControl) ? _beforeScaleTransform : _afterScaleTransform;
+            ScaleTransform scaleTransform = (imageControl == BeforeImageControl) ? beforeScaleTransform : afterScaleTransform;
 
             double zoomFactor = 1.1; // Zoom in/out factor
 
@@ -103,7 +103,7 @@ namespace ImaGy.View
             }
 
             // Update ViewModel
-            _viewModel.UpdateZoomLevel(scaleTransform.ScaleX);
+            viewModel.UpdateZoomLevel(scaleTransform.ScaleX);
 
             // Adjust scroll position to keep the mouse pointer centered (optional, but good UX)
             Point mousePos = e.GetPosition(imageControl);
@@ -119,8 +119,8 @@ namespace ImaGy.View
             ScrollViewer scrollViewer = (ScrollViewer)sender;
             if (e.ChangedButton == MouseButton.Left)
             {
-                _isPanning = true;
-                _lastMousePosition = e.GetPosition(scrollViewer);
+                isPanning = true;
+                lastMousePosition = e.GetPosition(scrollViewer);
                 scrollViewer.CaptureMouse();
             }
         }
@@ -128,16 +128,16 @@ namespace ImaGy.View
         private void ImageScrollViewer_MouseMove(object sender, MouseEventArgs e)
         {
             ScrollViewer scrollViewer = (ScrollViewer)sender;
-            if (_isPanning)
+            if (isPanning)
             {
                 Point currentMousePosition = e.GetPosition(scrollViewer);
-                double deltaX = currentMousePosition.X - _lastMousePosition.X;
-                double deltaY = currentMousePosition.Y - _lastMousePosition.Y;
+                double deltaX = currentMousePosition.X - lastMousePosition.X;
+                double deltaY = currentMousePosition.Y - lastMousePosition.Y;
 
                 scrollViewer.ScrollToHorizontalOffset(scrollViewer.HorizontalOffset - deltaX);
                 scrollViewer.ScrollToVerticalOffset(scrollViewer.VerticalOffset - deltaY);
 
-                _lastMousePosition = currentMousePosition;
+                lastMousePosition = currentMousePosition;
             }
         }
 
@@ -146,7 +146,7 @@ namespace ImaGy.View
             ScrollViewer scrollViewer = (ScrollViewer)sender;
             if (e.ChangedButton == MouseButton.Left)
             {
-                _isPanning = false;
+                isPanning = false;
                 scrollViewer.ReleaseMouseCapture();
             }
         }

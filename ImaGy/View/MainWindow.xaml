@@ -10,6 +10,14 @@
     <Window.DataContext>
         <vm:MainViewModel/>
     </Window.DataContext>
+
+
+    <Window.InputBindings>
+        <KeyBinding Modifiers="Control" Key="S" Command="{Binding SaveImageCommand}" />
+        <KeyBinding Modifiers="Control" Key="O" Command="{Binding OpenImageCommand}" />
+        <KeyBinding Modifiers="Control" Key="Z" Command="{Binding UndoCommand}" />
+    </Window.InputBindings>
+
     <DockPanel>
         <!-- Menu -->
         <Menu DockPanel.Dock="Top">
