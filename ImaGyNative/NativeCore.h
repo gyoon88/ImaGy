@@ -15,5 +15,7 @@ namespace ImaGyNative
         // Applies binarization to grayscale pixel data.
         static void ApplyBinarization(void* pixels, int width, int height, int stride, unsigned char threshold);
         static void ApplyEqualization(void* pixels, int width, int height, int stride, unsigned char threshold);
+        static void ApplyDifferential(void* pixels, int width, int height, int stride, unsigned char threshold);
+        static void ApplyAverageBlur(void* pixels, int width, int height, int stride, unsigned char threshold);
     };
 }

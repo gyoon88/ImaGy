@@ -90,6 +90,9 @@
                         Height="1" 
                         Background="{StaticResource SecondaryGrayBrush}" 
                         Margin="5,5" />
+                    
+                    <!--Here predfine the mouse that mouse can control size of image-->
+
                     <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
                                   x:Name="BeforeImageScrollViewer"
                                   MouseDown="ImageScrollViewer_MouseDown"
@@ -125,6 +128,7 @@
                         Height="1" 
                         Background="{StaticResource SecondaryGrayBrush}" 
                         Margin="5,5" />
+                    <!--Here predfine the mouse that mouse can control size of image-->
                     <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
                                   x:Name="AfterImageScrollViewer"
                                   MouseDown="ImageScrollViewer_MouseDown"

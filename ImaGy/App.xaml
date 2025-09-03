@@ -94,7 +94,7 @@
                 </Setter>
             </Style>
             
-            <!--그룹박스 스타일링--> 
+            <!-- GroupBox Styling --> 
             <Style TargetType="GroupBox">
                 <Setter Property="BorderBrush" Value="{StaticResource SecondaryGrayBrush}"/>
                 <Setter Property="BorderThickness" Value="1"/>
@@ -142,9 +142,7 @@
                     </Setter.Value>
                 </Setter>
             </Style>
-            
-            
-            <!--Text Box 스타일링--> 
+           
             <Style TargetType="TextBox">
                 <Setter Property="Background" Value="{StaticResource PrimaryGrayBrush}"/>
                 <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
