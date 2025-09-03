@@ -165,13 +165,13 @@
                             </Expander>
 
                             <Expander Header="Filterring" Foreground="White">
-                                <StackPanel>
+                                <StackPanel Cursor="">
 
                                     <GroupBox Header="Edge Detection">
                                         <StackPanel>
                                             <Button Content="Differential" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Diff" />
-                                            <Button Content="Sobel" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Diff"/>
-                                            <Button Content="Laplacian" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Diff"/>
+                                            <Button Content="Sobel" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Sobel"/>
+                                            <Button Content="Laplacian" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Laplace"/>
                                             <Button Content="FFT" Margin="2" />
                                         </StackPanel>
                                     </GroupBox>
