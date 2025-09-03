@@ -5,6 +5,7 @@
 
 namespace ImaGyNative
 {
+    // 헬퍼 메소드 
     void ApplyConvolution3x3( const unsigned char* sourcePixels, unsigned char* destPixels, 
         int width, int height, int stride, const int kernel[9], double kernelSum)
     {
@@ -223,63 +224,95 @@ namespace ImaGyNative
     }
 
     // Morphorogy
-    // Dilation - 시작 안함
     void NativeCore::ApplyDilation(void* pixels, int width, int height, int stride, unsigned char threshold)
     {
         unsigned char* pixelData = static_cast<unsigned char*>(pixels);
-        int arr[9] = { 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9 ,1 / 9 };
+
+        // 결과를 저장할 버퍼와 읽기 전용 원본 버퍼를 생성
+        unsigned char* resultBuffer = new unsigned char[height * stride];
+        unsigned char* sourceBuffer = new unsigned char[height * stride];
+        memcpy(sourceBuffer, pixelData, height * stride);
+
         for (int y = 1; y < height - 1; ++y)
         {
             for (int x = 1; x < width - 1; ++x)
             {
-                // 1번째 행
-                int indexMxPy = (y + 1) * stride + (x - 1); // 배열 0번째
-                int indexNxPy = (y + 1) * stride + x; // 배열 1번째
-                int indexPxPy = (y + 1) * stride + (x + 1); // 배열 2번째
-                // 2번째 행
-                int indexMxNy = y * stride + (x - 1); //배열 3번째 
-                int indexNxNy = y * stride + x; // 배열 4번째 중심
-                int indexPxNy = y * stride + (x + 1);
-                // 3번째 행
-                int indexMxMy = (y - 1) * stride + (x - 1); //배열 3번째 
-                int indexNxMy = (y - 1) * stride + x; // 배열 4번째
-                int indexPxMy = (y - 1) * stride + (x + 1);
+                // 이웃 픽셀 9개의 인덱스 계산
+                int indexes[9] = {
+                    (y - 1) * stride + (x - 1), (y - 1) * stride + x, (y - 1) * stride + (x + 1),
+                    y * stride + (x - 1),       y * stride + x,       y * stride + (x + 1),
+                    (y + 1) * stride + (x - 1), (y + 1) * stride + x, (y + 1) * stride + (x + 1)
+                };
 
+                // --- 팽창(Dilation) 연산의 핵심 로직 ---
+                // 이웃 픽셀 중에서 가장 큰(밝은) 값을 찾습니다.
+                unsigned char maxValue = 0;
+                for (int i = 0; i < 9; ++i)
+                {
+                    if (sourceBuffer[indexes[i]] > maxValue)
+                    {
+                        maxValue = sourceBuffer[indexes[i]];
+                    }
+                }
 
-
-                pixelData[indexNxNy];
+                // 찾은 최댓값을 결과 버퍼의 중심 픽셀에 저장합니다.
+                resultBuffer[indexes[4]] = maxValue;
             }
         }
+
+        // 최종 결과를 원본 버퍼에 복사
+        memcpy(pixelData, resultBuffer, height * stride);
+
+        // 할당한 메모리 해제
+        delete[] resultBuffer;
+        delete[] sourceBuffer;
     }
-    // Erosion - 시작 안함
+
+
+    // Erosion - 완료
     void NativeCore::ApplyErosion(void* pixels, int width, int height, int stride, unsigned char threshold)
     {
         unsigned char* pixelData = static_cast<unsigned char*>(pixels);
-        int arr[9] = { 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9 ,1 / 9 };
+
+        // 결과를 저장할 버퍼와 읽기 전용 원본 버퍼를 생성
+        unsigned char* resultBuffer = new unsigned char[height * stride];
+        unsigned char* sourceBuffer = new unsigned char[height * stride];
+        memcpy(sourceBuffer, pixelData, height * stride);
+
         for (int y = 1; y < height - 1; ++y)
         {
             for (int x = 1; x < width - 1; ++x)
             {
-                // 1번째 행
-                int indexMxPy = (y + 1) * stride + (x - 1); // 배열 0번째
-                int indexNxPy = (y + 1) * stride + x; // 배열 1번째
-                int indexPxPy = (y + 1) * stride + (x + 1); // 배열 2번째
-                // 2번째 행
-                int indexMxNy = y * stride + (x - 1); //배열 3번째 
-                int indexNxNy = y * stride + x; // 배열 4번째 중심
-                int indexPxNy = y * stride + (x + 1);
-                // 3번째 행
-                int indexMxMy = (y - 1) * stride + (x - 1); //배열 3번째 
-                int indexNxMy = (y - 1) * stride + x; // 배열 4번째
-                int indexPxMy = (y - 1) * stride + (x + 1);
+                // 이웃 픽셀 9개의 인덱스 계산
+                int indexes[9] = {
+                    (y - 1) * stride + (x - 1), (y - 1) * stride + x, (y - 1) * stride + (x + 1),
+                    y * stride + (x - 1),       y * stride + x,       y * stride + (x + 1),
+                    (y + 1) * stride + (x - 1), (y + 1) * stride + x, (y + 1) * stride + (x + 1)
+                };
 
+                // --- 침식(Erosion) 연산의 핵심 로직 ---
+                // 이웃 픽셀 중에서 가장 작은(어두운) 값을 찾습니다.
+                unsigned char minValue = 255;
+                for (int i = 0; i < 9; ++i)
+                {
+                    if (sourceBuffer[indexes[i]] < minValue)
+                    {
+                        minValue = sourceBuffer[indexes[i]];
+                    }
+                }
 
-
-                pixelData[indexNxNy];
+                // 찾은 최솟값을 결과 버퍼의 중심 픽셀에 저장합니다.
+                resultBuffer[indexes[4]] = minValue;
             }
         }
-    }
 
+        // 최종 결과를 원본 버퍼에 복사
+        memcpy(pixelData, resultBuffer, height * stride);
+
+        // 할당한 메모리 해제
+        delete[] resultBuffer;
+        delete[] sourceBuffer;
+    }
     // Image Matching - 여긴 이번주에 못할 듯
     // normailized cross correlation
     void NativeCore::ApplyNCC(void* pixels, int width, int height, int stride, unsigned char threshold)
