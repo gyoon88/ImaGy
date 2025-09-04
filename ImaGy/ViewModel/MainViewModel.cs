@@ -20,7 +20,16 @@ namespace ImaGy.ViewModel
         private string? imageResolution;
         private string? zoomLevel;
         private string? processingTime;
-
+        private bool _isProcessing;
+        public bool IsProcessing
+        {
+            get => _isProcessing;
+            set
+            {
+                _isProcessing = value;
+                OnPropertyChanged(); // Assuming you have a base method for property change notifications
+            }
+        }
         // Properties
         public BitmapSource? BeforeImage
         {
@@ -124,51 +133,69 @@ namespace ImaGy.ViewModel
             ProcessingTime = "0 ms";
         }
 
-
         // Image Open-Save
-        private void ExecuteOpenImage(object? parameter)
+        private async void ExecuteOpenImage(object? parameter)
         {
             OpenFileDialog openDialog = new OpenFileDialog
             {
                 Filter = "Image files (*.png;*.jpeg;*.jpg;*.bmp)|*.png;*.jpeg;*.jpg;*.bmp|All files (*.*)|*.*"
             };
+
             if (openDialog.ShowDialog() == true)
             {
+                if (IsProcessing) return; // Don't allow loading if another process is running
+
                 try
                 {
-                    double elapsedMs = ProcessTime.Measure(() =>
+                    IsProcessing = true; // Disable UI
+                    string fileName = openDialog.FileName; // Capture filename for the background thread
+                    BitmapSource? loadedBitmap = null;
+                    double elapsedMs = 0;
+
+                    var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+                    // Load and decode the image on a background thread
+                    loadedBitmap = await Task.Run(() =>
                     {
                         var bitmap = new BitmapImage();
                         bitmap.BeginInit();
-                        bitmap.UriSource = new Uri(openDialog.FileName);
+                        bitmap.UriSource = new Uri(fileName);
                         bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                        bitmap.EndInit(); // 파일을 프로그램으로 업로드하여 다른 프로그램에서 접근 하지 못하는 현상을 제거
-                        bitmap.Freeze();
-
-                        BeforeImage = bitmap;
-                        AfterImage = bitmap; // Set AfterImage to the new image
-                        FileName = Path.GetFileName(openDialog.FileName);
-                        ImageResolution = $"{bitmap.PixelWidth}x{bitmap.PixelHeight}";
-
-                        // Notify the View to reset zoom
-                        ImageLoadedCallback?.Invoke(bitmap);
-
-                        // Clear history for new image
-                        undoRedoService.Clear();
-                        historyService.Clear();
-                        loggingService.AddLog($"Image loaded: {FileName}");
-                        CommandManager.InvalidateRequerySuggested();
+                        bitmap.EndInit();
+                        bitmap.Freeze(); // Make it thread-safe
+                        return bitmap;
                     });
+
+                    stopwatch.Stop();
+                    elapsedMs = stopwatch.Elapsed.TotalMilliseconds;
+
+                    // Back on the UI thread, update properties
+                    BeforeImage = loadedBitmap;
+                    AfterImage = loadedBitmap;
+
+                    FileName = System.IO.Path.GetFileName(fileName);
+                    ImageResolution = $"{loadedBitmap.PixelWidth}x{loadedBitmap.PixelHeight}";
                     ProcessingTime = $"Load Time: {elapsedMs:F2} ms";
+
+                    ImageLoadedCallback?.Invoke(loadedBitmap);
+
+                    undoRedoService.Clear();
+                    historyService.Clear();
+                    loggingService.AddLog($"Image loaded: {FileName}");
+                    CommandManager.InvalidateRequerySuggested();
                 }
                 catch (Exception ex)
                 {
                     MessageBox.Show($"Failed to load the image.\n\nError: {ex.Message}",
-                        "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    loggingService.AddLog($"Error loading image: {ex.Message}");
+                }
+                finally
+                {
+                    IsProcessing = false; // Re-enable UI
                 }
             }
         }
-
         private void ExecuteSaveImage(object? parameter)
         {
             if (AfterImage == null) return;
@@ -241,44 +268,7 @@ namespace ImaGy.ViewModel
             }
         }
 
-        // Applies an image processing function to the current image
-        private async void ApplyProcessing(string processName, Func<BitmapSource, BitmapSource> processAction)
-        {
-            var imageToProcess = AfterImage ?? BeforeImage;
-            if (imageToProcess == null)
-            {
-                loggingService.AddLog("No image loaded for processing.");
-                MessageBox.Show("Please load an image first.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-
-            try
-            {
-                undoRedoService.AddState(imageToProcess);
-                BitmapSource? processedImage = null;
-                double elapsedMs = 0;
-
-                (processedImage, elapsedMs) = await Task.Run(() =>
-                {
-                    return ProcessTime.Measure(() => processAction(imageToProcess));
-                });
-
-                AfterImage = processedImage;
-                ProcessingTime = $"{processName}: {elapsedMs:F2} ms";
-                CommandManager.InvalidateRequerySuggested();
-
-                historyService.AddHistory(processName, elapsedMs);
-                loggingService.AddLog($"{processName} applied.");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"An error occurred during image processing.\n\nError: {ex.Message}", "Error",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
-                loggingService.AddLog($"Error applying {processName}: {ex.Message}");
-            }
-        }
-
-        // Command Implementations
+        // ImageProcessing Method
         private void ExecuteColorContrast(object? parameter)
         {
             string? processCommand = parameter?.ToString();
@@ -334,6 +324,7 @@ namespace ImaGy.ViewModel
                     break;
             }
         }
+
         private void ExecuteMorphorogy(object? parameter)
         {
             string? processCommand = parameter?.ToString();
@@ -356,6 +347,8 @@ namespace ImaGy.ViewModel
         }
         private async void ExecuteImageMatching(object? parameter) // Changed to async void
         {
+            if (IsProcessing) return; 
+
             string? processCommand = parameter?.ToString();
             var imageToProcess = AfterImage ?? BeforeImage;
 
@@ -373,12 +366,10 @@ namespace ImaGy.ViewModel
                 return;
             }
 
-            // Optional: Disable UI elements to prevent re-entry or indicate busy state
-            // ImageMatchingCommand.CanExecute = false; // This requires a CanExecute parameter in RelayCommand
-
             try
             {
-                // 1. Add current state to undo stack (can be done on UI thread)
+                IsProcessing = true; // Disable UI elements
+                                     // 1. Add current state to undo stack (can be done on UI thread)
                 undoRedoService.AddState(imageToProcess);
 
                 BitmapSource? processedImage = null;
@@ -387,7 +378,7 @@ namespace ImaGy.ViewModel
                 // Move the long-running operation to a background thread
                 (processedImage, elapsedMs) = await Task.Run(() => // Task.Run을 await
                 {
-                    // 아래 코드는 백그라운드 스레드에서 실행
+                    // 이 코드는 백그라운드 스레드에서 실행됩니다.
                     BitmapSource? tempProcessedImage = null;
                     double tempElapsedMs = 0;
 
@@ -417,7 +408,7 @@ namespace ImaGy.ViewModel
                 ProcessingTime = $"{processCommand}: {elapsedMs:F2} ms";
                 CommandManager.InvalidateRequerySuggested();
 
-                // 4. 기록 및 로그에 추가 (UI 스레드 또는 백그라운드에서 수행 가능하지만, UI 업데이트는 UI 스레드가 필요합니다)
+                // 4. 기록 및 로그에 추가 (UI 스레드 또는 백그라운드에서 수행 가능하지만, UI 업데이트는 UI 스레드가 필요
                 historyService.AddHistory(processCommand, elapsedMs); // processCommand를 기록 메시지로 사용
                 loggingService.AddLog($"{processCommand} applied.");
             }
@@ -434,11 +425,54 @@ namespace ImaGy.ViewModel
             }
             finally
             {
-                // 선택 사항: UI 요소 다시 활성화
-                // ImageMatchingCommand.CanExecute = true;
+                IsProcessing = false; 
             }
         }
 
+        // HelperMethod
+        private async void ApplyProcessing(string processName, Func<BitmapSource, BitmapSource> processAction)
+        {
+            if (IsProcessing) return;
+
+            var imageToProcess = AfterImage ?? BeforeImage;
+            if (imageToProcess == null)
+            {
+                loggingService.AddLog("No image loaded for processing.");
+                MessageBox.Show("Please load an image first.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            try
+            {
+                IsProcessing = true; // Disable UI
+                undoRedoService.AddState(imageToProcess);
+                BitmapSource? processedImage = null;
+                double elapsedMs = 0;
+
+                (processedImage, elapsedMs) = await Task.Run(() =>
+                {
+                    return ProcessTime.Measure(() => processAction(imageToProcess));
+                });
+
+                AfterImage = processedImage;
+                ProcessingTime = $"{processName}: {elapsedMs:F2} ms";
+                CommandManager.InvalidateRequerySuggested();
+
+                historyService.AddHistory(processName, elapsedMs);
+                loggingService.AddLog($"{processName} applied.");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred during image processing.\n\nError: {ex.Message}", "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+                loggingService.AddLog($"Error applying {processName}: {ex.Message}");
+            }
+            finally
+            {
+                IsProcessing = false;
+            }
+        }
+        // 
         private void ExecuteViewHistogram(object? parameter)
         {
             if (AfterImage == null) return;
