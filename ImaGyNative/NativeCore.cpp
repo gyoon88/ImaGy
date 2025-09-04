@@ -5,7 +5,7 @@
 
 namespace ImaGyNative
 {
-    // 헬퍼 메소드 
+    // Convolution Helper Method 3x3
     void ApplyConvolution3x3( const unsigned char* sourcePixels, unsigned char* destPixels, 
         int width, int height, int stride, const int kernel[9], double kernelSum)
     {
@@ -15,24 +15,24 @@ namespace ImaGyNative
             {
                 double sum = 0.0;
 
-                // 이웃 픽셀 인덱스 (이 부분은 더 압축할 수 있지만, 가독성을 위해 그대로 둡니다)
+                // neighbor pixel
                 int indexes[9] = {
                     (y - 1) * stride + (x - 1), (y - 1) * stride + x, (y - 1) * stride + (x + 1),
                     y * stride + (x - 1),       y * stride + x,       y * stride + (x + 1),
                     (y + 1) * stride + (x - 1), (y + 1) * stride + x, (y + 1) * stride + (x + 1)
                 };
 
-                // 컨볼루션 연산
+                // convolution operation
                 for (int i = 0; i < 9; ++i)
                 {
                     sum += kernel[i] * sourcePixels[indexes[i]];
                 }
                            
-                if (kernelSum != 0) {  // 0으로 나누는 것을 방지
+                if (kernelSum != 0) {  // If kernelSum is 0, the calling method is edge detect 
                     sum /= kernelSum;
                 }
 
-                // 결과 값 범위 조정 (Clamping)
+                // Pixel value validation
                 if (sum > 255) sum = 255;
                 if (sum < 0) sum = 0;
 
@@ -40,8 +40,9 @@ namespace ImaGyNative
             }
         }
     }
+
     // // Color Contrast
-    // 이진화 - 완료
+    // Binarization - Complete
     void NativeCore::ApplyBinarization(void* pixels, int width, int height, int stride, unsigned char threshold)
     {
         unsigned char* pixelData = static_cast<unsigned char*>(pixels);
@@ -55,7 +56,7 @@ namespace ImaGyNative
             }
         }
     }
-    // 평활화 - 시작안함.
+    // Equalization - Notyet
     void NativeCore::ApplyEqualization(void* pixels, int width, int height, int stride, unsigned char threshold)
     {
         unsigned char* pixelData = static_cast<unsigned char*>(pixels);
@@ -76,12 +77,12 @@ namespace ImaGyNative
     }
 
     // EdgeDetect
-    // 미분 완료
+    // Differnetial - Complete
     void NativeCore::ApplyDifferential(void* pixels, int width, int height, int stride, unsigned char threshold)
     {
+        // origin data 
         unsigned char* pixelData = static_cast<unsigned char*>(pixels);
-
-        // 1. 결과를 저장할 새로운 버퍼를 생성합니다.
+        // newbuffer for return 
         unsigned char* resultBuffer = new unsigned char[height * stride];
 
         for (int y = 0; y < height - 1; ++y)
@@ -89,44 +90,51 @@ namespace ImaGyNative
             for (int x = 0; x < width - 1; ++x)
             {
                 int centerIndex = y * stride + x;
-                int indexPx = y * stride + (x + 1); // 오른쪽 픽셀
-                int indexPy = (y + 1) * stride + x; // 아래쪽 픽셀
+                int indexPx = y * stride + (x + 1);
+                int indexPy = (y + 1) * stride + x; 
 
-                // 2. 가독성을 위해 계산을 나눕니다.
-                int gradX = pixelData[indexPx] - pixelData[centerIndex]; // 수평 변화량
-                int gradY = pixelData[indexPy] - pixelData[centerIndex]; // 수직 변화량
+                // Calculate Diff each axis
+                int gradX = pixelData[indexPx] - pixelData[centerIndex];
+                int gradY = pixelData[indexPy] - pixelData[centerIndex]; 
 
-                int val = abs(gradX) + abs(gradY);
+                // absolute value for velocity
+                int val = abs(gradX) + abs(gradY); // val never under 0
 
-                // 3. (개선) threshold 파라미터를 사용합니다.
-                // 변화량이 threshold보다 크면 엣지(흰색), 아니면 배경(검은색)으로 처리합니다.
-                unsigned char finalValue = (val > threshold) ? 255 : 0;
+                // value validation
+                if (val > 255) val = 255;
+                unsigned char finalValue = val;
 
-                // 4. 결과를 새 버퍼에 저장합니다.
                 resultBuffer[centerIndex] = finalValue;
             }
         }
 
-        // 5. 모든 계산이 끝난 후, 결과 버퍼의 내용을 원본 버퍼로 복사합니다.
-        memcpy(pixelData, resultBuffer, height * stride);
+        // copy the result To holding memory address
+        memcpy(pixelData, resultBuffer, height * stride); // memcpy(hold memory address, change content address, size) 
 
-        // 6. 할당했던 메모리를 해제합니다.
+        // free the resultBuffer memory
         delete[] resultBuffer;
     }
-    // 소벨 완료
+    // Sobel - Complete
     void NativeCore::ApplySobel(void* pixels, int width, int height, int stride, unsigned char threshold)
     {
-        // 1. Gx, Gy 커널 정의
-        int kernelX[9] = { -1, 0, 1, -2, 0, 2, -1, 0, 1 };
-        int kernelY[9] = { -1, -2, -1, 0, 0, 0, 1, 2, 1 };
-
+        // Gx kernel 
+        int kernelX[9] = { -1, 0, 1, 
+                           -2, 0, 2, 
+                           -1, 0, 1 };
+        // Gy kernel
+        int kernelY[9] = { -1, -2, -1, 
+                            0, 0, 0, 
+                            1, 2, 1 };
+        // origin data
         unsigned char* pixelData = static_cast<unsigned char*>(pixels);
 
-        // 원본 데이터를 복사해둘 버퍼 생성 (읽기 전용으로 사용)
+        // read only data 
         unsigned char* sourceBuffer = new unsigned char[height * stride];
+
+        //copy the origin data to read only data buffer
         memcpy(sourceBuffer, pixelData, height * stride);
 
-        // Gx, Gy 연산 결과를 저장할 임시 버퍼 2개 생성
+        // Generate temp buffer for Gx, Gy each result 
         double* bufferX = new double[height * stride];
         double* bufferY = new double[height * stride];
 
@@ -137,24 +145,18 @@ namespace ImaGyNative
                 double sumX = 0.0;
                 double sumY = 0.0;
 
-                // --- 채워넣은 부분 시작 ---
-
-                // 9개 이웃 픽셀의 인덱스 계산
                 int indexes[9] = {
                     (y - 1) * stride + (x - 1), (y - 1) * stride + x, (y - 1) * stride + (x + 1),
-                    y * stride + (x - 1),       y * stride + x,       y * stride + (x + 1),
+                    y * stride + (x - 1), y * stride + x, y * stride + (x + 1),
                     (y + 1) * stride + (x - 1), (y + 1) * stride + x, (y + 1) * stride + (x + 1)
                 };
 
-                // Gx, Gy 각각 컨볼루션 수행
+                // Convolution operation
                 for (int i = 0; i < 9; ++i)
                 {
-                    // 원본 데이터(sourceBuffer)에서 값을 읽어와야 합니다.
                     sumX += kernelX[i] * sourceBuffer[indexes[i]];
                     sumY += kernelY[i] * sourceBuffer[indexes[i]];
                 }
-
-                // --- 채워넣은 부분 끝 ---
 
                 int centerIndex = y * stride + x;
                 bufferX[centerIndex] = sumX;
@@ -162,65 +164,73 @@ namespace ImaGyNative
             }
         }
 
-        // 3. 두 버퍼의 결과를 합쳐서 최종 픽셀 값 계산
+        // Edit the origin data
         for (int i = 0; i < height * stride; ++i)
         {
-            double finalValue = sqrt(bufferX[i] * bufferX[i] + bufferY[i] * bufferY[i]); // 좀 더 정확한 Gx, Gy 조합 방식
-            // double finalValue = abs(bufferX[i]) + abs(bufferY[i]); // 더 빠른 근사치 방식
+            double finalValue = sqrt(bufferX[i] * bufferX[i] + bufferY[i] * bufferY[i]); // If they cause time issue change abs 
+            // value validation
             if (finalValue > 255) finalValue = 255;
             pixelData[i] = static_cast<unsigned char>(finalValue);
         }
 
-        // 4. 할당된 메모리 해제
+        // free the readonly buffer and each result buffer GxGy 
         delete[] sourceBuffer;
         delete[] bufferX;
         delete[] bufferY;
     }
-    // 라플라시안 완료
+    // Laplacian - Complete
     void NativeCore::ApplyLaplacian(void* pixels, int width, int height, int stride, unsigned char threshold)
     {
-        int kernel[9] = { 1, 1, 1, 1, -8, 1, 1, 1, 1 };
+        int kernel[9] = { 1, 1, 1, 
+                          1, -8, 1, 
+                          1, 1, 1 }; 
+        // Origin data
+        unsigned char* pixelData = static_cast<unsigned char*>(pixels); 
+        // result data
+        unsigned char* resultBuffer = new unsigned char[height * stride]; 
 
-        unsigned char* pixelData = static_cast<unsigned char*>(pixels); // 원본 버퍼
-        unsigned char* resultBuffer = new unsigned char[height * stride]; // 원본과 같은 크기의 결과 버퍼 생성
+        // Call the convolusion Helper method
+        ApplyConvolution3x3(pixelData, resultBuffer, width, height, stride, kernel, 0); 
+        memcpy(pixelData, resultBuffer, height * stride); // Copy the result to origin mem
 
-        ApplyConvolution3x3(pixelData, resultBuffer, width, height, stride, kernel, 0); // 컨볼루션 헬퍼 함수 호출
-        memcpy(pixelData, resultBuffer, height * stride); //결과를 원본 버퍼에 복사
-
-        delete[] resultBuffer; //메모리 해제
+        delete[] resultBuffer; // memory free - result buffer
     }
 
     // Blurring
     void NativeCore::ApplyAverageBlur(void* pixels, int width, int height, int stride, unsigned char threshold)
     {
-        int kernel[9] = { 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+        int kernel[9] = { 1, 1, 1,
+                         1, 1, 1,
+                         1, 1, 1 }; // plane kernel
         double kernelSum = 9.0;
 
         unsigned char* pixelData = static_cast<unsigned char*>(pixels);
         unsigned char* resultBuffer = new unsigned char[height * stride];
 
-        // 범용 컨볼루션 함수 호출
+        // convolution helper method 
         ApplyConvolution3x3(pixelData, resultBuffer, width, height, stride, kernel, kernelSum);
 
-        // 최종 결과를 원본 버퍼에 복사
+        // Copy the result to origin mem
         memcpy(pixelData, resultBuffer, height * stride);
-        delete[] resultBuffer;
+        delete[] resultBuffer; // memory free - result buffer
     }
-    // 가우시안 블러 
+    // Gaussian - Complete
     void NativeCore::ApplyGaussianBlur(void* pixels, int width, int height, int stride, unsigned char threshold)
     {
-        int kernel[9] = { 1, 2, 1, 2, 4, 2, 1, 2, 1 };
-        double kernelSum = 16.0;
+        int kernel[9] = { 1, 2, 1, 
+                          2, 4, 2, 
+                          1, 2, 1 };
+        double kernelSum = 16.0; // blur have to Divide by Sum of Kernel for brightness
 
         unsigned char* pixelData = static_cast<unsigned char*>(pixels);
         unsigned char* resultBuffer = new unsigned char[height * stride];
 
-        // 범용 컨볼루션 함수 호출
+        // convolution helper method 
         ApplyConvolution3x3(pixelData, resultBuffer, width, height, stride, kernel, kernelSum);
 
-        // 최종 결과를 원본 버퍼에 복사
+        // Copy the result to origin mem
         memcpy(pixelData, resultBuffer, height * stride);
-        delete[] resultBuffer;
+        delete[] resultBuffer; // memory free - result buffer
     }
 
     // Morphorogy
@@ -228,7 +238,7 @@ namespace ImaGyNative
     {
         unsigned char* pixelData = static_cast<unsigned char*>(pixels);
 
-        // 결과를 저장할 버퍼와 읽기 전용 원본 버퍼를 생성
+        // result and readonly buffer
         unsigned char* resultBuffer = new unsigned char[height * stride];
         unsigned char* sourceBuffer = new unsigned char[height * stride];
         memcpy(sourceBuffer, pixelData, height * stride);
@@ -237,15 +247,13 @@ namespace ImaGyNative
         {
             for (int x = 1; x < width - 1; ++x)
             {
-                // 이웃 픽셀 9개의 인덱스 계산
+                // calculate neighbor pixel 
                 int indexes[9] = {
                     (y - 1) * stride + (x - 1), (y - 1) * stride + x, (y - 1) * stride + (x + 1),
                     y * stride + (x - 1),       y * stride + x,       y * stride + (x + 1),
                     (y + 1) * stride + (x - 1), (y + 1) * stride + x, (y + 1) * stride + (x + 1)
                 };
-
-                // --- 팽창(Dilation) 연산의 핵심 로직 ---
-                // 이웃 픽셀 중에서 가장 큰(밝은) 값을 찾습니다.
+                // change max neighbor pixel 
                 unsigned char maxValue = 0;
                 for (int i = 0; i < 9; ++i)
                 {
@@ -255,26 +263,26 @@ namespace ImaGyNative
                     }
                 }
 
-                // 찾은 최댓값을 결과 버퍼의 중심 픽셀에 저장합니다.
+                // store the max value to result buffer
                 resultBuffer[indexes[4]] = maxValue;
             }
         }
 
-        // 최종 결과를 원본 버퍼에 복사
+        // copy the result buffer to origin data
         memcpy(pixelData, resultBuffer, height * stride);
 
-        // 할당한 메모리 해제
+        // memory free - result buffer
         delete[] resultBuffer;
         delete[] sourceBuffer;
     }
 
 
-    // Erosion - 완료
+    // Erosion - Complete
     void NativeCore::ApplyErosion(void* pixels, int width, int height, int stride, unsigned char threshold)
     {
         unsigned char* pixelData = static_cast<unsigned char*>(pixels);
 
-        // 결과를 저장할 버퍼와 읽기 전용 원본 버퍼를 생성
+        // result and readonly buffer
         unsigned char* resultBuffer = new unsigned char[height * stride];
         unsigned char* sourceBuffer = new unsigned char[height * stride];
         memcpy(sourceBuffer, pixelData, height * stride);
@@ -283,15 +291,14 @@ namespace ImaGyNative
         {
             for (int x = 1; x < width - 1; ++x)
             {
-                // 이웃 픽셀 9개의 인덱스 계산
+                // calculate neighbor pixel 
                 int indexes[9] = {
                     (y - 1) * stride + (x - 1), (y - 1) * stride + x, (y - 1) * stride + (x + 1),
                     y * stride + (x - 1),       y * stride + x,       y * stride + (x + 1),
                     (y + 1) * stride + (x - 1), (y + 1) * stride + x, (y + 1) * stride + (x + 1)
                 };
 
-                // --- 침식(Erosion) 연산의 핵심 로직 ---
-                // 이웃 픽셀 중에서 가장 작은(어두운) 값을 찾습니다.
+                // change the pixel to min of neighbor pixel
                 unsigned char minValue = 255;
                 for (int i = 0; i < 9; ++i)
                 {
@@ -301,15 +308,15 @@ namespace ImaGyNative
                     }
                 }
 
-                // 찾은 최솟값을 결과 버퍼의 중심 픽셀에 저장합니다.
+                // store the min value of neighbor to result buffer
                 resultBuffer[indexes[4]] = minValue;
             }
         }
 
-        // 최종 결과를 원본 버퍼에 복사
+        // copy the result to origin buffer
         memcpy(pixelData, resultBuffer, height * stride);
 
-        // 할당한 메모리 해제
+        // mem free
         delete[] resultBuffer;
         delete[] sourceBuffer;
     }

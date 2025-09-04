@@ -24,16 +24,15 @@
             <MenuItem Header="_파일">
                 <MenuItem Header="열기" Command="{Binding OpenImageCommand}"/>
                 <MenuItem Header="저장" Command="{Binding SaveImageCommand}"/>
-                <Separator Margin="3"/>
-                <MenuItem Header="종료"/>
+
             </MenuItem>
             <MenuItem Header="_편집">
                 <MenuItem Header="되돌리기" Command="{Binding UndoCommand}"/>
                 <MenuItem Header="다시 실행" Command="{Binding RedoCommand}"/>
             </MenuItem>
             <MenuItem Header="_보기">
-                <MenuItem Header="작업 내역 보이기"/>
-                <MenuItem Header="로그 창 보이기"/>
+                <MenuItem Header="작업기록 내보내기"/>
+                <MenuItem Header="로그 내보내기"/>
                 <MenuItem Header="히스토그램 보기" Command="{Binding ViewHistogramCommand}"/>
             </MenuItem>
             <MenuItem Header="_도움말">
@@ -172,6 +171,9 @@
                                             <Button Content="Differential" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Diff" />
                                             <Button Content="Sobel" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Sobel"/>
                                             <Button Content="Laplacian" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Laplace"/>
+                                            <Button Content="Differential" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Diff_SSE" />
+                                            <Button Content="Sobel" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Sobel_SSE"/>
+                                            <Button Content="Laplacian" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Laplace_SSE"/>
                                             <Button Content="FFT" Margin="2" />
                                         </StackPanel>
                                     </GroupBox>
@@ -180,6 +182,8 @@
                                         <StackPanel>
                                             <Button Content="Average" Margin="2"  Command="{Binding FilterringCommand}" CommandParameter="Average"/>
                                             <Button Content="Gaussian" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Gaussian"/>
+                                            <Button Content="Average" Margin="2"  Command="{Binding FilterringCommand}" CommandParameter="Average_SSE"/>
+                                            <Button Content="Gaussian" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Gaussian_SSE"/>
                                         </StackPanel>
                                     </GroupBox>
 
@@ -188,8 +192,10 @@
 
                             <Expander Header="Morphorogy" Foreground="White">
                                 <StackPanel>
-                                    <Button Content="팽창" Margin="2" Command="{Binding MophorogyCommand}" CommandParameter="Dilation"/>
-                                    <Button Content="수축" Margin="2" Command="{Binding MophorogyCommand}" CommandParameter="Erosion"/>
+                                    <Button Content="팽창" Margin="2" Command="{Binding MorphorogyCommand}" CommandParameter="Dilation"/>
+                                    <Button Content="수축" Margin="2" Command="{Binding MorphorogyCommand}" CommandParameter="Erosion"/>
+                                    <Button Content="팽창" Margin="2" Command="{Binding MorphorogyCommand}" CommandParameter="Dilation_SSE"/>
+                                    <Button Content="수축" Margin="2" Command="{Binding MorphorogyCommand}" CommandParameter="Erosion_SSE"/>
                                 </StackPanel>
                             </Expander>
 

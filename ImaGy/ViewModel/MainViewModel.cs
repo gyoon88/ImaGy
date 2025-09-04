@@ -55,6 +55,7 @@ namespace ImaGy.ViewModel
 
         // Model Class Instances
         private readonly ImageProcessor imageProcessor;
+        private readonly ImageProcessorSSE imageProcessorSSE;
         private readonly UndoRedoService<BitmapSource?> undoRedoService;
         private readonly HistoryService historyService;
         private readonly LoggingService loggingService;
@@ -80,6 +81,7 @@ namespace ImaGy.ViewModel
             undoRedoService = new UndoRedoService<BitmapSource?>();
             loggingService = new LoggingService();
             imageProcessor = new ImageProcessor();
+            imageProcessorSSE = new ImageProcessorSSE();
             historyService = new HistoryService();
 
             // Commands
@@ -230,10 +232,6 @@ namespace ImaGy.ViewModel
                 case "Bin":
                     ApplyProcessing("Binarization", image => imageProcessor.ApplyBinarization(image, 128));
                     break;
-                case "Bin_SSE":
-                    ApplyProcessing("Binarization", image => imageProcessor.ApplyBinarization(image, 128));
-                    break;
-
                 case "Equal":
                     ApplyProcessing("Equalization", image => imageProcessor.ApplyEqualization(image));
                     break;
@@ -248,17 +246,36 @@ namespace ImaGy.ViewModel
                 case "Diff":
                     ApplyProcessing("Differential", image => imageProcessor.ApplyDifferential(image));
                     break;
+                case "Diff_SSE":
+                    ApplyProcessing("Differential_SSE", image => imageProcessorSSE.ApplyDifferentialSse(image));
+                    break;
+
                 case "Sobel":
                     ApplyProcessing("Sobel", image => imageProcessor.ApplySobel(image));
                     break;
+                case "Sobel_SSE":
+                    ApplyProcessing("Sobel_SSE", image => imageProcessorSSE.ApplySobelSse(image));
+                    break;
+
                 case "Laplace":
                     ApplyProcessing("Laplacian", image => imageProcessor.ApplyLaplacian(image));
                     break;
+                case "Laplace_SSE":
+                    ApplyProcessing("Laplacian_SSE", image => imageProcessorSSE.ApplyLaplacianSse(image));
+                    break;
+
                 case "Average":
                     ApplyProcessing("Average Blur", image => imageProcessor.ApplyAverageBlur(image));
                     break;
+                case "Average_SSE":
+                    ApplyProcessing("Average Blur_SSE", image => imageProcessorSSE.ApplyAverageBlurSse(image));
+                    break;
+
                 case "Gaussian":
                     ApplyProcessing("Gaussian", image => imageProcessor.ApplyGaussianBlur(image));
+                    break;
+                case "Gaussian_SSE":
+                    ApplyProcessing("Gaussian_SSE", image => imageProcessorSSE.ApplyGaussianBlurSse(image));
                     break;
             }
         }
@@ -270,9 +287,15 @@ namespace ImaGy.ViewModel
                 case "Dilation":
                     ApplyProcessing("Dilation", image => imageProcessor.ApplyDilation(image));
                     break;
+                case "Dilation_SSE":
+                    ApplyProcessing("Dilation_SSE", image => imageProcessorSSE.ApplyDilationSse(image));
+                    break;
 
                 case "Erosion":
                     ApplyProcessing("Erosion", image => imageProcessor.ApplyErosion(image));
+                    break;
+                case "Erosion_SSE":
+                    ApplyProcessing("Erosion_SSE", image => imageProcessorSSE.ApplyErosionSse(image));
                     break;
             }
         }

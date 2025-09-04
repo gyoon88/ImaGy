@@ -5,8 +5,13 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ImaGy.View"
         mc:Ignorable="d"
-        Title="Histogram" Height="300" Width="400">
-    <Grid>
-        <Canvas Name="HistogramCanvas" Background="LightGray" Margin="10" Loaded="HistogramCanvas_Loaded" SizeChanged="HistogramCanvas_SizeChanged"/>
+        Title="Histogram" Height="400" Width="600">
+    <Grid Background="{StaticResource WindowBackgroundBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="10*"/>
+            <RowDefinition Height="1*"/>
+        </Grid.RowDefinitions>
+        <Canvas Grid.Row="0" Name="HistogramCanvas" Background="{StaticResource PrimaryGrayBrush}" Margin="10" Loaded="HistogramCanvas_Loaded" SizeChanged="HistogramCanvas_SizeChanged"/>
+        <Button Grid.Row="1" Content="Update Histogram" x:Name="HitogramUpdate" Margin="100,0,100,10" HorizontalContentAlignment="Center" /> 
     </Grid>
 </Window>

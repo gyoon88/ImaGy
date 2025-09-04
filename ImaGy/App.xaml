@@ -151,7 +151,7 @@
             </Style>
             
             <Style TargetType="ScrollViewer">
-                <Setter Property="Background" Value="{StaticResource PrimaryGrayBrush}"/>
+                <Setter Property="Background" Value="{StaticResource WindowBackgroundBrush}"/>
             </Style>
 
             <Style TargetType="StatusBar">
