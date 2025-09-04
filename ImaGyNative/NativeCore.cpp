@@ -56,22 +56,55 @@ namespace ImaGyNative
             }
         }
     }
-    // Equalization - Notyet
+    // Equalization - Complete
     void NativeCore::ApplyEqualization(void* pixels, int width, int height, int stride, unsigned char threshold)
     {
         unsigned char* pixelData = static_cast<unsigned char*>(pixels);
+        long long histogram[256] = { 0 }; // Calcuate the Distibution
+        long long cdf[256] = { 0 };
+        long long totalPixels = width * height;
 
+        // 1. Calculate Histogram
         for (int y = 0; y < height; ++y)
         {
             for (int x = 0; x < width; ++x)
             {
-                int centerIndex = y * stride + x;
-                int indexPy1 = (y + 1) * stride + x;
-                int indexPx1 = y * stride + (x + 1);
-                int indexPy1Px1 = (y + 1) * stride + x;
+                histogram[pixelData[y * stride + x]]++;
+            }
+        }
 
+        // 2. Calculate Cumulative Distribution Function (CDF)
+        cdf[0] = histogram[0];
+        for (int i = 1; i < 256; ++i)
+        {
+            cdf[i] = cdf[i - 1] + histogram[i];
+        }
 
-                pixelData[centerIndex] = (pixelData[centerIndex] > threshold) ? 255 : 0;
+        // Find the first non-zero CDF value
+        long long cdf_min = 0;
+        for (int i = 0; i < 256; ++i)
+        {
+            if (cdf[i] > 0)
+            {
+                cdf_min = cdf[i];
+                break;
+            }
+        }
+
+        // 3. Apply Mapping
+        for (int y = 0; y < height; ++y)
+        {
+            for (int x = 0; x < width; ++x)
+            {
+                int originalPixelValue = pixelData[y * stride + x];
+                // Apply the equalization formula
+                int newPixelValue = round(((double)cdf[originalPixelValue] - cdf_min) / (totalPixels - cdf_min) * 255.0);
+
+                // Clamp values to 0-255 range
+                if (newPixelValue < 0) newPixelValue = 0;
+                if (newPixelValue > 255) newPixelValue = 255;
+
+                pixelData[y * stride + x] = static_cast<unsigned char>(newPixelValue);
             }
         }
     }
@@ -320,88 +353,139 @@ namespace ImaGyNative
         delete[] resultBuffer;
         delete[] sourceBuffer;
     }
-    // Image Matching - ¿©±ä ÀÌ¹øÁÖ¿¡ ¸øÇÒ µí
+    // Image Matching - I'll complete next week
     // normailized cross correlation
-    void NativeCore::ApplyNCC(void* pixels, int width, int height, int stride, unsigned char threshold)
+    void NativeCore::ApplyNCC(void* pixels, int width, int height, int stride, void* templatePixels, int templateWidth, int templateHeight, int templateStride, unsigned char threshold)
     {
-        unsigned char* pixelData = static_cast<unsigned char*>(pixels);
-        int arr[9] = { 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9 ,1 / 9 };
-        for (int y = 1; y < height - 1; ++y)
+        unsigned char* sourceBuffer = static_cast<unsigned char*>(pixels);
+        unsigned char* templateBuffer = static_cast<unsigned char*>(templatePixels);
+
+        // result Buffer
+        unsigned char* resultBuffer = new unsigned char[height * stride];
+        memset(resultBuffer, 0, height * stride); // initialize to black
+
+        // Calculate the templete image
+        double templateSum = 0.0;
+        for (int ty = 0; ty < templateHeight; ++ty)
         {
-            for (int x = 1; x < width - 1; ++x)
+            for (int tx = 0; tx < templateWidth; ++tx)
             {
-                // 1¹øÂ° Çà
-                int indexMxPy = (y + 1) * stride + (x - 1); // ¹è¿­ 0¹øÂ°
-                int indexNxPy = (y + 1) * stride + x; // ¹è¿­ 1¹øÂ°
-                int indexPxPy = (y + 1) * stride + (x + 1); // ¹è¿­ 2¹øÂ°
-                // 2¹øÂ° Çà
-                int indexMxNy = y * stride + (x - 1); //¹è¿­ 3¹øÂ° 
-                int indexNxNy = y * stride + x; // ¹è¿­ 4¹øÂ° Áß½É
-                int indexPxNy = y * stride + (x + 1);
-                // 3¹øÂ° Çà
-                int indexMxMy = (y - 1) * stride + (x - 1); //¹è¿­ 3¹øÂ° 
-                int indexNxMy = (y - 1) * stride + x; // ¹è¿­ 4¹øÂ°
-                int indexPxMy = (y - 1) * stride + (x + 1);
-
-
-
-                pixelData[indexNxNy];
+                templateSum += templateBuffer[ty * templateStride + tx];
             }
         }
-    }
-    void NativeCore::ApplySAD(void* pixels, int width, int height, int stride, unsigned char threshold)
-    {
-        unsigned char* pixelData = static_cast<unsigned char*>(pixels);
-        int arr[9] = { 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9 ,1 / 9 };
-        for (int y = 1; y < height - 1; ++y)
+        double meanT = templateSum / (templateWidth * templateHeight);
+
+        double templateSqSum = 0.0;
+        for (int ty = 0; ty < templateHeight; ++ty)
         {
-            for (int x = 1; x < width - 1; ++x)
+            for (int tx = 0; tx < templateWidth; ++tx)
             {
-                // 1¹øÂ° Çà
-                int indexMxPy = (y + 1) * stride + (x - 1); // ¹è¿­ 0¹øÂ°
-                int indexNxPy = (y + 1) * stride + x; // ¹è¿­ 1¹øÂ°
-                int indexPxPy = (y + 1) * stride + (x + 1); // ¹è¿­ 2¹øÂ°
-                // 2¹øÂ° Çà
-                int indexMxNy = y * stride + (x - 1); //¹è¿­ 3¹øÂ° 
-                int indexNxNy = y * stride + x; // ¹è¿­ 4¹øÂ° Áß½É
-                int indexPxNy = y * stride + (x + 1);
-                // 3¹øÂ° Çà
-                int indexMxMy = (y - 1) * stride + (x - 1); //¹è¿­ 3¹øÂ° 
-                int indexNxMy = (y - 1) * stride + x; // ¹è¿­ 4¹øÂ°
-                int indexPxMy = (y - 1) * stride + (x + 1);
-
-
-
-                pixelData[indexNxNy];
+                double diff = templateBuffer[ty * templateStride + tx] - meanT;
+                templateSqSum += diff * diff;
             }
         }
-    }
-    void NativeCore::ApplySSD(void* pixels, int width, int height, int stride, unsigned char threshold)
-    {
-        unsigned char* pixelData = static_cast<unsigned char*>(pixels);
-        int arr[9] = { 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9 ,1 / 9 };
-        for (int y = 1; y < height - 1; ++y)
+        double stdT = sqrt(templateSqSum / (templateWidth * templateHeight));
+
+        // loop for matching image area
+        for (int y = 0; y <= height - templateHeight; ++y)
         {
-            for (int x = 1; x < width - 1; ++x)
+            for (int x = 0; x <= width - templateWidth; ++x)
             {
-                // 1¹øÂ° Çà
-                int indexMxPy = (y + 1) * stride + (x - 1); // ¹è¿­ 0¹øÂ°
-                int indexNxPy = (y + 1) * stride + x; // ¹è¿­ 1¹øÂ°
-                int indexPxPy = (y + 1) * stride + (x + 1); // ¹è¿­ 2¹øÂ°
-                // 2¹øÂ° Çà
-                int indexMxNy = y * stride + (x - 1); //¹è¿­ 3¹øÂ° 
-                int indexNxNy = y * stride + x; // ¹è¿­ 4¹øÂ° Áß½É
-                int indexPxNy = y * stride + (x + 1);
-                // 3¹øÂ° Çà
-                int indexMxMy = (y - 1) * stride + (x - 1); //¹è¿­ 3¹øÂ° 
-                int indexNxMy = (y - 1) * stride + x; // ¹è¿­ 4¹øÂ°
-                int indexPxMy = (y - 1) * stride + (x + 1);
+                // Current image patch's mean and std
+                double patchSum = 0.0;
+                for (int py = 0; py < templateHeight; ++py)
+                {
+                    for (int px = 0; px < templateWidth; ++px)
+                    {
+                        patchSum += sourceBuffer[(y + py) * stride + (x + px)];
+                    }
+                }
+                double meanI = patchSum / (templateWidth * templateHeight);
 
+                double patchSqSum = 0.0;
+                for (int py = 0; py < templateHeight; ++py)
+                {
+                    for (int px = 0; px < templateWidth; ++px)
+                    {
+                        double diff = sourceBuffer[(y + py) * stride + (x + px)] - meanI;
+                        patchSqSum += diff * diff;
+                    }
+                }
+                double stdI = sqrt(patchSqSum / (templateWidth * templateHeight));
 
+                double crossCorrelationSum = 0.0;
+                for (int ty = 0; ty < templateHeight; ++ty)
+                {
+                    for (int tx = 0; tx < templateWidth; ++tx)
+                    {
+                        double imagePixel = sourceBuffer[(y + ty) * stride + (x + tx)];
+                        double templatePixel = templateBuffer[ty * templateStride + tx];
+                        crossCorrelationSum += (imagePixel - meanI) * (templatePixel - meanT);
+                    }
+                }
 
-                pixelData[indexNxNy];
+                double nccValue = 0.0;
+                if (stdI > 0 && stdT > 0) // ZeroDivision Error exception
+                {
+                    nccValue = crossCorrelationSum / (stdI * stdT);
+                }
+
+                // normalization btween -1 and 1
+                unsigned char outputValue = static_cast<unsigned char>((nccValue + 1.0) * 127.5);
+                resultBuffer[y * stride + x] = outputValue;
             }
         }
+
+        // Copy the resultData to sourceData
+        memcpy(sourceBuffer, resultBuffer, height * stride);
+
+        // free mem
+        delete[] resultBuffer;
     }
 
+    void NativeCore::ApplySAD(void* pixels, int width, int height, int stride, void* templatePixels, int templateWidth, int templateHeight, int templateStride, unsigned char threshold)
+    {
+        unsigned char* sourceData = static_cast<unsigned char*>(pixels);
+        unsigned char* templateData = static_cast<unsigned char*>(templatePixels);
+
+        // ê²°ê³¼ ì´ë¯¸ì§€ìš© ë²„í¼ ìƒì„±
+        unsigned char* resultData = new unsigned char[height * stride];
+        memset(resultData, 0, height * stride); // ê²€ì€ìƒ‰ìœ¼ë¡œ ì´ˆê¸°í™”
+
+        double maxSAD = templateWidth * templateHeight * 255.0; // ê°€ëŠ¥í•œ ìµœëŒ€ SAD ê°’ (ëª¨ë“  í”½ì…€ì´ 255ë§Œí¼ ë‹¤ë¦„)
+
+        // ë§¤ì¹­ ì˜ì—­ì„ ì°¾ê¸° ìœ„í•´ ì›ë³¸ ì´ë¯¸ì§€ ë°˜ë³µ
+        for (int y = 0; y <= height - templateHeight; ++y)
+        {
+            for (int x = 0; x <= width - templateWidth; ++x)
+            {
+                double currentSAD = 0.0;
+                for (int ty = 0; ty < templateHeight; ++ty)
+                {
+                    for (int tx = 0; tx < templateWidth; ++tx)
+                    {
+                        double imagePixel = sourceData[(y + ty) * stride + (x + tx)];
+                        double templatePixel = templateData[ty * templateStride + tx];
+                        currentSAD += abs(imagePixel - templatePixel);
+                    }
+                }
+
+                // SAD ê°’ ì •ê·œí™”: 0 (ì™„ë²½í•œ ë§¤ì¹­)ì—ì„œ maxSAD (ìµœì•…ì˜ ë§¤ì¹­)
+                // 0ì€ í°ìƒ‰ (ìµœê³ ì˜ ë§¤ì¹­), maxSADëŠ” ê²€ì€ìƒ‰ (ìµœì•…ì˜ ë§¤ì¹­)ìœ¼ë¡œ 0-255ì— ë§¤í•‘
+                unsigned char outputValue = static_cast<unsigned char>(255.0 * (1.0 - (currentSAD / maxSAD)));
+                resultData[y * stride + x] = outputValue;
+            }
+        }
+
+        // ê²°ê³¼ë¥¼ ì›ë³¸ í”½ì…€ í¬ì¸í„°ë¡œ ë‹¤ì‹œ ë³µì‚¬
+        memcpy(sourceData, resultData, height * stride);
+
+        // í• ë‹¹ëœ ë©”ëª¨ë¦¬ í•´ì œ
+        delete[] resultData;
+    }
+
+    void NativeCore::ApplySSD(void* pixels, int width, int height, int stride, 
+        void* templatePixels, int templateWidth, int templateHeight, int templateStride, unsigned char threshold)
+    {
+    }
 }

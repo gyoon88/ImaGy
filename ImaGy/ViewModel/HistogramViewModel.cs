@@ -1,10 +1,14 @@
 using System.Linq;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using ImaGy.Model;
 
 namespace ImaGy.ViewModel
 {
     public class HistogramViewModel : BaseViewModel
     {
+        private MainViewModel mainViewModel;
+
         private int[]? histogramData;
         public int[]? HistogramData
         {
@@ -19,10 +23,34 @@ namespace ImaGy.ViewModel
             set => SetProperty(ref maxHistogramValue, value);
         }
 
-        public HistogramViewModel(int[] data)
+        public HistogramViewModel(MainViewModel mainViewModel)
         {
-            HistogramData = data;
-            MaxHistogramValue = data.Any() ? data.Max() : 0;
+            this.mainViewModel = mainViewModel;
+            this.mainViewModel.PropertyChanged += MainViewModel_PropertyChanged;
+            CalculateHistogram();
+        }
+
+        private void MainViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(MainViewModel.AfterImage) || e.PropertyName == nameof(MainViewModel.BeforeImage))
+            {
+                CalculateHistogram();
+            }
+        }
+
+        private void CalculateHistogram()
+        {
+            BitmapSource? imageSource = mainViewModel.AfterImage ?? mainViewModel.BeforeImage;
+            if (imageSource != null)
+            {
+                HistogramData = ServeHistogram.CalculateGrayscaleHistogram(imageSource);
+                MaxHistogramValue = HistogramData.Any() ? HistogramData.Max() : 0;
+            }
+            else
+            {
+                HistogramData = null;
+                MaxHistogramValue = 0;
+            }
         }
     }
 }

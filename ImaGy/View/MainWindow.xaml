@@ -23,6 +23,7 @@
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_파일">
                 <MenuItem Header="열기" Command="{Binding OpenImageCommand}"/>
+                <MenuItem Header="템플릿 이미지 열기" Command="{Binding OpenTemplateImageCommand}"/>
                 <MenuItem Header="저장" Command="{Binding SaveImageCommand}"/>
 
             </MenuItem>
@@ -31,8 +32,8 @@
                 <MenuItem Header="다시 실행" Command="{Binding RedoCommand}"/>
             </MenuItem>
             <MenuItem Header="_보기">
-                <MenuItem Header="작업기록 내보내기"/>
-                <MenuItem Header="로그 내보내기"/>
+                <MenuItem Header="작업기록 내보내기" Command="{Binding ExportHistoryCommand}"/>
+                <MenuItem Header="로그 내보내기" Command="{Binding ExportLogCommand}"/>
                 <MenuItem Header="히스토그램 보기" Command="{Binding ViewHistogramCommand}"/>
             </MenuItem>
             <MenuItem Header="_도움말">

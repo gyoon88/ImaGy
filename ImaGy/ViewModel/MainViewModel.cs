@@ -10,11 +10,12 @@ using ImaGy.View;
 
 namespace ImaGy.ViewModel
 {
-    internal class MainViewModel : BaseViewModel
+    public class MainViewModel : BaseViewModel
     {
         // Fields
         private BitmapSource? beforeImage;
         private BitmapSource? afterImage;
+        private BitmapSource? templateImage;
         private string? fileName;
         private string? imageResolution;
         private string? zoomLevel;
@@ -30,6 +31,11 @@ namespace ImaGy.ViewModel
         {
             get => afterImage;
             set => SetProperty(ref afterImage, value);
+        }
+        public BitmapSource? TemplateImage
+        {
+            get => templateImage;
+            set => SetProperty(ref templateImage, value);
         }
         public string? FileName
         {
@@ -71,6 +77,9 @@ namespace ImaGy.ViewModel
         public ICommand MorphorogyCommand { get; }
         public ICommand ImageMatchingCommand { get; }
         public ICommand ViewHistogramCommand { get; }
+        public ICommand ExportHistoryCommand { get; }
+        public ICommand ExportLogCommand { get; }
+        public ICommand OpenTemplateImageCommand { get; }
 
         public Action<BitmapSource>? ImageLoadedCallback { get; set; }
 
@@ -95,6 +104,9 @@ namespace ImaGy.ViewModel
             MorphorogyCommand = new RelayCommand(ExecuteMorphorogy, _ => BeforeImage != null);
             ImageMatchingCommand = new RelayCommand(ExecuteImageMatching, _ => BeforeImage != null);
             ViewHistogramCommand = new RelayCommand(ExecuteViewHistogram, _ => AfterImage != null);
+            ExportHistoryCommand = new RelayCommand(ExecuteExportHistory, _ => HistoryItems.Any());
+            ExportLogCommand = new RelayCommand(ExecuteExportLog, _ => !string.IsNullOrEmpty(LogText));
+            OpenTemplateImageCommand = new RelayCommand(ExecuteOpenTemplateImage);
 
             // Event Subscription
             loggingService.PropertyChanged += (s, e) =>
@@ -130,7 +142,7 @@ namespace ImaGy.ViewModel
                         bitmap.BeginInit();
                         bitmap.UriSource = new Uri(openDialog.FileName);
                         bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                        bitmap.EndInit(); // ∆ƒ¿œ¿ª «¡∑Œ±◊∑•¿∏∑Œ æ˜∑ŒµÂ«œø© ¥Ÿ∏• «¡∑Œ±◊∑•ø°º≠ ¡¢±Ÿ «œ¡ˆ ∏¯«œ¥¬ «ˆªÛ¿ª ¡¶∞≈
+                        bitmap.EndInit(); // ÌååÏùºÏùÑ ÌîÑÎ°úÍ∑∏Îû®ÏúºÎ°ú ÏóÖÎ°úÎìúÌïòÏó¨ Îã§Î•∏ ÌîÑÎ°úÍ∑∏Îû®ÏóêÏÑú Ï†ëÍ∑º ÌïòÏßÄ Î™ªÌïòÎäî ÌòÑÏÉÅÏùÑ Ï†úÍ±∞
                         bitmap.Freeze();
 
                         BeforeImage = bitmap;
@@ -194,10 +206,45 @@ namespace ImaGy.ViewModel
             }
         }
 
+        private void ExecuteOpenTemplateImage(object? parameter)
+        {
+            OpenFileDialog openDialog = new OpenFileDialog
+            {
+                Filter = "Image files (*.png;*.jpeg;*.jpg;*.bmp)|*.png;*.jpeg;*.jpg;*.bmp|All files (*.*)|*.*"
+            };
+            if (openDialog.ShowDialog() == true)
+            {
+                try
+                {
+                    var bitmap = new BitmapImage();
+                    bitmap.BeginInit();
+                    bitmap.UriSource = new Uri(openDialog.FileName);
+                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                    bitmap.EndInit();
+                    bitmap.Freeze();
+
+                    TemplateImage = bitmap;
+                    loggingService.AddLog($"Template image loaded: {Path.GetFileName(openDialog.FileName)}");
+
+                    TemplateImageViewerViewModel templateViewerViewModel = new TemplateImageViewerViewModel(this);
+                    TemplateImageViewer templateViewer = new TemplateImageViewer
+                    {
+                        DataContext = templateViewerViewModel
+                    };
+                    templateViewer.Show();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Failed to load the template image.\n\nError: {ex.Message}",
+                        "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
         // Applies an image processing function to the current image
         private void ApplyProcessing(string historyMessage, Func<BitmapSource, BitmapSource> processFunction)
         {
-            var imageToProcess = AfterImage ?? BeforeImage; // After ∞° ≥Œ¿Ã∏È before ¿ÃπÃ¡ˆ∏¶ ªÁøÎ
+            var imageToProcess = AfterImage ?? BeforeImage; // After Í∞Ä ÎÑêÏù¥Î©¥ before Ïù¥ÎØ∏ÏßÄÎ•º ÏÇ¨Ïö©
             if (imageToProcess == null) return;
 
             try
@@ -321,8 +368,7 @@ namespace ImaGy.ViewModel
         {
             if (AfterImage == null) return;
 
-            int[] histogramData = ServeHistogram.CalculateGrayscaleHistogram(AfterImage);
-            HistogramViewModel histogramViewModel = new HistogramViewModel(histogramData);
+            HistogramViewModel histogramViewModel = new HistogramViewModel(this);
 
             HistogramWindow histogramWindow = new HistogramWindow
             {
@@ -345,6 +391,54 @@ namespace ImaGy.ViewModel
         public void UpdateZoomLevel(double scale)
         {
             ZoomLevel = $"{scale * 100:F0}%";
+        }
+
+        private void ExecuteExportHistory(object? parameter)
+        {
+            SaveFileDialog saveDialog = new SaveFileDialog
+            {
+                Filter = "CSV files (*.csv)|*.csv",
+                FileName = "History.csv"
+            };
+
+            if (saveDialog.ShowDialog() == true)
+            {
+                try
+                {
+                    historyService.ExportToCsv(saveDialog.FileName);
+                    loggingService.AddLog($"History exported to: {saveDialog.FileName}");
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Failed to export history.\n\nError: {ex.Message}",
+                        "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    loggingService.AddLog($"Error exporting history: {ex.Message}");
+                }
+            }
+        }
+
+        private void ExecuteExportLog(object? parameter)
+        {
+            SaveFileDialog saveDialog = new SaveFileDialog
+            {
+                Filter = "CSV files (*.csv)|*.csv",
+                FileName = "Log.csv"
+            };
+
+            if (saveDialog.ShowDialog() == true)
+            {
+                try
+                {
+                    loggingService.ExportToCsv(saveDialog.FileName);
+                    loggingService.AddLog($"Log exported to: {saveDialog.FileName}");
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Failed to export log.\n\nError: {ex.Message}",
+                        "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    loggingService.AddLog($"Error exporting log: {ex.Message}");
+                }
+            }
         }
     }
 }

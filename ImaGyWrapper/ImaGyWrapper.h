@@ -46,9 +46,13 @@ namespace ImaGy
             static void ApplyErosionSse(IntPtr pixels, int width, int height, int stride, Byte threshold);
 
             // Image Matching
-            static void ApplyNCC(IntPtr pixels, int width, int height, int stride, Byte threshold);
-            static void ApplySAD(IntPtr pixels, int width, int height, int stride, Byte threshold);
-            static void ApplySSD(IntPtr pixels, int width, int height, int stride, Byte threshold);
+            void ApplyNCC(System::IntPtr pixels, int width, int height, int stride, 
+                System::IntPtr templatePixels, int templateWidth, int templateHeight, int templateStride, unsigned char threshold);
+            void ApplySAD(System::IntPtr pixels, int width, int height, int stride, 
+                System::IntPtr templatePixels, int templateWidth, int templateHeight, int templateStride, unsigned char threshold);
+            void ApplySSD(System::IntPtr pixels, int width, int height, int stride, 
+                System::IntPtr templatePixels, int templateWidth, int templateHeight, int templateStride, unsigned char threshold);
+
 
             // TODO: Add other function declarations here later
         };

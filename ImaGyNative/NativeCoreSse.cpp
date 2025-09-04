@@ -8,6 +8,9 @@ namespace ImaGyNative
     namespace SSE
     {
         // Corrected SSE implementation for Average Blur
+       
+
+
         void ApplyAverageBlurSse(void* pixels, int width, int height, int stride, unsigned char threshold)
         {
             unsigned char* pixelData = static_cast<unsigned char*>(pixels);
@@ -70,88 +73,6 @@ namespace ImaGyNative
                             }
                         }
                         pixelData[y * stride + x] = static_cast<unsigned char>(sum / 9);
-                    }
-                }
-            }
-            delete[] sourceBuffer;
-        }
-
-        void ApplyDilationSse(void* pixels, int width, int height, int stride, unsigned char threshold)
-        {
-            unsigned char* pixelData = static_cast<unsigned char*>(pixels);
-            unsigned char* sourceBuffer = new unsigned char[height * stride];
-            memcpy(sourceBuffer, pixelData, height * stride);
-
-            const int vectorSize = 16;
-            int vectorizedWidth = width - (width % vectorSize);
-
-            for (int y = 1; y < height - 1; ++y)
-            {
-                for (int x = 1; x < vectorizedWidth - 1; x += vectorSize)
-                {
-                    __m128i max_val = _mm_setzero_si128();
-                    for (int j = -1; j <= 1; ++j) {
-                        for (int i = -1; i <= 1; ++i) {
-                            __m128i neighbor = _mm_loadu_si128(reinterpret_cast<const __m128i*>(sourceBuffer + (y + j) * stride + (x + i)));
-                            max_val = _mm_max_epu8(max_val, neighbor);
-                        }
-                    }
-                    _mm_storeu_si128(reinterpret_cast<__m128i*>(pixelData + y * stride + x), max_val);
-                }
-
-                for (int x = vectorizedWidth; x < width - 1; ++x) {
-                    if (x > 0) {
-                        unsigned char maxVal = 0;
-                        for (int j = -1; j <= 1; ++j) {
-                            for (int i = -1; i <= 1; ++i) {
-                                unsigned char neighborPixel = sourceBuffer[(y + j) * stride + (x + i)];
-                                if (neighborPixel > maxVal) {
-                                    maxVal = neighborPixel;
-                                }
-                            }
-                        }
-                        pixelData[y * stride + x] = maxVal;
-                    }
-                }
-            }
-            delete[] sourceBuffer;
-        }
-
-        void ApplyErosionSse(void* pixels, int width, int height, int stride, unsigned char threshold)
-        {
-            unsigned char* pixelData = static_cast<unsigned char*>(pixels);
-            unsigned char* sourceBuffer = new unsigned char[height * stride];
-            memcpy(sourceBuffer, pixelData, height * stride);
-
-            const int vectorSize = 16;
-            int vectorizedWidth = width - (width % vectorSize);
-
-            for (int y = 1; y < height - 1; ++y)
-            {
-                for (int x = 1; x < vectorizedWidth - 1; x += vectorSize)
-                {
-                    __m128i min_val = _mm_set1_epi8(-1); // Initialize with 255
-                    for (int j = -1; j <= 1; ++j) {
-                        for (int i = -1; i <= 1; ++i) {
-                            __m128i neighbor = _mm_loadu_si128(reinterpret_cast<const __m128i*>(sourceBuffer + (y + j) * stride + (x + i)));
-                            min_val = _mm_min_epu8(min_val, neighbor);
-                        }
-                    }
-                    _mm_storeu_si128(reinterpret_cast<__m128i*>(pixelData + y * stride + x), min_val);
-                }
-
-                for (int x = vectorizedWidth; x < width - 1; ++x) {
-                    if (x > 0) {
-                        unsigned char minVal = 255;
-                        for (int j = -1; j <= 1; ++j) {
-                            for (int i = -1; i <= 1; ++i) {
-                                unsigned char neighborPixel = sourceBuffer[(y + j) * stride + (x + i)];
-                                if (neighborPixel < minVal) {
-                                    minVal = neighborPixel;
-                                }
-                            }
-                        }
-                        pixelData[y * stride + x] = minVal;
                     }
                 }
             }
@@ -230,81 +151,12 @@ namespace ImaGyNative
             delete[] sourceBuffer;
         }
 
-        void ApplyLaplacianSse(void* pixels, int width, int height, int stride, unsigned char threshold)
-        {
-            unsigned char* pixelData = static_cast<unsigned char*>(pixels);
-            unsigned char* sourceBuffer = new unsigned char[height * stride];
-            memcpy(sourceBuffer, pixelData, height * stride);
-
-            const int vectorSize = 16;
-            int vectorizedWidth = width - (width % vectorSize);
-            __m128i zero = _mm_setzero_si128();
-            const __m128i w_neg_8 = _mm_set1_epi16(-8);
-
-            for (int y = 1; y < height - 1; ++y)
-            {
-                for (int x = 1; x < vectorizedWidth - 1; x += vectorSize)
-                {
-                    __m128i p8_tl = _mm_loadu_si128(reinterpret_cast<const __m128i*>(sourceBuffer + (y - 1) * stride + (x - 1)));
-                    __m128i p8_tc = _mm_loadu_si128(reinterpret_cast<const __m128i*>(sourceBuffer + (y - 1) * stride + x));
-                    __m128i p8_tr = _mm_loadu_si128(reinterpret_cast<const __m128i*>(sourceBuffer + (y - 1) * stride + (x + 1)));
-                    __m128i p8_ml = _mm_loadu_si128(reinterpret_cast<const __m128i*>(sourceBuffer + y * stride + (x - 1)));
-                    __m128i p8_mc = _mm_loadu_si128(reinterpret_cast<const __m128i*>(sourceBuffer + y * stride + x));
-                    __m128i p8_mr = _mm_loadu_si128(reinterpret_cast<const __m128i*>(sourceBuffer + y * stride + (x + 1)));
-                    __m128i p8_bl = _mm_loadu_si128(reinterpret_cast<const __m128i*>(sourceBuffer + (y + 1) * stride + (x - 1)));
-                    __m128i p8_bc = _mm_loadu_si128(reinterpret_cast<const __m128i*>(sourceBuffer + (y + 1) * stride + x));
-                    __m128i p8_br = _mm_loadu_si128(reinterpret_cast<const __m128i*>(sourceBuffer + (y + 1) * stride + (x + 1)));
-
-                    // Process low 8 pixels
-                    __m128i sum_lo = _mm_add_epi16(_mm_unpacklo_epi8(p8_tl, zero), _mm_unpacklo_epi8(p8_tc, zero));
-                    sum_lo = _mm_add_epi16(sum_lo, _mm_unpacklo_epi8(p8_tr, zero));
-                    sum_lo = _mm_add_epi16(sum_lo, _mm_unpacklo_epi8(p8_ml, zero));
-                    sum_lo = _mm_add_epi16(sum_lo, _mm_unpacklo_epi8(p8_mr, zero));
-                    sum_lo = _mm_add_epi16(sum_lo, _mm_unpacklo_epi8(p8_bl, zero));
-                    sum_lo = _mm_add_epi16(sum_lo, _mm_unpacklo_epi8(p8_bc, zero));
-                    sum_lo = _mm_add_epi16(sum_lo, _mm_unpacklo_epi8(p8_br, zero));
-                    __m128i center_term_lo = _mm_mullo_epi16(_mm_unpacklo_epi8(p8_mc, zero), w_neg_8);
-                    sum_lo = _mm_add_epi16(sum_lo, center_term_lo);
-                    sum_lo = _mm_max_epi16(sum_lo, zero); // Clamp to 0
-
-                    // Process high 8 pixels
-                    __m128i sum_hi = _mm_add_epi16(_mm_unpackhi_epi8(p8_tl, zero), _mm_unpackhi_epi8(p8_tc, zero));
-                    sum_hi = _mm_add_epi16(sum_hi, _mm_unpackhi_epi8(p8_tr, zero));
-                    sum_hi = _mm_add_epi16(sum_hi, _mm_unpackhi_epi8(p8_ml, zero));
-                    sum_hi = _mm_add_epi16(sum_hi, _mm_unpackhi_epi8(p8_mr, zero));
-                    sum_hi = _mm_add_epi16(sum_hi, _mm_unpackhi_epi8(p8_bl, zero));
-                    sum_hi = _mm_add_epi16(sum_hi, _mm_unpackhi_epi8(p8_bc, zero));
-                    sum_hi = _mm_add_epi16(sum_hi, _mm_unpackhi_epi8(p8_br, zero));
-                    __m128i center_term_hi = _mm_mullo_epi16(_mm_unpackhi_epi8(p8_mc, zero), w_neg_8);
-                    sum_hi = _mm_add_epi16(sum_hi, center_term_hi);
-                    sum_hi = _mm_max_epi16(sum_hi, zero); // Clamp to 0
-
-                    _mm_storeu_si128(reinterpret_cast<__m128i*>(pixelData + y * stride + x), _mm_packus_epi16(sum_lo, sum_hi));
-                }
-
-                for (int x = vectorizedWidth; x < width - 1; ++x) {
-                    if (x > 0) {
-                        int sum = 0;
-                        int kernel[9] = { 1, 1, 1, 1, -8, 1, 1, 1, 1 };
-                        int k_idx = 0;
-                        for (int j = -1; j <= 1; ++j) {
-                            for (int i = -1; i <= 1; ++i) {
-                                sum += (int)sourceBuffer[(y + j) * stride + (x + i)] * kernel[k_idx++];
-                            }
-                        }
-                        if (sum < 0) sum = 0;
-                        if (sum > 255) sum = 255;
-                        pixelData[y * stride + x] = static_cast<unsigned char>(sum);
-                    }
-                }
-            }
-            delete[] sourceBuffer;
-        }
+        
 
         void ApplyDifferentialSse(void* pixels, int width, int height, int stride, unsigned char threshold)
         {
             unsigned char* pixelData = static_cast<unsigned char*>(pixels);
-            unsigned char* sourceBuffer = new unsigned char[height * stride];
+            unsigned char* sourceBuffer = new unsigned char[height * stride]; // readonly Buffer !!!
             memcpy(sourceBuffer, pixelData, height * stride);
 
             const int vectorSize = 16;
@@ -325,11 +177,7 @@ namespace ImaGyNative
                     __m128i sum = _mm_adds_epu8(diff_x, diff_y);
 
                     // Apply threshold
-                    __m128i threshold_vec = _mm_set1_epi8(threshold);
-                    __m128i mask = _mm_cmplt_epi8(sum, threshold_vec); // mask = (sum < threshold)
-                    __m128i result = _mm_andnot_si128(mask, _mm_set1_epi8(255)); // result = ~mask & 255
-
-                    _mm_storeu_si128(reinterpret_cast<__m128i*>(pixelData + y * stride + x), result);
+                    _mm_storeu_si128(reinterpret_cast<__m128i*>(pixelData + y * stride + x), sum);
                 }
 
                 for (int x = vectorizedWidth; x < width - 1; ++x)
@@ -337,7 +185,10 @@ namespace ImaGyNative
                     int gradX = (int)sourceBuffer[y * stride + (x + 1)] - (int)sourceBuffer[y * stride + x];
                     int gradY = (int)sourceBuffer[(y + 1) * stride + x] - (int)sourceBuffer[y * stride + x];
                     int val = abs(gradX) + abs(gradY);
-                    pixelData[y * stride + x] = (val > threshold) ? 255 : 0;
+                    // Clamp val to 0-255
+                    if (val > 255) val = 255;
+                    if (val < 0) val = 0; // abs ensures >= 0, but good practice
+                    pixelData[y * stride + x] = static_cast<unsigned char>(val);
                 }
             }
 
@@ -422,6 +273,159 @@ namespace ImaGyNative
                         int sum = abs(gx) + abs(gy);
                         if (sum > 255) sum = 255;
                         pixelData[y * stride + x] = static_cast<unsigned char>(sum);
+                    }
+                }
+            }
+            delete[] sourceBuffer;
+        }
+
+        void ApplyLaplacianSse(void* pixels, int width, int height, int stride, unsigned char threshold)
+        {
+            unsigned char* pixelData = static_cast<unsigned char*>(pixels);
+            unsigned char* sourceBuffer = new unsigned char[height * stride];
+            memcpy(sourceBuffer, pixelData, height * stride);
+
+            const int vectorSize = 16;
+            int vectorizedWidth = width - (width % vectorSize);
+            __m128i zero = _mm_setzero_si128();
+            const __m128i w_neg_8 = _mm_set1_epi16(-8);
+
+            for (int y = 1; y < height - 1; ++y)
+            {
+                for (int x = 1; x < vectorizedWidth - 1; x += vectorSize)
+                {
+                    __m128i p8_tl = _mm_loadu_si128(reinterpret_cast<const __m128i*>(sourceBuffer + (y - 1) * stride + (x - 1)));
+                    __m128i p8_tc = _mm_loadu_si128(reinterpret_cast<const __m128i*>(sourceBuffer + (y - 1) * stride + x));
+                    __m128i p8_tr = _mm_loadu_si128(reinterpret_cast<const __m128i*>(sourceBuffer + (y - 1) * stride + (x + 1)));
+                    __m128i p8_ml = _mm_loadu_si128(reinterpret_cast<const __m128i*>(sourceBuffer + y * stride + (x - 1)));
+                    __m128i p8_mc = _mm_loadu_si128(reinterpret_cast<const __m128i*>(sourceBuffer + y * stride + x));
+                    __m128i p8_mr = _mm_loadu_si128(reinterpret_cast<const __m128i*>(sourceBuffer + y * stride + (x + 1)));
+                    __m128i p8_bl = _mm_loadu_si128(reinterpret_cast<const __m128i*>(sourceBuffer + (y + 1) * stride + (x - 1)));
+                    __m128i p8_bc = _mm_loadu_si128(reinterpret_cast<const __m128i*>(sourceBuffer + (y + 1) * stride + x));
+                    __m128i p8_br = _mm_loadu_si128(reinterpret_cast<const __m128i*>(sourceBuffer + (y + 1) * stride + (x + 1)));
+
+                    // Process low 8 pixels
+                    __m128i sum_lo = _mm_add_epi16(_mm_unpacklo_epi8(p8_tl, zero), _mm_unpacklo_epi8(p8_tc, zero));
+                    sum_lo = _mm_add_epi16(sum_lo, _mm_unpacklo_epi8(p8_tr, zero));
+                    sum_lo = _mm_add_epi16(sum_lo, _mm_unpacklo_epi8(p8_ml, zero));
+                    sum_lo = _mm_add_epi16(sum_lo, _mm_unpacklo_epi8(p8_mr, zero));
+                    sum_lo = _mm_add_epi16(sum_lo, _mm_unpacklo_epi8(p8_bl, zero));
+                    sum_lo = _mm_add_epi16(sum_lo, _mm_unpacklo_epi8(p8_bc, zero));
+                    sum_lo = _mm_add_epi16(sum_lo, _mm_unpacklo_epi8(p8_br, zero));
+                    __m128i center_term_lo = _mm_mullo_epi16(_mm_unpacklo_epi8(p8_mc, zero), w_neg_8);
+                    sum_lo = _mm_add_epi16(sum_lo, center_term_lo);
+                    sum_lo = _mm_max_epi16(sum_lo, zero); // Clamp to 0
+
+                    // Process high 8 pixels
+                    __m128i sum_hi = _mm_add_epi16(_mm_unpackhi_epi8(p8_tl, zero), _mm_unpackhi_epi8(p8_tc, zero));
+                    sum_hi = _mm_add_epi16(sum_hi, _mm_unpackhi_epi8(p8_tr, zero));
+                    sum_hi = _mm_add_epi16(sum_hi, _mm_unpackhi_epi8(p8_ml, zero));
+                    sum_hi = _mm_add_epi16(sum_hi, _mm_unpackhi_epi8(p8_mr, zero));
+                    sum_hi = _mm_add_epi16(sum_hi, _mm_unpackhi_epi8(p8_bl, zero));
+                    sum_hi = _mm_add_epi16(sum_hi, _mm_unpackhi_epi8(p8_bc, zero));
+                    sum_hi = _mm_add_epi16(sum_hi, _mm_unpackhi_epi8(p8_br, zero));
+                    __m128i center_term_hi = _mm_mullo_epi16(_mm_unpackhi_epi8(p8_mc, zero), w_neg_8);
+                    sum_hi = _mm_add_epi16(sum_hi, center_term_hi);
+                    sum_hi = _mm_max_epi16(sum_hi, zero); // Clamp to 0
+
+                    _mm_storeu_si128(reinterpret_cast<__m128i*>(pixelData + y * stride + x), _mm_packus_epi16(sum_lo, sum_hi));
+                }
+
+                for (int x = vectorizedWidth; x < width - 1; ++x) {
+                    if (x > 0) {
+                        int sum = 0;
+                        int kernel[9] = { 1, 1, 1, 1, -8, 1, 1, 1, 1 };
+                        int k_idx = 0;
+                        for (int j = -1; j <= 1; ++j) {
+                            for (int i = -1; i <= 1; ++i) {
+                                sum += (int)sourceBuffer[(y + j) * stride + (x + i)] * kernel[k_idx++];
+                            }
+                        }
+                        if (sum < 0) sum = 0;
+                        if (sum > 255) sum = 255;
+                        pixelData[y * stride + x] = static_cast<unsigned char>(sum);
+                    }
+                }
+            }
+            delete[] sourceBuffer;
+        }
+
+        void ApplyDilationSse(void* pixels, int width, int height, int stride, unsigned char threshold)
+        {
+            unsigned char* pixelData = static_cast<unsigned char*>(pixels);
+            unsigned char* sourceBuffer = new unsigned char[height * stride];
+            memcpy(sourceBuffer, pixelData, height * stride);
+
+            const int vectorSize = 16;
+            int vectorizedWidth = width - (width % vectorSize);
+
+            for (int y = 1; y < height - 1; ++y)
+            {
+                for (int x = 1; x < vectorizedWidth - 1; x += vectorSize)
+                {
+                    __m128i max_val = _mm_setzero_si128();
+                    for (int j = -1; j <= 1; ++j) {
+                        for (int i = -1; i <= 1; ++i) {
+                            __m128i neighbor = _mm_loadu_si128(reinterpret_cast<const __m128i*>(sourceBuffer + (y + j) * stride + (x + i)));
+                            max_val = _mm_max_epu8(max_val, neighbor);
+                        }
+                    }
+                    _mm_storeu_si128(reinterpret_cast<__m128i*>(pixelData + y * stride + x), max_val);
+                }
+
+                for (int x = vectorizedWidth; x < width - 1; ++x) {
+                    if (x > 0) {
+                        unsigned char maxVal = 0;
+                        for (int j = -1; j <= 1; ++j) {
+                            for (int i = -1; i <= 1; ++i) {
+                                unsigned char neighborPixel = sourceBuffer[(y + j) * stride + (x + i)];
+                                if (neighborPixel > maxVal) {
+                                    maxVal = neighborPixel;
+                                }
+                            }
+                        }
+                        pixelData[y * stride + x] = maxVal;
+                    }
+                }
+            }
+            delete[] sourceBuffer;
+        }
+
+        void ApplyErosionSse(void* pixels, int width, int height, int stride, unsigned char threshold)
+        {
+            unsigned char* pixelData = static_cast<unsigned char*>(pixels);
+            unsigned char* sourceBuffer = new unsigned char[height * stride];
+            memcpy(sourceBuffer, pixelData, height * stride);
+
+            const int vectorSize = 16;
+            int vectorizedWidth = width - (width % vectorSize);
+
+            for (int y = 1; y < height - 1; ++y)
+            {
+                for (int x = 1; x < vectorizedWidth - 1; x += vectorSize)
+                {
+                    __m128i min_val = _mm_set1_epi8(-1); // Initialize with 255
+                    for (int j = -1; j <= 1; ++j) {
+                        for (int i = -1; i <= 1; ++i) {
+                            __m128i neighbor = _mm_loadu_si128(reinterpret_cast<const __m128i*>(sourceBuffer + (y + j) * stride + (x + i)));
+                            min_val = _mm_min_epu8(min_val, neighbor);
+                        }
+                    }
+                    _mm_storeu_si128(reinterpret_cast<__m128i*>(pixelData + y * stride + x), min_val);
+                }
+
+                for (int x = vectorizedWidth; x < width - 1; ++x) {
+                    if (x > 0) {
+                        unsigned char minVal = 255;
+                        for (int j = -1; j <= 1; ++j) {
+                            for (int i = -1; i <= 1; ++i) {
+                                unsigned char neighborPixel = sourceBuffer[(y + j) * stride + (x + i)];
+                                if (neighborPixel < minVal) {
+                                    minVal = neighborPixel;
+                                }
+                            }
+                        }
+                        pixelData[y * stride + x] = minVal;
                     }
                 }
             }

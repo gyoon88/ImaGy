@@ -54,18 +54,21 @@ namespace ImaGy
         }
         
         // Image Matching
-        void NativeProcessor::ApplyNCC(IntPtr pixels, int width, int height, int stride, Byte threshold)
+        void NativeProcessor::ApplyNCC(IntPtr pixels, int width, int height, int stride, IntPtr templatePixels, int templateWidth, int templateHeight, int templateStride, unsigned char threshold)
         {
-            ImaGyNative::NativeCore::ApplyNCC(pixels.ToPointer(), width, height, stride, threshold);
+            ImaGyNative::NativeCore::ApplyNCC(pixels.ToPointer(), width, height, stride, templatePixels.ToPointer(), templateWidth, templateHeight, templateStride, threshold);
         }
-        void NativeProcessor::ApplySAD(IntPtr pixels, int width, int height, int stride, Byte threshold)
+
+        void NativeProcessor::ApplySAD(IntPtr pixels, int width, int height, int stride, IntPtr templatePixels, int templateWidth, int templateHeight, int templateStride, unsigned char threshold)
         {
-            ImaGyNative::NativeCore::ApplySAD(pixels.ToPointer(), width, height, stride, threshold);
+            ImaGyNative::NativeCore::ApplySAD(pixels.ToPointer(), width, height, stride, templatePixels.ToPointer(), templateWidth, templateHeight, templateStride, threshold);
         }
-        void NativeProcessor::ApplySSD(IntPtr pixels, int width, int height, int stride, Byte threshold)
+
+        void NativeProcessor::ApplySSD(IntPtr pixels, int width, int height, int stride, IntPtr templatePixels, int templateWidth, int templateHeight, int templateStride, unsigned char threshold)
         {
-            ImaGyNative::NativeCore::ApplySSD(pixels.ToPointer(), width, height, stride, threshold);
+            ImaGyNative::NativeCore::ApplySSD(pixels.ToPointer(), width, height, stride, templatePixels.ToPointer(), templateWidth, templateHeight, templateStride, threshold);
         }
+
 
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
