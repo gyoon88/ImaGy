@@ -349,18 +349,63 @@ namespace ImaGy.ViewModel
         private void ExecuteImageMatching(object? parameter)
         {
             string? processCommand = parameter?.ToString();
-            switch (processCommand)
-            {
-                case "NCC":
-                    ApplyProcessing("NCC", image => imageProcessor.ApplyNCC(image));
-                    break;
+            var imageToProcess = AfterImage ?? BeforeImage;
 
-                case "SAD":
-                    ApplyProcessing("SAD", image => imageProcessor.ApplySAD(image));
-                    break;
-                case "SSD":
-                    ApplyProcessing("SSD", image => imageProcessor.ApplySSD(image));
-                    break;
+            if (imageToProcess == null)
+            {
+                loggingService.AddLog("No image loaded for matching.");
+                MessageBox.Show("Please load an image first.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            if (TemplateImage == null)
+            {
+                loggingService.AddLog("No template image loaded for matching.");
+                MessageBox.Show("Please load a template image first.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            try
+            {
+                // 1. Add current state to undo stack
+                undoRedoService.AddState(imageToProcess);
+
+                BitmapSource? processedImage = null;
+                double elapsedMs = 0;
+
+                switch (processCommand)
+                {
+                    case "NCC":
+                        (processedImage, elapsedMs) = ProcessTime.Measure(() => imageProcessor.ApplyNCC(imageToProcess, TemplateImage));
+                        loggingService.AddLog($"NCC applied. Elapsed: {elapsedMs:F2} ms");
+                        historyService.AddHistory("NCC", elapsedMs);
+                        break;
+                    case "SAD":
+                        (processedImage, elapsedMs) = ProcessTime.Measure(() => imageProcessor.ApplySAD(imageToProcess, TemplateImage));
+                        loggingService.AddLog($"SAD applied. Elapsed: {elapsedMs:F2} ms");
+                        historyService.AddHistory("SAD", elapsedMs);
+                        break;
+                    case "SSD":
+                        (processedImage, elapsedMs) = ProcessTime.Measure(() => imageProcessor.ApplySSD(imageToProcess, TemplateImage));
+                        loggingService.AddLog($"SSD applied. Elapsed: {elapsedMs:F2} ms");
+                        historyService.AddHistory("SSD", elapsedMs);
+                        break;
+                    default:
+                        loggingService.AddLog($"Unknown image matching command: {processCommand}");
+                        return;
+                }
+
+                // 3. Update UI
+                AfterImage = processedImage;
+                ProcessingTime = $"{processCommand}: {elapsedMs:F2} ms";
+                CommandManager.InvalidateRequerySuggested();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred during image matching.\n\nError: {{ex.Message}}", "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                loggingService.AddLog($"Error applying image matching ({{processCommand}}): {{ex.Message}}");
             }
         }
 
