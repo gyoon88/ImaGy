@@ -242,31 +242,39 @@ namespace ImaGy.ViewModel
         }
 
         // Applies an image processing function to the current image
-        private void ApplyProcessing(string historyMessage, Func<BitmapSource, BitmapSource> processFunction)
+        private async void ApplyProcessing(string processName, Func<BitmapSource, BitmapSource> processAction)
         {
-            var imageToProcess = AfterImage ?? BeforeImage; // After 가 널이면 before 이미지를 사용
-            if (imageToProcess == null) return;
+            var imageToProcess = AfterImage ?? BeforeImage;
+            if (imageToProcess == null)
+            {
+                loggingService.AddLog("No image loaded for processing.");
+                MessageBox.Show("Please load an image first.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
 
             try
             {
-                // 1. Add current state to undo stack
                 undoRedoService.AddState(imageToProcess);
+                BitmapSource? processedImage = null;
+                double elapsedMs = 0;
 
-                // 2. Process image and measure time
-                var (processedImage, elapsedMs) = ProcessTime.Measure(() => processFunction(imageToProcess));
+                (processedImage, elapsedMs) = await Task.Run(() =>
+                {
+                    return ProcessTime.Measure(() => processAction(imageToProcess));
+                });
 
-                // 3. Update UI
                 AfterImage = processedImage;
-                ProcessingTime = $"{historyMessage}: {elapsedMs:F2} ms";
+                ProcessingTime = $"{processName}: {elapsedMs:F2} ms";
+                CommandManager.InvalidateRequerySuggested();
 
-                // 4. Add to history and log
-                historyService.AddHistory(historyMessage, elapsedMs);
-                loggingService.AddLog($"{historyMessage} applied.");
+                historyService.AddHistory(processName, elapsedMs);
+                loggingService.AddLog($"{processName} applied.");
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"An error occurred during image processing.\n\nError: {ex.Message}", "Error",
                     MessageBoxButton.OK, MessageBoxImage.Error);
+                loggingService.AddLog($"Error applying {processName}: {ex.Message}");
             }
         }
 
@@ -346,7 +354,7 @@ namespace ImaGy.ViewModel
                     break;
             }
         }
-        private void ExecuteImageMatching(object? parameter)
+        private async void ExecuteImageMatching(object? parameter) // Changed to async void
         {
             string? processCommand = parameter?.ToString();
             var imageToProcess = AfterImage ?? BeforeImage;
@@ -365,47 +373,69 @@ namespace ImaGy.ViewModel
                 return;
             }
 
+            // Optional: Disable UI elements to prevent re-entry or indicate busy state
+            // ImageMatchingCommand.CanExecute = false; // This requires a CanExecute parameter in RelayCommand
+
             try
             {
-                // 1. Add current state to undo stack
+                // 1. Add current state to undo stack (can be done on UI thread)
                 undoRedoService.AddState(imageToProcess);
 
                 BitmapSource? processedImage = null;
                 double elapsedMs = 0;
 
-                switch (processCommand)
+                // Move the long-running operation to a background thread
+                (processedImage, elapsedMs) = await Task.Run(() => // Task.Run을 await
                 {
-                    case "NCC":
-                        (processedImage, elapsedMs) = ProcessTime.Measure(() => imageProcessor.ApplyNCC(imageToProcess, TemplateImage));
-                        loggingService.AddLog($"NCC applied. Elapsed: {elapsedMs:F2} ms");
-                        historyService.AddHistory("NCC", elapsedMs);
-                        break;
-                    case "SAD":
-                        (processedImage, elapsedMs) = ProcessTime.Measure(() => imageProcessor.ApplySAD(imageToProcess, TemplateImage));
-                        loggingService.AddLog($"SAD applied. Elapsed: {elapsedMs:F2} ms");
-                        historyService.AddHistory("SAD", elapsedMs);
-                        break;
-                    case "SSD":
-                        (processedImage, elapsedMs) = ProcessTime.Measure(() => imageProcessor.ApplySSD(imageToProcess, TemplateImage));
-                        loggingService.AddLog($"SSD applied. Elapsed: {elapsedMs:F2} ms");
-                        historyService.AddHistory("SSD", elapsedMs);
-                        break;
-                    default:
-                        loggingService.AddLog($"Unknown image matching command: {processCommand}");
-                        return;
-                }
+                    // 아래 코드는 백그라운드 스레드에서 실행
+                    BitmapSource? tempProcessedImage = null;
+                    double tempElapsedMs = 0;
 
-                // 3. Update UI
+                    switch (processCommand)
+                    {
+                        case "NCC":
+                            (tempProcessedImage, tempElapsedMs) = ProcessTime.Measure(() =>
+                                imageProcessor.ApplyNCC(imageToProcess, TemplateImage));
+                            break;
+                        case "SAD":
+                            (tempProcessedImage, tempElapsedMs) = ProcessTime.Measure(() =>
+                                imageProcessor.ApplySAD(imageToProcess, TemplateImage));
+                            break;
+                        case "SSD":
+                            (tempProcessedImage, tempElapsedMs) = ProcessTime.Measure(() =>
+                                imageProcessor.ApplySSD(imageToProcess, TemplateImage));
+                            break;
+                        default:
+                            throw new InvalidOperationException($"Unknown image matching command: {processCommand}");
+                    }
+                    return (tempProcessedImage, tempElapsedMs); // 백그라운드 스레드에서 결과 반환
+                });
+
+                // await 후, 실행은 원래 컨텍스트(UI 스레드)에서 재개
+                // 3. UI 업데이트
                 AfterImage = processedImage;
                 ProcessingTime = $"{processCommand}: {elapsedMs:F2} ms";
                 CommandManager.InvalidateRequerySuggested();
+
+                // 4. 기록 및 로그에 추가 (UI 스레드 또는 백그라운드에서 수행 가능하지만, UI 업데이트는 UI 스레드가 필요합니다)
+                historyService.AddHistory(processCommand, elapsedMs); // processCommand를 기록 메시지로 사용
+                loggingService.AddLog($"{processCommand} applied.");
             }
-            catch (Exception ex)
+            catch (InvalidOperationException ex) // Task.Run에서 발생하는 특정 예외를 catch
             {
-                MessageBox.Show($"An error occurred during image matching.\n\nError: {{ex.Message}}", "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
-                loggingService.AddLog($"Error applying image matching ({{processCommand}}): {{ex.Message}}");
+                MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                loggingService.AddLog($"Error: {ex.Message}");
+            }
+            catch (Exception ex) // 일반 예외 처리
+            {
+                MessageBox.Show($"An error occurred during image matching.\n\nError: {ex.Message}", "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+                loggingService.AddLog($"Error applying image matching ({processCommand}): {ex.Message}");
+            }
+            finally
+            {
+                // 선택 사항: UI 요소 다시 활성화
+                // ImageMatchingCommand.CanExecute = true;
             }
         }
 

@@ -16,7 +16,7 @@ Implement image processing functions in C++ and call them from C#. We are using 
 - **`ImaGyWrapper`**: Updated `ImaGyWrapper.h` and `ImaGyWrapper.cpp` to handle the data marshalling (BitmapSource -> byte[] -> native pointer -> BitmapSource).
 - **`ImaGy`**: Updated `ImageProcessor.cs` so that the `ApplyEqualization` method calls the C++ wrapper's binarization function.
 
---- 
+---
 
 ### **Recent Progress & Resolutions**
 
@@ -34,14 +34,26 @@ Implement image processing functions in C++ and call them from C#. We are using 
 - `HistogramViewModel.cs` and `HistogramWindow.xaml`/`.xaml.cs` were created to display the histogram.
 - The `MainViewModel.cs` was updated with a `ViewHistogramCommand` to open the `HistogramWindow`.
 - Initial drawing issues in `HistogramWindow` (due to `ActualWidth`/`ActualHeight` being zero during early rendering) were resolved by redrawing the histogram on `Loaded` and `SizeChanged` events of the Canvas.
+- **Further Histogram Improvements:** Implemented grid lines and axis labels in `HistogramWindow.xaml` and `HistogramWindow.xaml.cs` for better visualization. Refactored `HistogramViewModel` to observe `MainViewModel`'s image properties for self-contained data handling.
 
 **4. C++ Native DLL Loading Issue Resolution:**
 - The primary issue of `ImaGyWrapper.dll` failing to find `ImaGyNative.dll` at runtime was diagnosed.
-- It was determined that `ImaGyNative.dll` was being built successfully in its own output directory (`$(SolutionDir)x64\$(Configuration)\`) but was not being copied to the main `ImaGy` application's output directory (`ImaGy\bin\x64\Debug\net8.0-windows10.0.26100.0\`).
+- It was determined that `ImaGyNative.dll` was being built successfully in its own output directory (`$(SolutionDir)x64ackslash$(Configuration)\`) but was not being copied to the main `ImaGy` application's output directory (`ImaGy\bin\x64\Debug\net8.0-windows10.0.26100.0\`).
 - This was resolved by explicitly adding `ImaGyNative.dll` as a content item to `ImaGy.csproj` with `CopyToOutputDirectory` set to `PreserveNewest`, ensuring it's copied to the final application output.
 
---- 
+**5. Image Processing Functionalities (C++ & C# Interop):**
+- All core image processing functions (Color/Contrast, Edge Detect, Blurring, Morphology), except FFT, have been implemented in `ImaGyNative` (C++) and integrated via `ImaGyWrapper` (C++/CLI).
+- `ImageProcessor.cs` and `ImageProcessorSSE.cs` are correctly calling these native functions.
+
+**6. Template Matching Implementation:**
+- Added functionality to load a template image via a new menu option ("Open Template Image").
+- Implemented a `TemplateImageViewer` and `TemplateImageViewerViewModel` to display the loaded template image in a separate window.
+- The `NativeCore.h` and `NativeCore.cpp` signatures for `ApplyNCC`, `ApplySAD`, and `ApplySSD` have been updated to accept template image parameters.
+- `BitmapProcessorHelper.ProcessTwoBitmapSourcePixels` was added to handle marshalling of two `BitmapSource` inputs (source and template) for native calls.
+- `ImageProcessor.cs` and `MainViewModel.cs` have been updated to utilize the template image for `ApplyNCC`, `ApplySAD`, and `ApplySSD` operations, including asynchronous execution in `MainViewModel` to prevent UI freezing.
+
+---
 
 ### **NEXT STEPS**
 
-The next task is to implement other image processing functionalities in C++ within the `ImaGyNative` project, leveraging the established C# to C++ interoperability.
+All core image processing functionalities, including template matching, have been implemented and integrated. The next steps will involve further refinements, testing, or new feature development as required.
