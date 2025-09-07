@@ -1,7 +1,7 @@
 using System.Windows.Media.Imaging;
-using ImaGy.Model;
+using ImaGy.Models;
 
-namespace ImaGy.ViewModel
+namespace ImaGy.ViewModels
 {
     public class TemplateImageViewerViewModel : BaseViewModel
     {

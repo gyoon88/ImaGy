@@ -4,7 +4,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Runtime.InteropServices;
 
-namespace ImaGy.Model
+namespace ImaGy.Models
 {
     public class ImageProcessor
     {

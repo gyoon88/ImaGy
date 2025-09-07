@@ -1,7 +1,7 @@
 ﻿using System.Windows.Media.Imaging;
 using System.Windows.Media;
 
-namespace ImaGy.Model
+namespace ImaGy.Models
 {
     public class ServeHistogram
     {

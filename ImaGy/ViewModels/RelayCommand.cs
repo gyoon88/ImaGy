@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Input;
 
-namespace ImaGy.ViewModel
+namespace ImaGy.ViewModels
 {
     internal class RelayCommand : ICommand
     {

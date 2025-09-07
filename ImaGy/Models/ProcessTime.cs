@@ -1,6 +1,6 @@
 ﻿
 using System.Diagnostics;
-namespace ImaGy.Model
+namespace ImaGy.Models
 {
     public class ProcessTime
     {

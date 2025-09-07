@@ -1,4 +1,4 @@
-using ImaGy.ViewModel;
+using ImaGy.ViewModels;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;

@@ -4,13 +4,16 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ImaGy"
-        xmlns:vm="clr-namespace:ImaGy.ViewModel"
+        xmlns:vm="clr-namespace:ImaGy.ViewModels"
         mc:Ignorable="d"
         Title="ImaGy" Height="900" Width="1600" MinHeight="500" MinWidth="1000">
     <Window.DataContext>
         <vm:MainViewModel/>
     </Window.DataContext>
 
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </Window.Resources>
 
     <Window.InputBindings>
         <KeyBinding Modifiers="Control" Key="S" Command="{Binding SaveImageCommand}" />
@@ -18,23 +21,35 @@
         <KeyBinding Modifiers="Control" Key="Z" Command="{Binding UndoCommand}" />
     </Window.InputBindings>
 
-    <DockPanel>
+    <DockPanel>  <!-- This DockPanel is the single child of Window -->
         <!-- Menu -->
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_파일">
                 <MenuItem Header="열기" Command="{Binding OpenImageCommand}"/>
                 <MenuItem Header="템플릿 이미지 열기" Command="{Binding OpenTemplateImageCommand}"/>
                 <MenuItem Header="저장" Command="{Binding SaveImageCommand}"/>
+                <Separator />
+                <MenuItem Header="작업기록 내보내기" Command="{Binding ExportHistoryCommand}"/>
+                <MenuItem Header="로그 내보내기" Command="{Binding ExportLogCommand}"/>
 
             </MenuItem>
             <MenuItem Header="_편집">
                 <MenuItem Header="되돌리기" Command="{Binding UndoCommand}"/>
                 <MenuItem Header="다시 실행" Command="{Binding RedoCommand}"/>
+                <Separator />
+                <MenuItem Header="복사" Command="{Binding CopyImageCommand}"/>
+                <MenuItem Header="붙여넣기" Command="{Binding PasteImageCommand}"/>
             </MenuItem>
             <MenuItem Header="_보기">
                 <MenuItem Header="작업기록 내보내기" Command="{Binding ExportHistoryCommand}"/>
                 <MenuItem Header="로그 내보내기" Command="{Binding ExportLogCommand}"/>
                 <MenuItem Header="히스토그램 보기" Command="{Binding ViewHistogramCommand}"/>
+                <MenuItem Header="미니맵 보기" Command="{Binding MinimapCommand}"/>
+            </MenuItem>
+            <MenuItem Header="_도구">
+                <MenuItem Header="자르기"/>
+                <MenuItem Header="미니맵 보기"/>
+                <MenuItem Header="ROI 선택" Command="{Binding SelectRoiCommand}"/>
             </MenuItem>
             <MenuItem Header="_도움말">
                 <MenuItem Header="단축키 안내"/>
@@ -95,14 +110,22 @@
 
                     <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
                                   x:Name="BeforeImageScrollViewer"
-                                  MouseDown="ImageScrollViewer_MouseDown"
-                                  MouseMove="ImageScrollViewer_MouseMove"
-                                  MouseUp="ImageScrollViewer_MouseUp">
-                        <Image Source="{Binding BeforeImage}" Stretch="Uniform" x:Name="BeforeImageControl" MouseWheel="ImageControl_MouseWheel">
-                            <Image.LayoutTransform>
-                                <ScaleTransform ScaleX="1.0" ScaleY="1.0"/>
-                            </Image.LayoutTransform>
-                        </Image>
+                                  ScrollChanged="BeforeImageScrollViewer_ScrollChanged">
+                        <Grid>
+                            <Image Source="{Binding BeforeImage}" Stretch="Uniform" x:Name="BeforeImageControl" MouseWheel="ImageControl_MouseWheel">
+                                <Image.LayoutTransform>
+                                    <ScaleTransform ScaleX="1.0" ScaleY="1.0"/>
+                                </Image.LayoutTransform>
+                            </Image>
+                            <Canvas x:Name="BeforeRoiCanvas" 
+                                    Visibility="{Binding RoiViewModel.IsDrawingRoi, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <Border BorderBrush="Blue" BorderThickness="2"
+                                        Canvas.Left="{Binding RoiViewModel.CurrentRoi.X}"
+                                        Canvas.Top="{Binding RoiViewModel.CurrentRoi.Y}"
+                                        Width="{Binding RoiViewModel.CurrentRoi.Width}"
+                                        Height="{Binding RoiViewModel.CurrentRoi.Height}" />
+                            </Canvas>
+                        </Grid>
                     </ScrollViewer>
                 </Grid>
             </Border>
@@ -131,14 +154,22 @@
                     <!--Here predfine the mouse that mouse can control size of image-->
                     <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
                                   x:Name="AfterImageScrollViewer"
-                                  MouseDown="ImageScrollViewer_MouseDown"
-                                  MouseMove="ImageScrollViewer_MouseMove"
-                                  MouseUp="ImageScrollViewer_MouseUp">
-                        <Image Source="{Binding AfterImage}" Stretch="Uniform" x:Name="AfterImageControl" MouseWheel="ImageControl_MouseWheel">
-                            <Image.LayoutTransform>
-                                <ScaleTransform ScaleX="1.0" ScaleY="1.0"/>
-                            </Image.LayoutTransform>
-                        </Image>
+                                  ScrollChanged="AfterImageScrollViewer_ScrollChanged">
+                        <Grid>
+                            <Image Source="{Binding AfterImage}" Stretch="Uniform" x:Name="AfterImageControl" MouseWheel="ImageControl_MouseWheel">
+                                <Image.LayoutTransform>
+                                    <ScaleTransform ScaleX="1.0" ScaleY="1.0"/>
+                                </Image.LayoutTransform>
+                            </Image>
+                            <Canvas x:Name="AfterRoiCanvas" 
+                                    Visibility="{Binding RoiViewModel.IsDrawingRoi, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <Border BorderBrush="Blue" BorderThickness="2"
+                                        Canvas.Left="{Binding RoiViewModel.CurrentRoi.X}"
+                                        Canvas.Top="{Binding RoiViewModel.CurrentRoi.Y}"
+                                        Width="{Binding RoiViewModel.CurrentRoi.Width}"
+                                        Height="{Binding RoiViewModel.CurrentRoi.Height}" />
+                            </Canvas>
+                        </Grid>
                     </ScrollViewer>
                 </Grid>
             </Border>
@@ -174,7 +205,7 @@
                                             <Button Content="Laplacian" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Laplace"/>
                                             <Button Content="Differential" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Diff_SSE" />
                                             <Button Content="Sobel" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Sobel_SSE"/>
-                                            <Button Content="Laplacian" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Laplace_SSE"/>
+                                            <Button Content="Laplacian" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Laplace_SSE" />
                                             <Button Content="FFT" Margin="2" />
                                         </StackPanel>
                                     </GroupBox>
@@ -209,9 +240,9 @@
                             </Expander>
                         </StackPanel>
                     </GroupBox>
-                    
+
                 </ScrollViewer>
-                
+
                 <!-- History -->
                 <GroupBox Grid.Row="1" Header="작업 내역">
                     <ListBox x:Name="작업내역" ItemsSource="{Binding HistoryItems}" d:ItemsSource="{d:SampleData ItemCount=5}" />

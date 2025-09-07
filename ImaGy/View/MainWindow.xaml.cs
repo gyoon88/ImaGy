@@ -1,20 +1,13 @@
-﻿using System.Text;
+using System;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using ImaGy.ViewModel;
+using ImaGy.ViewModels;
 
 namespace ImaGy.View
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
         private ScaleTransform beforeScaleTransform;
@@ -39,6 +32,7 @@ namespace ImaGy.View
 
             // Set the callback for the ViewModel
             viewModel.ImageLoadedCallback = ResetImageZoom;
+            viewModel.beforeScaleTransform = beforeScaleTransform; // Pass the ScaleTransform
 
             // Initial update of ZoomLevel and fit image
             if (viewModel.BeforeImage != null)
@@ -77,6 +71,28 @@ namespace ImaGy.View
 
             // Update ViewModel's ZoomLevel
             viewModel.UpdateZoomLevel(initialScaleBefore);
+        }
+
+        private void BeforeImageScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
+        {
+            if (DataContext is MainViewModel viewModel)
+            {
+                viewModel.ScrollViewerHorizontalOffset = BeforeImageScrollViewer.HorizontalOffset;
+                viewModel.ScrollViewerVerticalOffset = BeforeImageScrollViewer.VerticalOffset;
+                viewModel.ScrollViewerViewportWidth = BeforeImageScrollViewer.ViewportWidth;
+                viewModel.ScrollViewerViewportHeight = BeforeImageScrollViewer.ViewportHeight;
+            }
+        }
+
+        private void AfterImageScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
+        {
+            if (DataContext is MainViewModel viewModel)
+            {
+                viewModel.ScrollViewerHorizontalOffset = AfterImageScrollViewer.HorizontalOffset;
+                viewModel.ScrollViewerVerticalOffset = AfterImageScrollViewer.VerticalOffset;
+                viewModel.ScrollViewerViewportWidth = AfterImageScrollViewer.ViewportWidth;
+                viewModel.ScrollViewerViewportHeight = AfterImageScrollViewer.ViewportHeight;
+            }
         }
 
         private void ImageControl_MouseWheel(object sender, MouseWheelEventArgs e)
@@ -148,6 +164,39 @@ namespace ImaGy.View
             {
                 isPanning = false;
                 scrollViewer.ReleaseMouseCapture();
+            }
+        }
+
+        public void ScrollMainImage(double deltaX, double deltaY)
+        {
+            BeforeImageScrollViewer.ScrollToHorizontalOffset(BeforeImageScrollViewer.HorizontalOffset - deltaX);
+            BeforeImageScrollViewer.ScrollToVerticalOffset(BeforeImageScrollViewer.VerticalOffset - deltaY);
+
+            AfterImageScrollViewer.ScrollToHorizontalOffset(AfterImageScrollViewer.HorizontalOffset - deltaX);
+            AfterImageScrollViewer.ScrollToVerticalOffset(AfterImageScrollViewer.VerticalOffset - deltaY);
+        }
+
+        private void RoiCanvas_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (DataContext is MainViewModel viewModel)
+            {
+                viewModel.RoiViewModel.MouseDownCommand.Execute(e);
+            }
+        }
+
+        private void RoiCanvas_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (DataContext is MainViewModel viewModel)
+            {
+                viewModel.RoiViewModel.MouseMoveCommand.Execute(e);
+            }
+        }
+
+        private void RoiCanvas_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            if (DataContext is MainViewModel viewModel)
+            {
+                viewModel.RoiViewModel.MouseUpCommand.Execute(e);
             }
         }
     }

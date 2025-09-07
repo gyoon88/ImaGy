@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace ImaGy.ViewModel
+namespace ImaGy.ViewModels
 {
     public class BaseViewModel : INotifyPropertyChanged
     {

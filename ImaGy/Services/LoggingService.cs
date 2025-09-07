@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.IO;
+using ImaGy.ViewModels;
 using System.Text.RegularExpressions;
 
-namespace ImaGy.ViewModel
+namespace ImaGy.Services
 {
     public class LoggingService : BaseViewModel
     {

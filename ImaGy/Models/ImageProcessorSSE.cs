@@ -3,9 +3,9 @@ using System.Runtime.InteropServices;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
-namespace ImaGy.Model
+namespace ImaGy.Models
 {
-    internal class ImageProcessorSSE
+    public class ImageProcessorSSE
     {
         // Edge detect process
         public BitmapSource ApplyDifferentialSse(BitmapSource source)

@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace ImaGy.ViewModel
+namespace ImaGy.Services
 {
     public static class CsvExporter
     {
