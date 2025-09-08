@@ -24,7 +24,9 @@ namespace ImaGy.ViewModels
         private string? zoomLevel;
         private string? processingTime;
         private bool isProcessing;
-        private int threshold;
+        private int threshold = 128;
+        private double sigma = 1.0;
+        private int kernelSize = 3;
 
         public bool IsProcessing
         {
@@ -71,11 +73,24 @@ namespace ImaGy.ViewModels
             get => processingTime;
             set => SetProperty(ref processingTime, value);
         }
+        public double Sigma
+        {
+            get => sigma;
+            set => SetProperty(ref sigma, value);
+        }
+
         public int Threshold
         {
             get => threshold;
-            set => OnPropertyChanged();
+            set => SetProperty(ref threshold, value);
         }
+
+        public int KernelSize
+        {
+            get => kernelSize;
+            set => SetProperty(ref kernelSize, value);
+        }
+
         public string LogText => loggingService.LogText;
 
         // ScrollViewer properties for Minimap
@@ -171,17 +186,21 @@ namespace ImaGy.ViewModels
             clipboardService = new ClipboardImageService();
 
             fileService = new FileService();
-            imageProcessingService = new ImageProcessingService(imageProcessor, imageProcessorSSE,  colorContrastProcess, matchingProcessor, filterProcessor, morphologyProcessor, undoRedoService, historyService, loggingService);
+
+            imageProcessingService = new ImageProcessingService(
+                imageProcessor, imageProcessorSSE,  
+                colorContrastProcess, matchingProcessor, filterProcessor, morphologyProcessor,
+                undoRedoService, historyService, loggingService
+                );
             histogramService = new HistogramService();
             roiViewModel = new RoiViewModel();
             cropService = new CropService();
 
 
             // Commands
-            
-            // Commands
             OpenImageCommand = new OpenImageCommand(this, fileService, loggingService);
             SaveImageCommand = new OpenImageCommand(this, fileService, loggingService);
+
             UndoCommand = new UndoCommand(this, undoRedoService);
             RedoCommand = new UndoCommand(this, undoRedoService);
 
@@ -189,13 +208,15 @@ namespace ImaGy.ViewModels
             FilterringCommand = new ApplyFilterCommand(this, imageProcessingService);
             MorphorogyCommand = new ApplyFilterCommand(this, imageProcessingService);
             ImageMatchingCommand = new ApplyImageMatchingCommand(this, imageProcessingService);
-
             ViewHistogramCommand = new ViewHistogramCommand(this, histogramService);
+
             ExportHistoryCommand = new ExportHistoryCommand(this, historyService, loggingService, fileService);
             ExportLogCommand = new ExportLogCommand(this, loggingService, fileService);
             OpenTemplateImageCommand = new OpenTemplateImageCommand(this, fileService, loggingService);
             CopyImageCommand = new CopyImageCommand(this, clipboardService);
             PasteImageCommand = new PasteImageCommand(this, clipboardService);
+
+
             SelectRoiCommand = new RelayCommand(ExecuteSelectRoi);
             MinimapCommand = new RelayCommand(ExecuteMinimapCommand, _ => AfterImage != null);
             ApplyCropCommand = new RelayCommand(ExecuteApplyCrop, _ => RoiViewModel.CurrentRoi != null && AfterImage != null);

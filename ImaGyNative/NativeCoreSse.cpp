@@ -7,10 +7,7 @@ namespace ImaGyNative
 {
     namespace SSE
     {
-        // Corrected SSE implementation for Average Blur
-       
-
-
+        // Corrected SSE implementation for Average Blur  
         void ApplyAverageBlurSse(void* pixels, int width, int height, int stride, int kernelSize)
         {
             unsigned char* pixelData = static_cast<unsigned char*>(pixels);
@@ -150,8 +147,6 @@ namespace ImaGyNative
             }
             delete[] sourceBuffer;
         }
-
-        
 
         void ApplyDifferentialSse(void* pixels, int width, int height, int stride, unsigned char threshold)
         {

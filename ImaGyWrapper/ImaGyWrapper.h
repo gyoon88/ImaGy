@@ -22,7 +22,7 @@ namespace ImaGy
         {
         public:
             // // Color Contrast
-            static void ApplyBinarization(IntPtr pixels, int width, int height, int stride, Byte threshold);
+            static void ApplyBinarization(IntPtr pixels, int width, int height, int stride, int threshold);
             static void ApplyEqualization(IntPtr pixels, int width, int height, int stride, Byte threshold);
 
             // EdgeDetect
@@ -36,12 +36,14 @@ namespace ImaGy
             // Blurring
             static void ApplyAverageBlur(IntPtr pixels, int width, int height, int stride, int kernelSize);
             static void ApplyAverageBlurSse(IntPtr pixels, int width, int height, int stride, int kernelSize);
+
             static void ApplyGaussianBlur(IntPtr pixels, int width, int height, int stride, double sigma, int kernelSize);
             static void ApplyGaussianBlurSse(IntPtr pixels, int width, int height, int stride, double sigma, int kernelSize);
 
             // Morphorogy
             static void ApplyDilation(IntPtr pixels, int width, int height, int stride, Byte threshold);
             static void ApplyDilationSse(IntPtr pixels, int width, int height, int stride, Byte threshold);
+
             static void ApplyErosion(IntPtr pixels, int width, int height, int stride, Byte threshold);
             static void ApplyErosionSse(IntPtr pixels, int width, int height, int stride, Byte threshold);
 

@@ -32,7 +32,7 @@ namespace ImaGy.ViewModels.Commands
             {
                 _mainViewModel.IsProcessing = true;
 
-                var processAction = _imageProcessingService.GetProcessAction(command, _mainViewModel.TemplateImage);
+                var processAction = _imageProcessingService.GetProcessAction(command, _mainViewModel);
                 var (processedImage, elapsedMs) = await _imageProcessingService.ApplyProcessing(command, processAction, _mainViewModel.AfterImage);
 
                 if (processedImage != null)

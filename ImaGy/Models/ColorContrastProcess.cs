@@ -5,7 +5,7 @@ namespace ImaGy.Models
 {
     public class ColorContrastProcess
     {
-        public BitmapSource ApplyBinarization(BitmapSource source, byte threshold)
+        public BitmapSource ApplyBinarization(BitmapSource source, int threshold)
         {
             return BitmapProcessorHelper.ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride) =>
             {

@@ -7,8 +7,6 @@
 #include <iomanip> 
 
 
-
-
 /**
  * @brief 2D 가우시안 커널을 생성합니다.
  * * @param kernelSize 커널의 한 변의 크기. 반드시 홀수여야 합니다 (e.g., 3, 5, 7).
@@ -27,7 +25,6 @@ std::vector<double> createGaussianKernel(int kernelSize, double sigma)
     double sum = 0.0;
     int center = kernelSize / 2;
 
-    // 1. 가우시안 함수를 이용해 커널 값 계산
     for (int i = 0; i < kernelSize; ++i)
     {
         for (int j = 0; j < kernelSize; ++j)
@@ -35,7 +32,7 @@ std::vector<double> createGaussianKernel(int kernelSize, double sigma)
             int x = j - center;
             int y = i - center;
 
-            // 2D 가우시안 공식 적용
+            // 2D 가우시안 공식
             double value = exp(-(x * x + y * y) / (2 * sigma * sigma)) / (2 * M_PI * sigma * sigma);
 
             kernel[i * kernelSize + j] = value;
@@ -44,7 +41,6 @@ std::vector<double> createGaussianKernel(int kernelSize, double sigma)
     }
 
     // 2. 정규화: 모든 커널 값의 합이 1이 되도록 조정
-    // 이렇게 해야 이미지의 전체 밝기가 유지됩니다.
     for (int i = 0; i < kernel.size(); ++i)
     {
         kernel[i] /= sum;
@@ -124,14 +120,13 @@ namespace ImaGyNative
     }
     // // Color Contrast
     // Binarization - Complete
-    void NativeCore::ApplyBinarization(void* pixels, int width, int height, int stride, unsigned char threshold)
+    void NativeCore::ApplyBinarization(void* pixels, int width, int height, int stride, int threshold)
     {
         unsigned char* pixelData = static_cast<unsigned char*>(pixels);
         for (int y = 0; y < height; ++y)
         {
             for (int x = 0; x < width; ++x)
             {
-                // Assuming Gray8 format, so each pixel is 1 byte
                 int index = y * stride + x;
                 pixelData[index] = (pixelData[index] > threshold) ? 255 : 0;
             }
@@ -311,26 +306,26 @@ namespace ImaGyNative
     }
 
     // Blurring
-   // 2. 버그가 수정된 GaussianBlur 함수
+   // Gaussian - Complete
     void NativeCore::ApplyGaussianBlur(void* pixels, int width, int height, int stride, double sigma, int kernelSize)
     {
-        // double 타입 벡터로 가우시안 커널을 받습니다.
+        // double 타입 벡터로 가우시안 커널을 받음
         std::vector<double> kernel = createGaussianKernel(kernelSize, sigma);
 
         unsigned char* pixelData = static_cast<unsigned char*>(pixels);
         unsigned char* resultBuffer = new unsigned char[height * stride];
 
-        // 원본 데이터를 결과 버퍼에 복사하여 가장자리 픽셀들이 보존되도록 합니다.
+        // 원본 데이터를 결과 버퍼에 복사하여 가장자리 픽셀들이 보존
         memcpy(resultBuffer, pixelData, height * stride);
 
-        // 일반화된 컨볼루션 함수를 호출합니다.
-        // 커널이 이미 정규화되었으므로 kernelSum은 1.0 입니다.
+        // 일반화된 컨볼루션 함수를 호출
+        // 커널이 이미 정규화되었으므로 kernelSum은 1.0
         ApplyConvolution(pixelData, resultBuffer, width, height, stride, kernel.data(), kernelSize, 1.0);
 
         memcpy(pixelData, resultBuffer, height * stride);
         delete[] resultBuffer;
     }
-    // Gaussian - Complete
+    //
     void NativeCore::ApplyAverageBlur(void* pixels, int width, int height, int stride, int kernelSize)
     {
         // double 타입 커널을 사용하도록 수정 (ApplyConvolution 함수와 호환을 위해)

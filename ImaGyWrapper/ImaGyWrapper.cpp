@@ -9,7 +9,7 @@ namespace ImaGy
     namespace Wrapper
     {
         // Color Contrast
-        void NativeProcessor::ApplyBinarization(IntPtr pixels, int width, int height, int stride, Byte threshold)
+        void NativeProcessor::ApplyBinarization(IntPtr pixels, int width, int height, int stride, int threshold)
         {
             ImaGyNative::NativeCore::ApplyBinarization(pixels.ToPointer(), width, height, stride, threshold);
         }

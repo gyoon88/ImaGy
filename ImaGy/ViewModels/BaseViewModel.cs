@@ -13,7 +13,7 @@ namespace ImaGy.ViewModels
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        // 바로 이 부분이 빠져있는 헬퍼 메서드입니다.
+       
         protected bool SetProperty<T>(ref T field, T newValue, [CallerMemberName] string? propertyName = null)
         {
             // 기존 값과 새 값이 같으면 아무것도 하지 않음 (불필요한 UI 갱신 방지)
