@@ -51,8 +51,6 @@ namespace ImaGy.Models
         public static BitmapSource ProcessTwoBitmapSourcePixels(BitmapSource source, BitmapSource template, Action<IntPtr, int,
      int, int, IntPtr, int, int, int> nativeAction)
         {
-            // 1. Process Source Image
-            // Convert source image to a usable format (Gray8)
             FormatConvertedBitmap graySourceBitmap = new FormatConvertedBitmap();
             graySourceBitmap.BeginInit();
             graySourceBitmap.Source = source;
@@ -65,8 +63,6 @@ namespace ImaGy.Models
             byte[] sourcePixels = new byte[sourceHeight * sourceStride];
             graySourceBitmap.CopyPixels(sourcePixels, sourceStride, 0);
 
-            // 2. Process Template Image
-            // Convert template image to a usable format (Gray8)
             FormatConvertedBitmap grayTemplateBitmap = new FormatConvertedBitmap();
             grayTemplateBitmap.BeginInit();
             grayTemplateBitmap.Source = template;

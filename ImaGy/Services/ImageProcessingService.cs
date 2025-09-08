@@ -11,6 +11,12 @@ namespace ImaGy.Services
     {
         private readonly ImageProcessor _imageProcessor;
         private readonly ImageProcessorSSE _imageProcessorSse;
+
+        private readonly ColorContrastProcess _colorContrastProcessor;
+        private readonly MatchingProcessor _matchingProcessor;
+        private readonly FilterProcessor _filterProcessor;
+        private readonly MorphologyProcessor _morphologyProcessor;
+        
         private readonly UndoRedoService<BitmapSource?> _undoRedoService;
         private readonly HistoryService _historyService;
         private readonly LoggingService _loggingService;
@@ -18,12 +24,24 @@ namespace ImaGy.Services
         public ImageProcessingService(
             ImageProcessor imageProcessor,
             ImageProcessorSSE imageProcessorSse,
+            ColorContrastProcess colorContrastProcessor,
+            MatchingProcessor matchingProcessor,
+            FilterProcessor filterProcessor,
+            MorphologyProcessor morphologyProcessor,
+
+
             UndoRedoService<BitmapSource?> undoRedoService,
             HistoryService historyService,
             LoggingService loggingService)
         {
             _imageProcessor = imageProcessor;
             _imageProcessorSse = imageProcessorSse;
+            
+            _colorContrastProcessor = colorContrastProcessor;
+            _matchingProcessor = matchingProcessor;
+            _filterProcessor = filterProcessor;
+            _morphologyProcessor = morphologyProcessor;
+
             _undoRedoService = undoRedoService;
             _historyService = historyService;
             _loggingService = loggingService;
@@ -57,9 +75,9 @@ namespace ImaGy.Services
         {
             return processCommand switch
             {
-                "NCC" => (image) => _imageProcessor.ApplyNCC(image, template),
-                "SAD" => (image) => _imageProcessor.ApplySAD(image, template),
-                "SSD" => (image) => _imageProcessor.ApplySSD(image, template),
+                "NCC" => (image) => _matchingProcessor.ApplyNCC(image, template),
+                "SAD" => (image) => _matchingProcessor.ApplySAD(image, template),
+                "SSD" => (image) => _matchingProcessor.ApplySSD(image, template),
                 _ => GetProcessAction(processCommand),
             };
         }
@@ -69,9 +87,9 @@ namespace ImaGy.Services
             
             return processCommand switch
             {
-                "Average" => (image) => _imageProcessor.ApplyAverageBlur(image, kernelSize),
+                "Average" => (image) => _filterProcessor.ApplyAverageBlur(image, kernelSize),
                 "Average_SSE" => (image) => _imageProcessorSse.ApplyAverageBlurSse(image, kernelSize),
-                "Gaussian" => (image) => _imageProcessor.ApplyGaussianBlur(image, sigma, kernelSize),
+                "Gaussian" => (image) => _filterProcessor.ApplyGaussianBlur(image, sigma, kernelSize),
                 "Gaussian_SSE" => (image) => _imageProcessorSse.ApplyGaussianBlurSse(image, sigma, kernelSize),
                 _ => throw new ArgumentException("Invalid process command", nameof(processCommand)),
             };
@@ -81,17 +99,18 @@ namespace ImaGy.Services
             
             return processCommand switch
             {
-                "Bin" => (image) => _imageProcessor.ApplyBinarization(image, 128),
-                "Equal" => (image) => _imageProcessor.ApplyEqualization(image),
-                "Diff" => (image) => _imageProcessor.ApplyDifferential(image),
+                "Bin" => (image) => _colorContrastProcessor.ApplyBinarization(image, 128),
+                "Equal" => (image) => _colorContrastProcessor.ApplyEqualization(image),
+                "Diff" => (image) => _filterProcessor.ApplyDifferential(image),
                 "Diff_SSE" => (image) => _imageProcessorSse.ApplyDifferentialSse(image),
-                "Sobel" => (image) => _imageProcessor.ApplySobel(image),
+                "Sobel" => (image) => _filterProcessor.ApplySobel(image),
                 "Sobel_SSE" => (image) => _imageProcessorSse.ApplySobelSse(image),
-                "Laplace" => (image) => _imageProcessor.ApplyLaplacian(image),
+                "Laplace" => (image) => _filterProcessor.ApplyLaplacian(image),
                 "Laplace_SSE" => (image) => _imageProcessorSse.ApplyLaplacianSse(image),
-                "Dilation" => (image) => _imageProcessor.ApplyDilation(image),
+
+                "Dilation" => (image) => _morphologyProcessor.ApplyDilation(image),
                 "Dilation_SSE" => (image) => _imageProcessorSse.ApplyDilationSse(image),
-                "Erosion" => (image) => _imageProcessor.ApplyErosion(image),
+                "Erosion" => (image) => _morphologyProcessor.ApplyErosion(image),
                 "Erosion_SSE" => (image) => _imageProcessorSse.ApplyErosionSse(image),
                 _ => throw new ArgumentException("Invalid process command", nameof(processCommand)),
             };

@@ -110,6 +110,12 @@ namespace ImaGy.ViewModels
         // Model Class Instances
         private readonly ImageProcessor imageProcessor;
         private readonly ImageProcessorSSE imageProcessorSSE;
+
+        private readonly FilterProcessor filterProcessor;
+        private readonly MatchingProcessor matchingProcessor;
+        private readonly ColorContrastProcess colorContrastProcess;
+        private readonly MorphologyProcessor morphologyProcessor;
+
         public readonly UndoRedoService<BitmapSource?> undoRedoService;
         public readonly HistoryService historyService;
         private readonly LoggingService loggingService;
@@ -155,11 +161,17 @@ namespace ImaGy.ViewModels
             loggingService = new LoggingService();
             imageProcessor = new ImageProcessor();
             imageProcessorSSE = new ImageProcessorSSE();
+
+            filterProcessor = new FilterProcessor();
+            morphologyProcessor = new MorphologyProcessor();
+            matchingProcessor = new MatchingProcessor();
+            colorContrastProcess = new ColorContrastProcess();
+
             historyService = new HistoryService();
             clipboardService = new ClipboardImageService();
 
             fileService = new FileService();
-            imageProcessingService = new ImageProcessingService(imageProcessor, imageProcessorSSE, undoRedoService, historyService, loggingService);
+            imageProcessingService = new ImageProcessingService(imageProcessor, imageProcessorSSE,  colorContrastProcess, matchingProcessor, filterProcessor, morphologyProcessor, undoRedoService, historyService, loggingService);
             histogramService = new HistogramService();
             roiViewModel = new RoiViewModel();
             cropService = new CropService();
