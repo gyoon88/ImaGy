@@ -1,4 +1,0 @@
-namespace ImaGy.Models
-{
-
-}

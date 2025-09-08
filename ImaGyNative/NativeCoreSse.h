@@ -14,8 +14,8 @@ namespace ImaGyNative
         extern "C" IMAGYNATIVE_API void ApplyDifferentialSse(void* pixels, int width, int height, int stride, unsigned char threshold);
         extern "C" IMAGYNATIVE_API void ApplySobelSse(void* pixels, int width, int height, int stride, unsigned char threshold);
 
-        extern "C" IMAGYNATIVE_API void ApplyAverageBlurSse(void* pixels, int width, int height, int stride, unsigned char threshold);
-        extern "C" IMAGYNATIVE_API void ApplyGaussianBlurSse(void* pixels, int width, int height, int stride, unsigned char threshold);
+        extern "C" IMAGYNATIVE_API void ApplyAverageBlurSse(void* pixels, int width, int height, int stride, int kernelSize);
+        extern "C" IMAGYNATIVE_API void ApplyGaussianBlurSse(void* pixels, int width, int height, int stride, double sigma, int kernelSize);
 
         extern "C" IMAGYNATIVE_API void ApplyDilationSse(void* pixels, int width, int height, int stride, unsigned char threshold);
         extern "C" IMAGYNATIVE_API void ApplyErosionSse(void* pixels, int width, int height, int stride, unsigned char threshold);

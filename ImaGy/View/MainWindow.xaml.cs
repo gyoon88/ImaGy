@@ -100,7 +100,8 @@ namespace ImaGy.View
             e.Handled = true; // Consume the event to prevent ScrollViewer from handling it
 
             Image imageControl = (Image)sender;
-            ScrollViewer scrollViewer = (ScrollViewer)imageControl.Parent; // Get parent ScrollViewer
+            ScrollViewer scrollViewer = FindAncestor<ScrollViewer>(imageControl); // Safely get parent ScrollViewer
+            if (scrollViewer == null) return;
             ScaleTransform scaleTransform = (imageControl == BeforeImageControl) ? beforeScaleTransform : afterScaleTransform;
 
             double zoomFactor = 1.1; // Zoom in/out factor
@@ -167,14 +168,7 @@ namespace ImaGy.View
             }
         }
 
-        public void ScrollMainImage(double deltaX, double deltaY)
-        {
-            BeforeImageScrollViewer.ScrollToHorizontalOffset(BeforeImageScrollViewer.HorizontalOffset - deltaX);
-            BeforeImageScrollViewer.ScrollToVerticalOffset(BeforeImageScrollViewer.VerticalOffset - deltaY);
-
-            AfterImageScrollViewer.ScrollToHorizontalOffset(AfterImageScrollViewer.HorizontalOffset - deltaX);
-            AfterImageScrollViewer.ScrollToVerticalOffset(AfterImageScrollViewer.VerticalOffset - deltaY);
-        }
+        
 
         private void RoiCanvas_MouseDown(object sender, MouseButtonEventArgs e)
         {
@@ -198,6 +192,22 @@ namespace ImaGy.View
             {
                 viewModel.RoiViewModel.MouseUpCommand.Execute(e);
             }
+        }
+
+        // Helper method to find an ancestor of a specific type in the visual tree
+        private static T FindAncestor<T>(DependencyObject current) where T : DependencyObject
+        {
+            do
+            {
+                current = VisualTreeHelper.GetParent(current);
+                if (current is T ancestor) return ancestor;
+            } while (current != null);
+            return null;
+        }
+
+        private void Slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+
         }
     }
 }

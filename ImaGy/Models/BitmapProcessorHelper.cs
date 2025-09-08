@@ -8,7 +8,7 @@ namespace ImaGy.Models
 {
     public static class BitmapProcessorHelper
     {
-        public static BitmapSource ProcessBitmapSourcePixels(BitmapSource source, Action<IntPtr, int, int, int, byte> nativeAction, byte threshold)
+        public static BitmapSource ProcessBitmapSourcePixels(BitmapSource source, Action<IntPtr, int, int, int> nativeAction)
         {
             // Convert to grayscale if not already, as native function expects Gray8
             FormatConvertedBitmap grayBitmap = new FormatConvertedBitmap();
@@ -27,7 +27,7 @@ namespace ImaGy.Models
             try
             {
                 IntPtr pixelPtr = pinnedPixels.AddrOfPinnedObject();
-                nativeAction(pixelPtr, width, height, stride, threshold);
+                nativeAction(pixelPtr, width, height, stride);
             }
             finally
             {
@@ -49,7 +49,7 @@ namespace ImaGy.Models
             return result;
         }
         public static BitmapSource ProcessTwoBitmapSourcePixels(BitmapSource source, BitmapSource template, Action<IntPtr, int,
-     int, int, IntPtr, int, int, int, byte> nativeAction, byte threshold)
+     int, int, IntPtr, int, int, int> nativeAction)
         {
             // 1. Process Source Image
             // Convert source image to a usable format (Gray8)
@@ -93,7 +93,7 @@ namespace ImaGy.Models
                 // pointed to by sourcePixelPtr. No BitmapSource is returned from native code;
                 // instead, we create a new one here from the modified byte array.
                 nativeAction(sourcePixelPtr, sourceWidth, sourceHeight, sourceStride,
-                             templatePixelPtr, templateWidth, templateHeight, templateStride, threshold);
+                             templatePixelPtr, templateWidth, templateHeight, templateStride);
 
                 // Recreate BitmapSource from the modified sourcePixels array.
                 // This is the correct way to get the data back from the in-place modification.

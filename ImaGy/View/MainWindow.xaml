@@ -48,7 +48,7 @@
             </MenuItem>
             <MenuItem Header="_도구">
                 <MenuItem Header="자르기"/>
-                <MenuItem Header="미니맵 보기"/>
+
                 <MenuItem Header="ROI 선택" Command="{Binding SelectRoiCommand}"/>
             </MenuItem>
             <MenuItem Header="_도움말">
@@ -161,14 +161,14 @@
                                     <ScaleTransform ScaleX="1.0" ScaleY="1.0"/>
                                 </Image.LayoutTransform>
                             </Image>
-                            <Canvas x:Name="AfterRoiCanvas" 
+                            <!--<Canvas x:Name="AfterRoiCanvas" 
                                     Visibility="{Binding RoiViewModel.IsDrawingRoi, Converter={StaticResource BooleanToVisibilityConverter}}">
                                 <Border BorderBrush="Blue" BorderThickness="2"
                                         Canvas.Left="{Binding RoiViewModel.CurrentRoi.X}"
                                         Canvas.Top="{Binding RoiViewModel.CurrentRoi.Y}"
                                         Width="{Binding RoiViewModel.CurrentRoi.Width}"
                                         Height="{Binding RoiViewModel.CurrentRoi.Height}" />
-                            </Canvas>
+                            </Canvas>-->
                         </Grid>
                     </ScrollViewer>
                 </Grid>
@@ -192,6 +192,7 @@
                                 <StackPanel>
                                     <Button Content="Binarization" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Bin"/>
                                     <Button Content="Equalization" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Equal" />
+                                    
                                 </StackPanel>
                             </Expander>
 
@@ -206,9 +207,11 @@
                                             <Button Content="Differential" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Diff_SSE" />
                                             <Button Content="Sobel" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Sobel_SSE"/>
                                             <Button Content="Laplacian" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Laplace_SSE" />
-                                            <Button Content="FFT" Margin="2" />
+                                            <Button Content="FFT" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Laplace_SSE"/>
                                         </StackPanel>
                                     </GroupBox>
+                                
+
 
                                     <GroupBox Header="Blur">
                                         <StackPanel>

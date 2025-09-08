@@ -10,63 +10,63 @@ namespace ImaGy.Models
         // Edge detect process
         public BitmapSource ApplyDifferentialSse(BitmapSource source)
         {
-            return BitmapProcessorHelper.ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride, threshold) =>
+            return BitmapProcessorHelper.ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride) =>
             {
-                NativeProcessor.ApplyDifferentialSse(pixelPtr, width, height, stride, threshold);
-            }, 128);
+                NativeProcessor.ApplyDifferentialSse(pixelPtr, width, height, stride, 128); // Assuming 128 is a default or placeholder threshold
+            });
         }
 
         public BitmapSource ApplySobelSse(BitmapSource source)
         {
-            return BitmapProcessorHelper.ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride, threshold) =>
+            return BitmapProcessorHelper.ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride) =>
             {
-                NativeProcessor.ApplySobelSse(pixelPtr, width, height, stride, threshold);
-            }, 128);
+                NativeProcessor.ApplySobelSse(pixelPtr, width, height, stride, 128); // Assuming 128 is a default or placeholder threshold
+            });
         }
 
         public BitmapSource ApplyLaplacianSse(BitmapSource source)
         {
-            return BitmapProcessorHelper.ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride, threshold) =>
+            return BitmapProcessorHelper.ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride) =>
             {
-                NativeProcessor.ApplyLaplacianSse(pixelPtr, width, height, stride, threshold);
-            }, 128);
+                NativeProcessor.ApplyLaplacianSse(pixelPtr, width, height, stride, 128); // Assuming 128 is a default or placeholder threshold
+            });
         }
 
 
         // Blur process
-        public BitmapSource ApplyAverageBlurSse(BitmapSource source)
+        public BitmapSource ApplyAverageBlurSse(BitmapSource source, int kernelSize)
         {
-            return BitmapProcessorHelper.ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride, threshold) =>
+            return BitmapProcessorHelper.ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride) =>
             {
-                NativeProcessor.ApplyAverageBlurSse(pixelPtr, width, height, stride, threshold);
-            }, 128);
+                NativeProcessor.ApplyAverageBlurSse(pixelPtr, width, height, stride, kernelSize);
+            });
         }
 
-        public BitmapSource ApplyGaussianBlurSse(BitmapSource source)
+        public BitmapSource ApplyGaussianBlurSse(BitmapSource source, double sigma, int kernelSize)
         {
-            return BitmapProcessorHelper.ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride, threshold) =>
+            return BitmapProcessorHelper.ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride) =>
             {
-                NativeProcessor.ApplyGaussianBlurSse(pixelPtr, width, height, stride, threshold);
-            }, 128);
+                NativeProcessor.ApplyGaussianBlurSse(pixelPtr, width, height, stride, sigma, kernelSize);
+            });
         }
 
 
         // Mophorogy
         public BitmapSource ApplyDilationSse(BitmapSource source)
         {
-            return BitmapProcessorHelper.ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride, threshold) =>
+            return BitmapProcessorHelper.ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride) =>
             {
-                NativeProcessor.ApplyDilationSse(pixelPtr, width, height, stride, threshold);
-            }, 128);
+                NativeProcessor.ApplyDilationSse(pixelPtr, width, height, stride, 128);
+            });
 
         }
 
         public BitmapSource ApplyErosionSse(BitmapSource source)
         {
-            return BitmapProcessorHelper.ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride, threshold) =>
+            return BitmapProcessorHelper.ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride) =>
             {
-                NativeProcessor.ApplyErosionSse(pixelPtr, width, height, stride, threshold);
-            }, 128);
+                NativeProcessor.ApplyErosionSse(pixelPtr, width, height, stride, 128);
+            });
         }
 
 

@@ -34,14 +34,16 @@ namespace ImaGy
         }
 
         // Blurring
-        void NativeProcessor::ApplyAverageBlur(IntPtr pixels, int width, int height, int stride, Byte threshold)
+        void NativeProcessor::ApplyAverageBlur(IntPtr pixels, int width, int height, int stride, int kernelSize)
         {
-            ImaGyNative::NativeCore::ApplyAverageBlur(pixels.ToPointer(), width, height, stride, threshold);
+            ImaGyNative::NativeCore::ApplyAverageBlur(pixels.ToPointer(), width, height, stride, kernelSize);
         }
-        void NativeProcessor::ApplyGaussianBlur(IntPtr pixels, int width, int height, int stride, Byte threshold)
+
+        void NativeProcessor::ApplyGaussianBlur(IntPtr pixels, int width, int height, int stride, double sigma, int kernelSize)
         {
-            ImaGyNative::NativeCore::ApplyGaussianBlur(pixels.ToPointer(), width, height, stride, threshold);
+            ImaGyNative::NativeCore::ApplyGaussianBlur(pixels.ToPointer(), width, height, stride, sigma, kernelSize);
         }
+
 
         // Morphorogy
         void NativeProcessor::ApplyDilation(IntPtr pixels, int width, int height, int stride, Byte threshold)
@@ -90,13 +92,14 @@ namespace ImaGy
         }
 
         // Blurring
-        void NativeProcessor::ApplyAverageBlurSse(IntPtr pixels, int width, int height, int stride, Byte threshold)
+        void NativeProcessor::ApplyAverageBlurSse(IntPtr pixels, int width, int height, int stride, int kernelSize)
         {
-            ImaGyNative::SSE::ApplyAverageBlurSse(pixels.ToPointer(), width, height, stride, threshold);
+            ImaGyNative::SSE::ApplyAverageBlurSse(pixels.ToPointer(), width, height, stride, kernelSize);
         }
-        void NativeProcessor::ApplyGaussianBlurSse(IntPtr pixels, int width, int height, int stride, Byte threshold)
+
+        void NativeProcessor::ApplyGaussianBlurSse(IntPtr pixels, int width, int height, int stride, double sigma, int kernelSize)
         {
-            ImaGyNative::SSE::ApplyGaussianBlurSse(pixels.ToPointer(), width, height, stride, threshold);
+            ImaGyNative::SSE::ApplyGaussianBlurSse(pixels.ToPointer(), width, height, stride, sigma, kernelSize);
         }
 
         // Morphorogy

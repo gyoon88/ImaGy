@@ -2,12 +2,61 @@
 #include "pch.h"
 #include "NativeCore.h"
 #include <cmath>
+#include <iostream>
+#include <vector>
+#include <iomanip> 
 
+
+
+
+/**
+ * @brief 2D 가우시안 커널을 생성합니다.
+ * * @param kernelSize 커널의 한 변의 크기. 반드시 홀수여야 합니다 (e.g., 3, 5, 7).
+ * @param sigma 가우시안 분포의 표준편차(sigma). 블러의 강도를 조절합니다.
+ * @return 정규화된 1D 벡터 형태의 가우시안 커널.
+ */
+std::vector<double> createGaussianKernel(int kernelSize, double sigma)
+{
+    const double M_PI = 3.14159265358979323846;
+    // 커널 크기는 반드시 홀수여야 중앙 픽셀이 존재합니다.
+    if (kernelSize % 2 == 0) {
+        throw std::invalid_argument("Kernel size must be an odd number.");
+    }
+
+    std::vector<double> kernel(kernelSize * kernelSize);
+    double sum = 0.0;
+    int center = kernelSize / 2;
+
+    // 1. 가우시안 함수를 이용해 커널 값 계산
+    for (int i = 0; i < kernelSize; ++i)
+    {
+        for (int j = 0; j < kernelSize; ++j)
+        {
+            int x = j - center;
+            int y = i - center;
+
+            // 2D 가우시안 공식 적용
+            double value = exp(-(x * x + y * y) / (2 * sigma * sigma)) / (2 * M_PI * sigma * sigma);
+
+            kernel[i * kernelSize + j] = value;
+            sum += value;
+        }
+    }
+
+    // 2. 정규화: 모든 커널 값의 합이 1이 되도록 조정
+    // 이렇게 해야 이미지의 전체 밝기가 유지됩니다.
+    for (int i = 0; i < kernel.size(); ++i)
+    {
+        kernel[i] /= sum;
+    }
+
+    return kernel;
+}
 namespace ImaGyNative
 {
     // Convolution Helper Method 3x3
     void ApplyConvolution3x3( const unsigned char* sourcePixels, unsigned char* destPixels, 
-        int width, int height, int stride, const int kernel[9], double kernelSum)
+        int width, int height, int stride, int kernel[9], double kernelSum)
     {
         for (int y = 1; y < height - 1; ++y)
         {
@@ -39,8 +88,40 @@ namespace ImaGyNative
                 destPixels[indexes[4]] = static_cast<unsigned char>(sum);
             }
         }
-    }
 
+    }
+    void ApplyConvolution(const unsigned char* sourcePixels, unsigned char* destPixels,
+        int width, int height, int stride, const double* kernel, int kernelSize, double kernelSum)
+    {
+        int center = kernelSize / 2;
+
+        for (int y = center; y < height - center; ++y)
+        {
+            for (int x = center; x < width - center; ++x)
+            {
+                double sum = 0.0;
+                for (int ky = -center; ky <= center; ++ky)
+                {
+                    for (int kx = -center; kx <= center; ++kx)
+                    {
+                        int sourceIndex = (y + ky) * stride + (x + kx);
+                        int kernelIndex = (ky + center) * kernelSize + (kx + center);
+                        sum += kernel[kernelIndex] * sourcePixels[sourceIndex];
+                    }
+                }
+
+                if (kernelSum != 0)
+                {
+                    sum /= kernelSum;
+                }
+
+                if (sum > 255) sum = 255;
+                if (sum < 0) sum = 0;
+
+                destPixels[y * stride + x] = static_cast<unsigned char>(sum);
+            }
+        }
+    }
     // // Color Contrast
     // Binarization - Complete
     void NativeCore::ApplyBinarization(void* pixels, int width, int height, int stride, unsigned char threshold)
@@ -230,40 +311,45 @@ namespace ImaGyNative
     }
 
     // Blurring
-    void NativeCore::ApplyAverageBlur(void* pixels, int width, int height, int stride, unsigned char threshold)
+   // 2. 버그가 수정된 GaussianBlur 함수
+    void NativeCore::ApplyGaussianBlur(void* pixels, int width, int height, int stride, double sigma, int kernelSize)
     {
-        int kernel[9] = { 1, 1, 1,
-                         1, 1, 1,
-                         1, 1, 1 }; // plane kernel
-        double kernelSum = 9.0;
+        // double 타입 벡터로 가우시안 커널을 받습니다.
+        std::vector<double> kernel = createGaussianKernel(kernelSize, sigma);
 
         unsigned char* pixelData = static_cast<unsigned char*>(pixels);
         unsigned char* resultBuffer = new unsigned char[height * stride];
 
-        // convolution helper method 
-        ApplyConvolution3x3(pixelData, resultBuffer, width, height, stride, kernel, kernelSum);
+        // 원본 데이터를 결과 버퍼에 복사하여 가장자리 픽셀들이 보존되도록 합니다.
+        memcpy(resultBuffer, pixelData, height * stride);
 
-        // Copy the result to origin mem
+        // 일반화된 컨볼루션 함수를 호출합니다.
+        // 커널이 이미 정규화되었으므로 kernelSum은 1.0 입니다.
+        ApplyConvolution(pixelData, resultBuffer, width, height, stride, kernel.data(), kernelSize, 1.0);
+
         memcpy(pixelData, resultBuffer, height * stride);
-        delete[] resultBuffer; // memory free - result buffer
+        delete[] resultBuffer;
     }
     // Gaussian - Complete
-    void NativeCore::ApplyGaussianBlur(void* pixels, int width, int height, int stride, unsigned char threshold)
+    void NativeCore::ApplyAverageBlur(void* pixels, int width, int height, int stride, int kernelSize)
     {
-        int kernel[9] = { 1, 2, 1, 
-                          2, 4, 2, 
-                          1, 2, 1 };
-        double kernelSum = 16.0; // blur have to Divide by Sum of Kernel for brightness
+        // double 타입 커널을 사용하도록 수정 (ApplyConvolution 함수와 호환을 위해)
+        std::vector<double> kernel(kernelSize * kernelSize);
+        for (int i = 0; i < kernel.size(); i++) { // 루프 변수 초기화 및 범위 수정
+            kernel[i] = 1.0;
+        }
+
+        double kernelSum = kernelSize * kernelSize; // kernelSum 수정
 
         unsigned char* pixelData = static_cast<unsigned char*>(pixels);
         unsigned char* resultBuffer = new unsigned char[height * stride];
+        memcpy(resultBuffer, pixelData, height * stride);
 
-        // convolution helper method 
-        ApplyConvolution3x3(pixelData, resultBuffer, width, height, stride, kernel, kernelSum);
+        // 일반화된 컨볼루션 함수 호출
+        ApplyConvolution(pixelData, resultBuffer, width, height, stride, kernel.data(), kernelSize, kernelSum);
 
-        // Copy the result to origin mem
         memcpy(pixelData, resultBuffer, height * stride);
-        delete[] resultBuffer; // memory free - result buffer
+        delete[] resultBuffer;
     }
 
     // Morphorogy

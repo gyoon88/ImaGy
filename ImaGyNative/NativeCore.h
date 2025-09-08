@@ -22,8 +22,8 @@ namespace ImaGyNative
         static void ApplyLaplacian (void* pixels, int width, int height, int stride, unsigned char threshold);
         
         // Blurring
-        static void ApplyAverageBlur(void* pixels, int width, int height, int stride, unsigned char threshold);
-        static void ApplyGaussianBlur(void* pixels, int width, int height, int stride, unsigned char threshold);
+        static void ApplyAverageBlur(void* pixels, int width, int height, int stride, int kernelSize);
+        static void ApplyGaussianBlur(void* pixels, int width, int height, int stride, double sigma, int kernelSize);
 
         // Morphorogy
         static void ApplyDilation(void* pixels, int width, int height, int stride, unsigned char threshold);

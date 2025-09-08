@@ -2,6 +2,7 @@ using ImaGy.Models;
 using System;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media.Effects;
 using System.Windows.Media.Imaging;
 
 namespace ImaGy.Services
@@ -63,8 +64,21 @@ namespace ImaGy.Services
             };
         }
 
+        public Func<BitmapSource, BitmapSource> GetProcessAction(string processCommand, double sigma, int kernelSize)
+        {
+            
+            return processCommand switch
+            {
+                "Average" => (image) => _imageProcessor.ApplyAverageBlur(image, kernelSize),
+                "Average_SSE" => (image) => _imageProcessorSse.ApplyAverageBlurSse(image, kernelSize),
+                "Gaussian" => (image) => _imageProcessor.ApplyGaussianBlur(image, sigma, kernelSize),
+                "Gaussian_SSE" => (image) => _imageProcessorSse.ApplyGaussianBlurSse(image, sigma, kernelSize),
+                _ => throw new ArgumentException("Invalid process command", nameof(processCommand)),
+            };
+        }
         public Func<BitmapSource, BitmapSource> GetProcessAction(string processCommand)
         {
+            
             return processCommand switch
             {
                 "Bin" => (image) => _imageProcessor.ApplyBinarization(image, 128),
@@ -75,10 +89,6 @@ namespace ImaGy.Services
                 "Sobel_SSE" => (image) => _imageProcessorSse.ApplySobelSse(image),
                 "Laplace" => (image) => _imageProcessor.ApplyLaplacian(image),
                 "Laplace_SSE" => (image) => _imageProcessorSse.ApplyLaplacianSse(image),
-                "Average" => (image) => _imageProcessor.ApplyAverageBlur(image),
-                "Average_SSE" => (image) => _imageProcessorSse.ApplyAverageBlurSse(image),
-                "Gaussian" => (image) => _imageProcessor.ApplyGaussianBlur(image),
-                "Gaussian_SSE" => (image) => _imageProcessorSse.ApplyGaussianBlurSse(image),
                 "Dilation" => (image) => _imageProcessor.ApplyDilation(image),
                 "Dilation_SSE" => (image) => _imageProcessorSse.ApplyDilationSse(image),
                 "Erosion" => (image) => _imageProcessor.ApplyErosion(image),

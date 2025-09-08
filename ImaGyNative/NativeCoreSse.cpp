@@ -11,7 +11,7 @@ namespace ImaGyNative
        
 
 
-        void ApplyAverageBlurSse(void* pixels, int width, int height, int stride, unsigned char threshold)
+        void ApplyAverageBlurSse(void* pixels, int width, int height, int stride, int kernelSize)
         {
             unsigned char* pixelData = static_cast<unsigned char*>(pixels);
             unsigned char* sourceBuffer = new unsigned char[height * stride];
@@ -79,7 +79,7 @@ namespace ImaGyNative
             delete[] sourceBuffer;
         }
 
-        void ApplyGaussianBlurSse(void* pixels, int width, int height, int stride, unsigned char threshold)
+        void ApplyGaussianBlurSse(void* pixels, int width, int height, int stride, double sigma, int kernelSize)
         {
             unsigned char* pixelData = static_cast<unsigned char*>(pixels);
             unsigned char* sourceBuffer = new unsigned char[height * stride];

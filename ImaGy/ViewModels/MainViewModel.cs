@@ -23,13 +23,15 @@ namespace ImaGy.ViewModels
         private string? imageResolution;
         private string? zoomLevel;
         private string? processingTime;
-        private bool _isProcessing;
+        private bool isProcessing;
+        private int threshold;
+
         public bool IsProcessing
         {
-            get => _isProcessing;
+            get => isProcessing;
             set
             {
-                _isProcessing = value;
+                isProcessing = value;
                 OnPropertyChanged(); // Assuming you have a base method for property change notifications
             }
         }
@@ -68,6 +70,11 @@ namespace ImaGy.ViewModels
         {
             get => processingTime;
             set => SetProperty(ref processingTime, value);
+        }
+        public int Threshold
+        {
+            get => threshold;
+            set => OnPropertyChanged();
         }
         public string LogText => loggingService.LogText;
 
@@ -157,16 +164,20 @@ namespace ImaGy.ViewModels
             roiViewModel = new RoiViewModel();
             cropService = new CropService();
 
+
+            // Commands
+            
             // Commands
             OpenImageCommand = new OpenImageCommand(this, fileService, loggingService);
-            SaveImageCommand = new SaveImageCommand(this, fileService, loggingService);
+            SaveImageCommand = new OpenImageCommand(this, fileService, loggingService);
             UndoCommand = new UndoCommand(this, undoRedoService);
-            RedoCommand = new RedoCommand(this, undoRedoService);
+            RedoCommand = new UndoCommand(this, undoRedoService);
 
             ColorContrastCommand = new ApplyFilterCommand(this, imageProcessingService);
             FilterringCommand = new ApplyFilterCommand(this, imageProcessingService);
             MorphorogyCommand = new ApplyFilterCommand(this, imageProcessingService);
             ImageMatchingCommand = new ApplyImageMatchingCommand(this, imageProcessingService);
+
             ViewHistogramCommand = new ViewHistogramCommand(this, histogramService);
             ExportHistoryCommand = new ExportHistoryCommand(this, historyService, loggingService, fileService);
             ExportLogCommand = new ExportLogCommand(this, loggingService, fileService);
@@ -208,16 +219,6 @@ namespace ImaGy.ViewModels
         public void UpdateZoomLevel(double scale)
         {
             ZoomLevel = $"{scale * 100:F0}%";
-        }
-
-        public void ScrollMainImage(double deltaX, double deltaY)
-        {
-            // This method will be called from MinimapViewModel
-            // It needs to update the ScrollViewer's scroll position in MainWindow.xaml.cs
-            // This requires a callback or event from ViewModel to View.
-            // For now, a placeholder.
-            // This is where the ImageLoadedCallback might be useful, but for scrolling.
-            // A better approach is to use a dedicated service for UI interactions.
         }
 
         private void ExecuteSelectRoi(object? parameter)

@@ -34,10 +34,10 @@ namespace ImaGy
             static void ApplyLaplacianSse(IntPtr pixels, int width, int height, int stride, Byte threshold);
 
             // Blurring
-            static void ApplyAverageBlur(IntPtr pixels, int width, int height, int stride, Byte threshold);
-            static void ApplyAverageBlurSse(IntPtr pixels, int width, int height, int stride, Byte threshold);
-            static void ApplyGaussianBlur(IntPtr pixels, int width, int height, int stride, Byte threshold);
-            static void ApplyGaussianBlurSse(IntPtr pixels, int width, int height, int stride, Byte threshold);
+            static void ApplyAverageBlur(IntPtr pixels, int width, int height, int stride, int kernelSize);
+            static void ApplyAverageBlurSse(IntPtr pixels, int width, int height, int stride, int kernelSize);
+            static void ApplyGaussianBlur(IntPtr pixels, int width, int height, int stride, double sigma, int kernelSize);
+            static void ApplyGaussianBlurSse(IntPtr pixels, int width, int height, int stride, double sigma, int kernelSize);
 
             // Morphorogy
             static void ApplyDilation(IntPtr pixels, int width, int height, int stride, Byte threshold);

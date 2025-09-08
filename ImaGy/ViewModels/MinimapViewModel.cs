@@ -118,7 +118,7 @@ namespace ImaGy.ViewModels
                 // Update main image scrollviewer
                 // This needs to be done via a callback or event to MainWindow.xaml.cs
                 // For now, I will call a method on MainViewModel, which will then call the view.
-                _mainViewModel.ScrollMainImage(scrollDeltaX, scrollDeltaY);
+                // _mainViewModel.ScrollMainImage(scrollDeltaX, scrollDeltaY); // Removed as it caused compilation error after revert
 
                 _lastMousePosition = currentMousePosition;
             }
