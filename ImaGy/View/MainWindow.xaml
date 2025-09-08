@@ -191,6 +191,7 @@
                             <Expander Header="Colour | Contrast" Foreground="White">
                                 <StackPanel>
                                     <Button Content="Binarization" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Bin"/>
+                                    <Button Content="GreyScale" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Bin"/>
                                     <Button Content="Equalization" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Equal" />
                                     
                                 </StackPanel>
