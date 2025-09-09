@@ -30,9 +30,11 @@ namespace ImaGy
             // EdgeDetect
             static void ApplyDifferential(IntPtr pixels, int width, int height, int stride, Byte threshold);
             static void ApplyDifferentialSse(IntPtr pixels, int width, int height, int stride, Byte threshold);
-            static void ApplySobel(IntPtr pixels, int width, int height, int stride, Byte threshold);
+
+            static void ApplySobel(IntPtr pixels, int width, int height, int stride, int kernelSize);
             static void ApplySobelSse(IntPtr pixels, int width, int height, int stride, Byte threshold);
-            static void ApplyLaplacian(IntPtr pixels, int width, int height, int stride, Byte threshold);
+
+            static void ApplyLaplacian(IntPtr pixels, int width, int height, int stride, int kernelSize);
             static void ApplyLaplacianSse(IntPtr pixels, int width, int height, int stride, Byte threshold);
 
             // Blurring
@@ -43,10 +45,10 @@ namespace ImaGy
             static void ApplyGaussianBlurSse(IntPtr pixels, int width, int height, int stride, double sigma, int kernelSize);
 
             // Morphorogy
-            static void ApplyDilation(IntPtr pixels, int width, int height, int stride, Byte threshold);
+            static void ApplyDilation(IntPtr pixels, int width, int height, int stride, int kernelSize);
             static void ApplyDilationSse(IntPtr pixels, int width, int height, int stride, Byte threshold);
 
-            static void ApplyErosion(IntPtr pixels, int width, int height, int stride, Byte threshold);
+            static void ApplyErosion(IntPtr pixels, int width, int height, int stride, int kernelSize);
             static void ApplyErosionSse(IntPtr pixels, int width, int height, int stride, Byte threshold);
 
             // Image Matching

@@ -29,13 +29,13 @@ namespace ImaGy
         {
             ImaGyNative::NativeCore::ApplyDifferential(pixels.ToPointer(), width, height, stride, threshold);
         }
-        void NativeProcessor::ApplySobel(IntPtr pixels, int width, int height, int stride, Byte threshold)
+        void NativeProcessor::ApplySobel(IntPtr pixels, int width, int height, int stride, int kernelSize)
         {
-            ImaGyNative::NativeCore::ApplySobel(pixels.ToPointer(), width, height, stride, threshold);
+            ImaGyNative::NativeCore::ApplySobel(pixels.ToPointer(), width, height, stride, kernelSize);
         }
-        void NativeProcessor::ApplyLaplacian(IntPtr pixels, int width, int height, int stride, Byte threshold)
+        void NativeProcessor::ApplyLaplacian(IntPtr pixels, int width, int height, int stride, int kernelSize)
         {
-            ImaGyNative::NativeCore::ApplyLaplacian(pixels.ToPointer(), width, height, stride, threshold);
+            ImaGyNative::NativeCore::ApplyLaplacian(pixels.ToPointer(), width, height, stride, kernelSize);
         }
 
         // Blurring
@@ -51,13 +51,13 @@ namespace ImaGy
 
 
         // Morphorogy
-        void NativeProcessor::ApplyDilation(IntPtr pixels, int width, int height, int stride, Byte threshold)
+        void NativeProcessor::ApplyDilation(IntPtr pixels, int width, int height, int stride, int kernelSize)
         {
-            ImaGyNative::NativeCore::ApplyDilation(pixels.ToPointer(), width, height, stride, threshold);
+            ImaGyNative::NativeCore::ApplyDilation(pixels.ToPointer(), width, height, stride, kernelSize);
         }
-        void NativeProcessor::ApplyErosion(IntPtr pixels, int width, int height, int stride, Byte threshold)
+        void NativeProcessor::ApplyErosion(IntPtr pixels, int width, int height, int stride, int kernelSize)
         {
-            ImaGyNative::NativeCore::ApplyErosion(pixels.ToPointer(), width, height, stride, threshold);
+            ImaGyNative::NativeCore::ApplyErosion(pixels.ToPointer(), width, height, stride, kernelSize);
         }
         
         // Image Matching

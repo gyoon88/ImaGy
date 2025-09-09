@@ -81,8 +81,13 @@ namespace ImaGy.Services
             return processCommand switch
             {
                 // Color & Contrast
-                "Bin" => (image) => _colorContrastProcessor.ApplyBinarization(image, vm.Threshold), // 하드코딩(128) 대신 ViewModel 값 사용
+                "Bin" => (image) => _colorContrastProcessor.ApplyBinarization(image, vm.Threshold), 
+                "Bin_Othu" => (image) => _colorContrastProcessor.ApplyOtsuBinarization(image),
+
+                "Grey" => (image) => _colorContrastProcessor.ToGrayscale(image), 
+
                 "Equal" => (image) => _colorContrastProcessor.ApplyEqualization(image),
+                "Equal_color" => (image) => _colorContrastProcessor.ApplyColorEqualization(image),
 
                 // Filters
                 "Average" => (image) => _filterProcessor.ApplyAverageBlur(image, vm.KernelSize),
@@ -91,15 +96,15 @@ namespace ImaGy.Services
                 "Gaussian_SSE" => (image) => _imageProcessorSse.ApplyGaussianBlurSse(image, vm.Sigma, vm.KernelSize),
                 "Diff" => (image) => _filterProcessor.ApplyDifferential(image),
                 "Diff_SSE" => (image) => _imageProcessorSse.ApplyDifferentialSse(image),
-                "Sobel" => (image) => _filterProcessor.ApplySobel(image),
+                "Sobel" => (image) => _filterProcessor.ApplySobel(image, vm.KernelSize),
                 "Sobel_SSE" => (image) => _imageProcessorSse.ApplySobelSse(image),
-                "Laplace" => (image) => _filterProcessor.ApplyLaplacian(image),
+                "Laplace" => (image) => _filterProcessor.ApplyLaplacian(image, vm.KernelSize),
                 "Laplace_SSE" => (image) => _imageProcessorSse.ApplyLaplacianSse(image),
 
                 // Morphology
-                "Dilation" => (image) => _morphologyProcessor.ApplyDilation(image),
+                "Dilation" => (image) => _morphologyProcessor.ApplyDilation(image, vm.KernelSize),
                 "Dilation_SSE" => (image) => _imageProcessorSse.ApplyDilationSse(image),
-                "Erosion" => (image) => _morphologyProcessor.ApplyErosion(image),
+                "Erosion" => (image) => _morphologyProcessor.ApplyErosion(image, vm.KernelSize),
                 "Erosion_SSE" => (image) => _imageProcessorSse.ApplyErosionSse(image),
 
                 // Matching - Template 이미지가 필요

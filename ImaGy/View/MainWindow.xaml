@@ -191,7 +191,9 @@
                                 <StackPanel>
                                     <GroupBox Header="Binarization" Margin="5">
                                         <StackPanel>
+                                            <Button Content="Othu's Binarization" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Bin_Othu"/>
                                             <Button Content="Binarization" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Bin"/>
+
 
                                             <Grid Margin="5">
                                                 <Grid.ColumnDefinitions>
@@ -208,6 +210,7 @@
                                     </GroupBox>
                                     <Button Content="GreyScale" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Grey"/>
                                     <Button Content="Equalization" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Equal" />
+                                    <Button Content="Color Equalization" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Equal_color" />
                                 </StackPanel>
                             </Expander>
 

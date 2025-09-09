@@ -15,7 +15,7 @@ namespace ImaGy.Models
             return (result, stopwatch.Elapsed.TotalMilliseconds);
         }
 
-        // 반환 값이 없는 함수(Action)의 실행 시간을 측정합니다.
+        // 반환 값이 없는 함수(Action)의 실행 시간을 측정
         public static double Measure(Action action)
         {
             var stopwatch = new Stopwatch();

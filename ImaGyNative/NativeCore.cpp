@@ -7,10 +7,68 @@
 #include <iomanip> 
 
 
+    /**
+     * @brief 소벨 X축 커널을 생성
+     * @param kernelSize 커널 크기 (홀수).
+     * @return double 타입의 1D 벡터 커널.
+     */
+std::vector<double> createSobelKernelX(int kernelSize) {
+    std::vector<double> kernel(kernelSize * kernelSize);
+    int center = kernelSize / 2;
+    for (int y = 0; y < kernelSize; ++y) {
+        for (int x = 0; x < kernelSize; ++x) {
+            if (x == center) {
+                kernel[y * kernelSize + x] = 0;
+            }
+            else {
+                kernel[y * kernelSize + x] = (x - center) / (double)((x - center) * (x - center) + (y - center) * (y - center));
+            }
+        }
+    }
+    return kernel;
+}
+
 /**
- * @brief 2D 가우시안 커널을 생성합니다.
- * * @param kernelSize 커널의 한 변의 크기. 반드시 홀수여야 합니다 (e.g., 3, 5, 7).
- * @param sigma 가우시안 분포의 표준편차(sigma). 블러의 강도를 조절합니다.
+ * @brief 소벨 Y축 커널을 생성
+ * @param kernelSize 커널 크기 (홀수).
+ * @return double 타입의 1D 벡터 커널.
+ */
+std::vector<double> createSobelKernelY(int kernelSize) {
+    std::vector<double> kernel(kernelSize * kernelSize);
+    int center = kernelSize / 2;
+    for (int y = 0; y < kernelSize; ++y) {
+        for (int x = 0; x < kernelSize; ++x) {
+            if (y == center) {
+                kernel[y * kernelSize + x] = 0;
+            }
+            else {
+                kernel[y * kernelSize + x] = (y - center) / (double)((x - center) * (x - center) + (y - center) * (y - center));
+            }
+        }
+    }
+    return kernel;
+}
+
+/**
+ * @brief 라플라시안 커널을 생성 
+ * @param kernelSize 커널 크기 (홀수).
+ * @return double 타입의 1D 벡터 커널.
+ */
+std::vector<double> createLaplacianKernel(int kernelSize)
+{
+    if (kernelSize % 2 == 0) {
+        throw std::invalid_argument("Kernel size must be an odd number.");
+    }
+    std::vector<double> kernel(kernelSize * kernelSize, 1.0);
+    int centerIndex = (kernelSize / 2) * kernelSize + (kernelSize / 2);
+    kernel[centerIndex] = 1.0 - (kernelSize * kernelSize);
+    return kernel;
+}
+
+/**
+ * @brief 2D 가우시안 커널을 생성
+ * * @param kernelSize 커널의 한 변의 크기. 반드시 홀수
+ * @param sigma 가우시안 분포의 표준편차(sigma). 블러의 강도를 조절
  * @return 정규화된 1D 벡터 형태의 가우시안 커널.
  */
 std::vector<double> createGaussianKernel(int kernelSize, double sigma)
@@ -48,23 +106,27 @@ std::vector<double> createGaussianKernel(int kernelSize, double sigma)
 
     return kernel;
 }
+
+/**
+ * 오츠 알고리즘으로 임계값 산정
+ */
 int OtsuThreshold(const unsigned char* sourcePixels, int width, int height, int stride)
 {
     int hist[256] = { 0 };
     int total = width * height;
-
+    // Hitogram Distribution Calculation
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             int idx = sourcePixels[y * stride + x];
             hist[idx]++;
         }
     }
-
+    // Expetation Calculation
     double sumAll = 0;
     for (int i = 0; i < 256; i++) {
         sumAll += i * hist[i];
     }
-
+    
     double sumB = 0;   
     int wB = 0;        
     int wF = 0;       
@@ -93,9 +155,12 @@ int OtsuThreshold(const unsigned char* sourcePixels, int width, int height, int 
 
     return threshold;
 }
+
+
+
 namespace ImaGyNative
 {
-    // Convolution Helper Method 3x3
+    // Convolution Helper Method
     void ApplyConvolution3x3( const unsigned char* sourcePixels, unsigned char* destPixels, 
         int width, int height, int stride, int kernel[9], double kernelSum)
     {
@@ -163,12 +228,13 @@ namespace ImaGyNative
             }
         }
     }
+
     // // Color Contrast
     // Binarization - Complete
     void NativeCore::ApplyBinarization(void* pixels, int width, int height, int stride, int threshold)
     {
         unsigned char* pixelData = static_cast<unsigned char*>(pixels);
-        if (threshold != 128) {
+        if (threshold == -1) {
             threshold = OtsuThreshold(pixelData, width, height, stride);
         }
         for (int y = 0; y < height; ++y)
@@ -180,6 +246,7 @@ namespace ImaGyNative
             }
         }
     }
+
     // Equalization - Complete
     void NativeCore::ApplyEqualization(void* pixels, int width, int height, int stride, unsigned char threshold)
     {
@@ -232,6 +299,7 @@ namespace ImaGyNative
             }
         }
     }
+    // Histogram - Complete
     void NativeCore::ApplyHistogram(void* pixels, int width, int height, int stride, int* hist) {
         unsigned char* pixelData = static_cast<unsigned char*>(pixels);
         std::fill(hist, hist + 256, 0);
@@ -243,7 +311,9 @@ namespace ImaGyNative
             }
         }
     }
-    // EdgeDetect
+    
+    
+    // // EdgeDetect
     // Differnetial - Complete
     void NativeCore::ApplyDifferential(void* pixels, int width, int height, int stride, unsigned char threshold)
     {
@@ -281,90 +351,78 @@ namespace ImaGyNative
         // free the resultBuffer memory
         delete[] resultBuffer;
     }
-    // Sobel - Complete
-    void NativeCore::ApplySobel(void* pixels, int width, int height, int stride, unsigned char threshold)
+  
+   // Sobel - Complete
+    void NativeCore::ApplySobel(void* pixels, int width, int height, int stride, int kernelSize)
     {
-        // Gx kernel 
-        int kernelX[9] = { -1, 0, 1, 
-                           -2, 0, 2, 
-                           -1, 0, 1 };
-        // Gy kernel
-        int kernelY[9] = { -1, -2, -1, 
-                            0, 0, 0, 
-                            1, 2, 1 };
-        // origin data
+        // 커널 크기는 홀수여야 합니다.
+        if (kernelSize % 2 == 0) kernelSize++;
+
+        std::vector<double> kernelX = createSobelKernelX(kernelSize);
+        std::vector<double> kernelY = createSobelKernelY(kernelSize);
+
         unsigned char* pixelData = static_cast<unsigned char*>(pixels);
-
-        // read only data 
         unsigned char* sourceBuffer = new unsigned char[height * stride];
-
-        //copy the origin data to read only data buffer
         memcpy(sourceBuffer, pixelData, height * stride);
 
-        // Generate temp buffer for Gx, Gy each result 
-        double* bufferX = new double[height * stride];
-        double* bufferY = new double[height * stride];
+        // Gx와 Gy 결과를 저장할 임시 버퍼
+        double* bufferX = new double[height * stride]();
+        double* bufferY = new double[height * stride]();
 
-        for (int y = 1; y < height - 1; ++y)
-        {
-            for (int x = 1; x < width - 1; ++x)
-            {
+        int center = kernelSize / 2;
+
+        // Gx와 Gy를 각각 계산
+        for (int y = center; y < height - center; ++y) {
+            for (int x = center; x < width - center; ++x) {
                 double sumX = 0.0;
                 double sumY = 0.0;
-
-                int indexes[9] = {
-                    (y - 1) * stride + (x - 1), (y - 1) * stride + x, (y - 1) * stride + (x + 1),
-                    y * stride + (x - 1), y * stride + x, y * stride + (x + 1),
-                    (y + 1) * stride + (x - 1), (y + 1) * stride + x, (y + 1) * stride + (x + 1)
-                };
-
-                // Convolution operation
-                for (int i = 0; i < 9; ++i)
-                {
-                    sumX += kernelX[i] * sourceBuffer[indexes[i]];
-                    sumY += kernelY[i] * sourceBuffer[indexes[i]];
+                for (int ky = -center; ky <= center; ++ky) {
+                    for (int kx = -center; kx <= center; ++kx) {
+                        int sourceIndex = (y + ky) * stride + (x + kx);
+                        int kernelIndex = (ky + center) * kernelSize + (kx + center);
+                        sumX += kernelX[kernelIndex] * sourceBuffer[sourceIndex];
+                        sumY += kernelY[kernelIndex] * sourceBuffer[sourceIndex];
+                    }
                 }
-
-                int centerIndex = y * stride + x;
-                bufferX[centerIndex] = sumX;
-                bufferY[centerIndex] = sumY;
+                int destIndex = y * stride + x;
+                bufferX[destIndex] = sumX;
+                bufferY[destIndex] = sumY;
             }
         }
 
-        // Edit the origin data
-        for (int i = 0; i < height * stride; ++i)
-        {
-            double finalValue = sqrt(bufferX[i] * bufferX[i] + bufferY[i] * bufferY[i]); // If they cause time issue change abs 
-            // value validation
+        // 결과 병합
+        for (int i = 0; i < height * stride; ++i) {
+            double finalValue = sqrt(bufferX[i] * bufferX[i] + bufferY[i] * bufferY[i]);
             if (finalValue > 255) finalValue = 255;
             pixelData[i] = static_cast<unsigned char>(finalValue);
         }
 
-        // free the readonly buffer and each result buffer GxGy 
         delete[] sourceBuffer;
         delete[] bufferX;
         delete[] bufferY;
     }
+
     // Laplacian - Complete
-    void NativeCore::ApplyLaplacian(void* pixels, int width, int height, int stride, unsigned char threshold)
+    void NativeCore::ApplyLaplacian(void* pixels, int width, int height, int stride, int kernelSize)
     {
-        int kernel[9] = { 1, 1, 1, 
-                          1, -8, 1, 
-                          1, 1, 1 }; 
-        // Origin data
-        unsigned char* pixelData = static_cast<unsigned char*>(pixels); 
-        // result data
-        unsigned char* resultBuffer = new unsigned char[height * stride]; 
+        // 커널 크기는 홀수여야 합니다.
+        if (kernelSize % 2 == 0) kernelSize++;
 
-        // Call the convolusion Helper method
-        ApplyConvolution3x3(pixelData, resultBuffer, width, height, stride, kernel, 0); 
-        memcpy(pixelData, resultBuffer, height * stride); // Copy the result to origin mem
+        std::vector<double> kernel = createLaplacianKernel(kernelSize);
 
-        delete[] resultBuffer; // memory free - result buffer
+        unsigned char* pixelData = static_cast<unsigned char*>(pixels);
+        unsigned char* resultBuffer = new unsigned char[height * stride];
+        memcpy(resultBuffer, pixelData, height * stride);
+
+        // 일반화된 컨볼루션 함수 호출 (kernelSum = 0으로 하여 엣지 강조)
+        ApplyConvolution(pixelData, resultBuffer, width, height, stride, kernel.data(), kernelSize, 0.0);
+
+        memcpy(pixelData, resultBuffer, height * stride);
+        delete[] resultBuffer;
     }
 
-    // Blurring
-   // Gaussian - Complete
+    // // Blurring
+    // Gaussian - Complete
     void NativeCore::ApplyGaussianBlur(void* pixels, int width, int height, int stride, double sigma, int kernelSize)
     {
         // double 타입 벡터로 가우시안 커널을 받음
@@ -383,7 +441,7 @@ namespace ImaGyNative
         memcpy(pixelData, resultBuffer, height * stride);
         delete[] resultBuffer;
     }
-    //
+    // Average - Complete
     void NativeCore::ApplyAverageBlur(void* pixels, int width, int height, int stride, int kernelSize)
     {
         // double 타입 커널을 사용하도록 수정 (ApplyConvolution 함수와 호환을 위해)
@@ -406,92 +464,85 @@ namespace ImaGyNative
     }
 
     // Morphorogy
-    void NativeCore::ApplyDilation(void* pixels, int width, int height, int stride, unsigned char threshold)
-    {
-        unsigned char* pixelData = static_cast<unsigned char*>(pixels);
 
-        // result and readonly buffer
-        unsigned char* resultBuffer = new unsigned char[height * stride];
+    void NativeCore::ApplyDilation(void* pixels, int width, int height, int stride, int kernelSize)
+    {
+        if (kernelSize % 2 == 0) kernelSize++; // 커널 크기를 홀수로 보정
+        int center = kernelSize / 2;
+
+        unsigned char* pixelData = static_cast<unsigned char*>(pixels);
         unsigned char* sourceBuffer = new unsigned char[height * stride];
         memcpy(sourceBuffer, pixelData, height * stride);
 
-        for (int y = 1; y < height - 1; ++y)
+        // 결과 버퍼는 원본 데이터로 초기화하여 가장자리를 보존
+        unsigned char* resultBuffer = new unsigned char[height * stride];
+        memcpy(resultBuffer, pixelData, height * stride);
+
+        for (int y = center; y < height - center; ++y)
         {
-            for (int x = 1; x < width - 1; ++x)
+            for (int x = center; x < width - center; ++x)
             {
-                // calculate neighbor pixel 
-                int indexes[9] = {
-                    (y - 1) * stride + (x - 1), (y - 1) * stride + x, (y - 1) * stride + (x + 1),
-                    y * stride + (x - 1),       y * stride + x,       y * stride + (x + 1),
-                    (y + 1) * stride + (x - 1), (y + 1) * stride + x, (y + 1) * stride + (x + 1)
-                };
-                // change max neighbor pixel 
                 unsigned char maxValue = 0;
-                for (int i = 0; i < 9; ++i)
+                // 커널 영역 순회
+                for (int ky = -center; ky <= center; ++ky)
                 {
-                    if (sourceBuffer[indexes[i]] > maxValue)
+                    for (int kx = -center; kx <= center; ++kx)
                     {
-                        maxValue = sourceBuffer[indexes[i]];
+                        int currentVal = sourceBuffer[(y + ky) * stride + (x + kx)];
+                        if (currentVal > maxValue)
+                        {
+                            maxValue = currentVal;
+                        }
                     }
                 }
-
-                // store the max value to result buffer
-                resultBuffer[indexes[4]] = maxValue;
+                resultBuffer[y * stride + x] = maxValue;
             }
         }
 
-        // copy the result buffer to origin data
         memcpy(pixelData, resultBuffer, height * stride);
-
-        // memory free - result buffer
-        delete[] resultBuffer;
         delete[] sourceBuffer;
+        delete[] resultBuffer;
     }
-
 
     // Erosion - Complete
-    void NativeCore::ApplyErosion(void* pixels, int width, int height, int stride, unsigned char threshold)
+    void NativeCore::ApplyErosion(void* pixels, int width, int height, int stride, int kernelSize)
     {
-        unsigned char* pixelData = static_cast<unsigned char*>(pixels);
+        if (kernelSize % 2 == 0) kernelSize++; // 커널 크기를 홀수로 보정
+        int center = kernelSize / 2;
 
-        // result and readonly buffer
-        unsigned char* resultBuffer = new unsigned char[height * stride];
+        unsigned char* pixelData = static_cast<unsigned char*>(pixels);
         unsigned char* sourceBuffer = new unsigned char[height * stride];
         memcpy(sourceBuffer, pixelData, height * stride);
 
-        for (int y = 1; y < height - 1; ++y)
-        {
-            for (int x = 1; x < width - 1; ++x)
-            {
-                // calculate neighbor pixel 
-                int indexes[9] = {
-                    (y - 1) * stride + (x - 1), (y - 1) * stride + x, (y - 1) * stride + (x + 1),
-                    y * stride + (x - 1),       y * stride + x,       y * stride + (x + 1),
-                    (y + 1) * stride + (x - 1), (y + 1) * stride + x, (y + 1) * stride + (x + 1)
-                };
+        unsigned char* resultBuffer = new unsigned char[height * stride];
+        memcpy(resultBuffer, pixelData, height * stride);
 
-                // change the pixel to min of neighbor pixel
+        for (int y = center; y < height - center; ++y)
+        {
+            for (int x = center; x < width - center; ++x)
+            {
                 unsigned char minValue = 255;
-                for (int i = 0; i < 9; ++i)
+                // 커널 영역 순회
+                for (int ky = -center; ky <= center; ++ky)
                 {
-                    if (sourceBuffer[indexes[i]] < minValue)
+                    for (int kx = -center; kx <= center; ++kx)
                     {
-                        minValue = sourceBuffer[indexes[i]];
+                        int currentVal = sourceBuffer[(y + ky) * stride + (x + kx)];
+                        if (currentVal < minValue)
+                        {
+                            minValue = currentVal;
+                        }
                     }
                 }
-
-                // store the min value of neighbor to result buffer
-                resultBuffer[indexes[4]] = minValue;
+                resultBuffer[y * stride + x] = minValue;
             }
         }
 
-        // copy the result to origin buffer
         memcpy(pixelData, resultBuffer, height * stride);
-
-        // mem free
-        delete[] resultBuffer;
         delete[] sourceBuffer;
+        delete[] resultBuffer;
     }
+
     // Image Matching - I'll complete next week
     // normailized cross correlation
     void NativeCore::ApplyNCC(void* pixels, int width, int height, int stride, void* templatePixels, int templateWidth, int templateHeight, int templateStride, unsigned char threshold)

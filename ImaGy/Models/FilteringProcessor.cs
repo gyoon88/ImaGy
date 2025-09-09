@@ -15,19 +15,19 @@ namespace ImaGy.Models
             });
         }
 
-        public BitmapSource ApplySobel(BitmapSource source)
+        public BitmapSource ApplySobel(BitmapSource source, int kernelSize)
         {
             return BitmapProcessorHelper.ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride) =>
             {
-                NativeProcessor.ApplySobel(pixelPtr, width, height, stride, 128);
+                NativeProcessor.ApplySobel(pixelPtr, width, height, stride, kernelSize);
             });
         }
 
-        public BitmapSource ApplyLaplacian(BitmapSource source)
+        public BitmapSource ApplyLaplacian(BitmapSource source, int kernelSize)
         {
             return BitmapProcessorHelper.ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride) =>
             {
-                NativeProcessor.ApplyLaplacian(pixelPtr, width, height, stride, 128);
+                NativeProcessor.ApplyLaplacian(pixelPtr, width, height, stride, kernelSize);
             });
         }
         public BitmapSource ApplyFFT(BitmapSource source)

@@ -20,16 +20,16 @@ namespace ImaGyNative
 
         // Edge Detection
         static void ApplyDifferential(void* pixels, int width, int height, int stride, unsigned char threshold);
-        static void ApplySobel(void* pixels, int width, int height, int stride, unsigned char threshold);
-        static void ApplyLaplacian (void* pixels, int width, int height, int stride, unsigned char threshold);
+        static void ApplySobel(void* pixels, int width, int height, int stride, int kernelSize);
+        static void ApplyLaplacian (void* pixels, int width, int height, int stride, int kernelSize);
         
         // Blurring
         static void ApplyAverageBlur(void* pixels, int width, int height, int stride, int kernelSize);
         static void ApplyGaussianBlur(void* pixels, int width, int height, int stride, double sigma, int kernelSize);
 
         // Morphorogy
-        static void ApplyDilation(void* pixels, int width, int height, int stride, unsigned char threshold);
-        static void ApplyErosion(void* pixels, int width, int height, int stride, unsigned char threshold);
+        static void ApplyDilation(void* pixels, int width, int height, int stride, int kernelSize);
+        static void ApplyErosion(void* pixels, int width, int height, int stride, int kernelSize);
 
         // Image Matching
         static void ApplyNCC(void* pixels, int width, int height, int stride, 
