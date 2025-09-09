@@ -25,6 +25,8 @@ namespace ImaGy
             static void ApplyBinarization(IntPtr pixels, int width, int height, int stride, int threshold);
             static void ApplyEqualization(IntPtr pixels, int width, int height, int stride, Byte threshold);
 
+            static void ApplyHistogram(IntPtr pixels, int width, int height, int stride, int* hist);
+
             // EdgeDetect
             static void ApplyDifferential(IntPtr pixels, int width, int height, int stride, Byte threshold);
             static void ApplyDifferentialSse(IntPtr pixels, int width, int height, int stride, Byte threshold);

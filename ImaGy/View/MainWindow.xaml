@@ -189,7 +189,23 @@
                         <StackPanel>
                             <Expander Header="Colour | Contrast" Foreground="White">
                                 <StackPanel>
-                                    <Button Content="Binarization" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Bin"/>
+                                    <GroupBox Header="Binarization" Margin="5">
+                                        <StackPanel>
+                                            <Button Content="Binarization" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Bin"/>
+
+                                            <Grid Margin="5">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="50"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="Threshold:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                                <TextBox Grid.Column="1" Text="{Binding Threshold, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
+                                                <Slider Grid.Column="2" Value="{Binding Threshold, Mode=TwoWay}" Minimum="0" Maximum="255" TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
+                                            </Grid>
+
+                                        </StackPanel>
+                                    </GroupBox>
                                     <Button Content="GreyScale" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Grey"/>
                                     <Button Content="Equalization" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Equal" />
                                 </StackPanel>
@@ -223,7 +239,6 @@
                                     
                                     <GroupBox Header="Blur Parameter" Margin="5">
                                         <StackPanel>
-
                                             <Grid Margin="5">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
@@ -232,9 +247,8 @@
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock Grid.Column="0" Text="Sigma:" VerticalAlignment="Center" Margin="0,0,5,0"/>
                                                 <TextBox Grid.Column="1" Text="{Binding Sigma, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
-                                                <Slider Grid.Column="2" Value="{Binding Sigma, Mode=TwoWay}" Minimum="0.1" Maximum="10" TickFrequency="0.1" VerticalAlignment="Center"/>
+                                                <Slider Grid.Column="2" Value="{Binding Sigma, Mode=TwoWay}" Minimum="0.1" Maximum="15" TickFrequency="0.1" VerticalAlignment="Center"/>
                                             </Grid>
-
                                             <Grid Margin="5">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
@@ -242,21 +256,9 @@
                                                     <ColumnDefinition Width="*"/>
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock Grid.Column="0" Text="Kernel:" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                                <TextBox Grid.Column="1" Text="{Binding Kernel, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
-                                                <Slider Grid.Column="2" Value="{Binding Kernel, Mode=TwoWay}" Minimum="1" Maximum="21" TickFrequency="2" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
+                                                <TextBox Grid.Column="1" Text="{Binding KernelSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
+                                                <Slider Grid.Column="2" Value="{Binding KernelSize, Mode=TwoWay}" Minimum="1" Maximum="25" TickFrequency="2" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
                                             </Grid>
-
-                                            <Grid Margin="5">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="50"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock Grid.Column="0" Text="Threshold:" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                                <TextBox Grid.Column="1" Text="{Binding Threshold, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
-                                                <Slider Grid.Column="2" Value="{Binding Threshold, Mode=TwoWay}" Minimum="0" Maximum="255" TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
-                                            </Grid>
-
                                         </StackPanel>
                                     </GroupBox>
 

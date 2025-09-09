@@ -18,6 +18,11 @@ namespace ImaGy
             ImaGyNative::NativeCore::ApplyEqualization(pixels.ToPointer(), width, height, stride, threshold);
         }
 
+        void NativeProcessor::ApplyHistogram(IntPtr pixels, int width, int height, int stride, int* hist) 
+        {
+            ImaGyNative::NativeCore::ApplyHistogram(pixels.ToPointer(), width, height, stride, hist);
+        }
+
 
         // Edge Detect
         void NativeProcessor::ApplyDifferential(IntPtr pixels, int width, int height, int stride, Byte threshold)

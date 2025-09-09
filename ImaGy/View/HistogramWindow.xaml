@@ -4,29 +4,26 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ImaGy.View"
+        xmlns:vm="clr-namespace:ImaGy.ViewModels"
         mc:Ignorable="d"
-        Title="Histogram" Height="400" Width="600">
+        Title="Histogram" Height="400" Width="600"
+        d:DataContext="{d:DesignInstance Type=vm:HistogramViewModel, IsDesignTimeCreatable=True}">
+
     <Grid Background="{StaticResource WindowBackgroundBrush}">
-    <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="Auto"/>
-        <ColumnDefinition Width="*"/>
-    </Grid.ColumnDefinitions>
-    <Grid.RowDefinitions>
-        <RowDefinition Height="*"/>
-        <RowDefinition Height="Auto"/>
-        <RowDefinition Height="Auto"/>
-    </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
-    <!-- Y-axis labels -->
-    <Grid Grid.Row="0" Grid.Column="0" Name="YAxisLabelsPanel" VerticalAlignment="Stretch" Margin="0,10,5,10"/>
+        <Grid Grid.Row="0" Grid.Column="0" Name="YAxisLabelsPanel" VerticalAlignment="Stretch" Margin="5,10,5,10"/>
 
-    <!-- Histogram Canvas -->
-    <Canvas Grid.Row="0" Grid.Column="1" Name="HistogramCanvas" Background="{StaticResource PrimaryGrayBrush}" Margin="10" Loaded="HistogramCanvas_Loaded" SizeChanged="HistogramCanvas_SizeChanged"/>
+        <Canvas Grid.Row="0" Grid.Column="1" Name="HistogramCanvas" Background="{StaticResource PrimaryGrayBrush}" Margin="10" SizeChanged="HistogramCanvas_SizeChanged"/>
 
-    <!-- X-axis labels -->
-    <StackPanel Grid.Row="1" Grid.Column="1" Name="XAxisLabelsPanel" Orientation="Horizontal" HorizontalAlignment="Stretch" Margin="10,5,10,0"/>
+        <StackPanel Grid.Row="1" Grid.Column="1" Name="XAxisLabelsPanel" Orientation="Horizontal" HorizontalAlignment="Stretch" Margin="10,5,10,0"/>
 
-    <!-- Button -->
-    <Button Grid.Row="2" Grid.Column="1" Content="Update Histogram" x:Name="HitogramUpdate" Margin="100,0,100,10" HorizontalContentAlignment="Center" /> 
-</Grid>
+    </Grid>
 </Window>

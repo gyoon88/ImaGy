@@ -1,4 +1,5 @@
 using ImaGy.ViewModels;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -6,130 +7,93 @@ using System.Windows.Shapes;
 
 namespace ImaGy.View
 {
-    /// <summary>
-    /// Interaction logic for HistogramWindow.xaml
-    /// </summary>
-    public partial class HistogramWindow : Window
-    {
-        public HistogramWindow()
+        public partial class HistogramWindow : Window
         {
-            InitializeComponent();
-        }
+            private HistogramViewModel _viewModel;
 
-        private void HistogramCanvas_Loaded(object sender, RoutedEventArgs e)
-        {
-            RedrawHistogram();
-        }
-
-        private void HistogramCanvas_SizeChanged(object sender, SizeChangedEventArgs e)
-        {
-            RedrawHistogram();
-        }
-
-        public void RedrawHistogram()
-        {
-            if (DataContext is HistogramViewModel viewModel)
+            public HistogramWindow()
             {
-                DrawHistogram(viewModel.HistogramData, viewModel.MaxHistogramValue);
-            }
-        }
-
-        private void DrawHistogram(int[]? histogramData, int maxVal)
-        {
-            HistogramCanvas.Children.Clear();
-            YAxisLabelsPanel.Children.Clear();
-            XAxisLabelsPanel.Children.Clear();
-
-            if (histogramData == null || histogramData.Length == 0 || maxVal == 0) return;
-
-            double canvasWidth = HistogramCanvas.ActualWidth;
-            double canvasHeight = HistogramCanvas.ActualHeight;
-
-            if (canvasWidth == 0 || canvasHeight == 0) return; // Avoid division by zero if not rendered yet
-
-            DrawGridAndLabels(canvasWidth, canvasHeight, maxVal);
-
-            double barWidth = canvasWidth / histogramData.Length;
-
-            for (int i = 0; i < histogramData.Length; i++)
-            {
-                double barHeight = (double)histogramData[i] / maxVal * canvasHeight;
-
-                Rectangle rect = new Rectangle
-                {
-                    Width = barWidth,
-                    Height = barHeight,
-                    Fill = Brushes.Blue
-                };
-
-                Canvas.SetLeft(rect, i * barWidth);
-                Canvas.SetBottom(rect, 0); // Align bars to the bottom
-
-                HistogramCanvas.Children.Add(rect);
-            }
-        }
-
-        private void DrawGridAndLabels(double canvasWidth, double canvasHeight, int maxVal)
-        {
-            // Draw Horizontal Grid Lines and Y-axis Labels
-            int horizontalLines = 5; // 0%, 25%, 50%, 75%, 100%
-            YAxisLabelsPanel.Children.Clear();
-            YAxisLabelsPanel.RowDefinitions.Clear(); // Clear existing row definitions
-
-            for (int i = 0; i < horizontalLines; i++)
-            {
-                // Add RowDefinition for each label
-                YAxisLabelsPanel.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-
-                double y = canvasHeight - (canvasHeight / (horizontalLines - 1)) * i;
-                if (i == 0) y = canvasHeight; // Ensure bottom line is exactly at the bottom
-
-                Line horizontalLine = new Line
-                {
-                    X1 = 0, Y1 = y,
-                    X2 = canvasWidth, Y2 = y,
-                    Stroke = Brushes.LightGray,
-                    StrokeDashArray = new DoubleCollection { 2, 2 }
-                };
-                HistogramCanvas.Children.Add(horizontalLine);
-
-                TextBlock yLabel = new TextBlock
-                {
-                    Text = (maxVal / (horizontalLines - 1) * i).ToString(),
-                    VerticalAlignment = VerticalAlignment.Center,
-                    HorizontalAlignment = HorizontalAlignment.Right,
-                    Margin = new Thickness(0, 0, 5, 0),
-                    Foreground = Brushes.White
-                };
-                Grid.SetRow(yLabel, horizontalLines - 1 - i); // Set row for the label (reverse order)
-                YAxisLabelsPanel.Children.Add(yLabel);
+                InitializeComponent();
+                Loaded += HistogramWindow_Loaded;
             }
 
-            // Draw Vertical Grid Lines and X-axis Labels
-            int verticalLines = 5; // 0, 64, 128, 192, 255
-            for (int i = 0; i < verticalLines; i++)
+            private void HistogramWindow_Loaded(object sender, RoutedEventArgs e)
             {
-                double x = (canvasWidth / (verticalLines - 1)) * i;
+                _viewModel = DataContext as HistogramViewModel;
+                if (_viewModel == null) return;
 
-                Line verticalLine = new Line
-                {
-                    X1 = x, Y1 = 0,
-                    X2 = x, Y2 = canvasHeight,
-                    Stroke = Brushes.LightGray,
-                    StrokeDashArray = new DoubleCollection { 2, 2 }
-                };
-                HistogramCanvas.Children.Add(verticalLine);
+                _viewModel.PropertyChanged += ViewModel_PropertyChanged;
+                DrawHistogram(); // 초기 히스토그램 그리기
+            }
 
-                TextBlock xLabel = new TextBlock
+            private void ViewModel_PropertyChanged(object sender, PropertyChangedEventArgs e)
+            {
+                // ViewModel의 주요 데이터 속성이 변경되면 그래프를 다시 그리도록 신호를 보냅니다.
+                // OnPropertyChanged가 여러 번 호출되므로, 모든 계산이 끝난 후 업데이트되는 MaxHistogramValue를 기준으로 삼는 것이 효율적입니다.
+                if (e.PropertyName == nameof(HistogramViewModel.MaxHistogramValue))
                 {
-                    Text = (255 / (verticalLines - 1) * i).ToString(),
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    VerticalAlignment = VerticalAlignment.Top,
-                    Width = canvasWidth / (verticalLines - 1), // Distribute width
-                    Foreground = Brushes.White
-                };
-                XAxisLabelsPanel.Children.Add(xLabel);
+                    DrawHistogram();
+                }
+            }
+
+            private void HistogramCanvas_SizeChanged(object sender, SizeChangedEventArgs e)
+            {
+                // 창 크기가 변경될 때도 그래프를 다시 그립니다.
+                DrawHistogram();
+            }
+
+            private void DrawHistogram()
+            {
+                HistogramCanvas.Children.Clear();
+                if (_viewModel == null) return;
+
+                // ViewModel의 플래그에 따라 그리기 로직을 분기합니다.
+                if (_viewModel.IsColorImage)
+                {
+                    // 반투명한 R, G, B 색상으로 각 채널을 겹쳐서 그립니다.
+                    DrawChannelHistogram(_viewModel.R_HistogramData, Color.FromArgb(128, 255, 0, 0)); // Red
+                    DrawChannelHistogram(_viewModel.G_HistogramData, Color.FromArgb(128, 0, 255, 0)); // Green
+                    DrawChannelHistogram(_viewModel.B_HistogramData, Color.FromArgb(128, 0, 0, 255)); // Blue
+                }
+                else
+                {
+                    // 흑백 히스토그램을 그립니다.
+                    DrawChannelHistogram(_viewModel.GrayscaleHistogramData, Colors.WhiteSmoke);
+                }
+            }
+
+            // 각 채널을 그리는 로직을 별도 메서드로 분리하여 코드 중복을 줄입니다.
+            private void DrawChannelHistogram(int[]? data, Color color)
+            {
+                if (data == null || data.Length == 0) return;
+
+                int max = _viewModel.MaxHistogramValue;
+                if (max == 0) return;
+
+                double canvasWidth = HistogramCanvas.ActualWidth;
+                double canvasHeight = HistogramCanvas.ActualHeight;
+                double barWidth = canvasWidth / data.Length;
+
+                var brush = new SolidColorBrush(color);
+                brush.Freeze(); // 성능 향상을 위해 WPF 리소스를 고정합니다.
+
+                for (int i = 0; i < data.Length; i++)
+                {
+                    double barHeight = (double)data[i] / max * canvasHeight;
+                    if (barHeight <= 0) continue;
+
+                    var bar = new Rectangle
+                    {
+                        Width = barWidth,
+                        Height = barHeight,
+                        Fill = brush
+                    };
+
+                    Canvas.SetLeft(bar, i * barWidth);
+                    Canvas.SetBottom(bar, 0);
+                    HistogramCanvas.Children.Add(bar);
+                }
             }
         }
     }
-}
+

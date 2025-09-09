@@ -48,6 +48,51 @@ std::vector<double> createGaussianKernel(int kernelSize, double sigma)
 
     return kernel;
 }
+int OtsuThreshold(const unsigned char* sourcePixels, int width, int height, int stride)
+{
+    int hist[256] = { 0 };
+    int total = width * height;
+
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            int idx = sourcePixels[y * stride + x];
+            hist[idx]++;
+        }
+    }
+
+    double sumAll = 0;
+    for (int i = 0; i < 256; i++) {
+        sumAll += i * hist[i];
+    }
+
+    double sumB = 0;   
+    int wB = 0;        
+    int wF = 0;       
+
+    double maxVar = 0;
+    int threshold = 0;
+
+    for (int t = 0; t < 256; t++) {
+        wB += hist[t];
+        if (wB == 0) continue;
+
+        wF = total - wB;
+        if (wF == 0) break;
+
+        sumB += (double)(t * hist[t]);
+
+        double mB = sumB / wB;                
+        double mF = (sumAll - sumB) / wF;      
+        double varBetween = (double)wB * (double)wF * (mB - mF) * (mB - mF);
+
+        if (varBetween > maxVar) {
+            maxVar = varBetween;
+            threshold = t;
+        }
+    }
+
+    return threshold;
+}
 namespace ImaGyNative
 {
     // Convolution Helper Method 3x3
@@ -123,6 +168,9 @@ namespace ImaGyNative
     void NativeCore::ApplyBinarization(void* pixels, int width, int height, int stride, int threshold)
     {
         unsigned char* pixelData = static_cast<unsigned char*>(pixels);
+        if (threshold != 128) {
+            threshold = OtsuThreshold(pixelData, width, height, stride);
+        }
         for (int y = 0; y < height; ++y)
         {
             for (int x = 0; x < width; ++x)
@@ -184,7 +232,17 @@ namespace ImaGyNative
             }
         }
     }
+    void NativeCore::ApplyHistogram(void* pixels, int width, int height, int stride, int* hist) {
+        unsigned char* pixelData = static_cast<unsigned char*>(pixels);
+        std::fill(hist, hist + 256, 0);
 
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                int idx = pixelData[y * stride + x];
+                hist[idx]++;
+            }
+        }
+    }
     // EdgeDetect
     // Differnetial - Complete
     void NativeCore::ApplyDifferential(void* pixels, int width, int height, int stride, unsigned char threshold)

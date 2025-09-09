@@ -16,6 +16,8 @@ namespace ImaGyNative
         static void ApplyBinarization(void* pixels, int width, int height, int stride, int threshold);
         static void ApplyEqualization(void* pixels, int width, int height, int stride, unsigned char threshold);
         
+        static void ApplyHistogram(void* pixels, int width, int height, int stride, int* hist);
+
         // Edge Detection
         static void ApplyDifferential(void* pixels, int width, int height, int stride, unsigned char threshold);
         static void ApplySobel(void* pixels, int width, int height, int stride, unsigned char threshold);

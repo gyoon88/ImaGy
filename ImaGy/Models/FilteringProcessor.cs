@@ -11,7 +11,7 @@ namespace ImaGy.Models
         {
             return BitmapProcessorHelper.ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride) =>
             {
-                NativeProcessor.ApplyDifferential(pixelPtr, width, height, stride, 128); // Assuming 128 is a default or placeholder threshold
+                NativeProcessor.ApplyDifferential(pixelPtr, width, height, stride, 128);
             });
         }
 
@@ -19,7 +19,7 @@ namespace ImaGy.Models
         {
             return BitmapProcessorHelper.ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride) =>
             {
-                NativeProcessor.ApplySobel(pixelPtr, width, height, stride, 128); // Assuming 128 is a default or placeholder threshold
+                NativeProcessor.ApplySobel(pixelPtr, width, height, stride, 128);
             });
         }
 
@@ -27,14 +27,14 @@ namespace ImaGy.Models
         {
             return BitmapProcessorHelper.ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride) =>
             {
-                NativeProcessor.ApplyLaplacian(pixelPtr, width, height, stride, 128); // Assuming 128 is a default or placeholder threshold
+                NativeProcessor.ApplyLaplacian(pixelPtr, width, height, stride, 128);
             });
         }
         public BitmapSource ApplyFFT(BitmapSource source)
         {
             return BitmapProcessorHelper.ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride) =>
             {
-                NativeProcessor.ApplyLaplacian(pixelPtr, width, height, stride, 128); // Assuming 128 is a default or placeholder threshold
+                NativeProcessor.ApplyLaplacian(pixelPtr, width, height, stride, 128); 
             });
         }
 
