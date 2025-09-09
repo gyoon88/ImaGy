@@ -34,7 +34,7 @@ namespace ImaGy.ViewModels
             set
             {
                 isProcessing = value;
-                OnPropertyChanged(); // Assuming you have a base method for property change notifications
+                OnPropertyChanged(); 
             }
         }
         // Properties

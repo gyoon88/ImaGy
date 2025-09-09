@@ -53,14 +53,12 @@ namespace ImaGy.Models
         }
 
         /// <summary>
-        /// 컬러 이미지의 R, G, B, A 각 채널에 대한 히스토그램을 계산합니다.
+        /// 컬러 이미지의 R, G, B, A 각 채널에 대한 히스토그램을 계산
         /// </summary>
         /// <returns>"R", "G", "B", "A"를 키로 갖는 히스토그램 Dictionary</returns>
         public static Dictionary<string, int[]> CalculateColorHistograms(BitmapSource source)
         {
             if (source == null) return new Dictionary<string, int[]>();
-
-            // 1. 일관된 처리를 위해 이미지를 Bgra32 포맷으로 변환합니다.
             FormatConvertedBitmap bitmapToUse = new FormatConvertedBitmap();
             bitmapToUse.BeginInit();
             bitmapToUse.Source = source;
@@ -69,12 +67,13 @@ namespace ImaGy.Models
 
             int width = bitmapToUse.PixelWidth;
             int height = bitmapToUse.PixelHeight;
-            // Bgra32는 픽셀당 4바이트(32비트)를 사용합니다.
+
+            // Bgra32는 픽셀당 4바이트(32비트)를 사용
             int stride = width * 4;
             byte[] allPixels = new byte[height * stride];
             bitmapToUse.CopyPixels(allPixels, stride, 0);
 
-            // 2. 각 채널별로 픽셀 데이터를 분리할 배열을 준비합니다.
+            // 각 채널별로 픽셀 데이터를 분리할 배열을 준비
             byte[] blueChannel = new byte[width * height];
             byte[] greenChannel = new byte[width * height];
             byte[] redChannel = new byte[width * height];
@@ -83,15 +82,15 @@ namespace ImaGy.Models
             for (int i = 0; i < allPixels.Length; i += 4)
             {
                 int pixelIndex = i / 4;
-                blueChannel[pixelIndex] = allPixels[i];     // Blue
-                greenChannel[pixelIndex] = allPixels[i + 1]; // Green
-                redChannel[pixelIndex] = allPixels[i + 2];   // Red
+                blueChannel[pixelIndex] = allPixels[i];     
+                greenChannel[pixelIndex] = allPixels[i + 1]; 
+                redChannel[pixelIndex] = allPixels[i + 2];   
                 alphaChannel[pixelIndex] = allPixels[i + 3]; // Alpha
             }
 
             var histograms = new Dictionary<string, int[]>();
 
-            // 3. 각 채널에 대해 기존 C++ 함수를 호출하여 히스토그램을 계산합니다.
+            // 각 채널에 대해 기존 C++ 함수를 호출하여 히스토그램을 계산
             histograms["B"] = CalculateHistogramForChannel(blueChannel, width, height);
             histograms["G"] = CalculateHistogramForChannel(greenChannel, width, height);
             histograms["R"] = CalculateHistogramForChannel(redChannel, width, height);
