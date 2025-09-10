@@ -9,30 +9,30 @@ namespace ImaGy.Models
         public BitmapSource ApplyNCC(BitmapSource source, BitmapSource template)
         {
             return BitmapProcessorHelper.ProcessTwoBitmapSourcePixels(source, template, (sourcePixelPtr, sourceWidth,
-                sourceHeight, sourceStride, templatePixelPtr, templateWidth, templateHeight, templateStride) =>
+                sourceHeight, sourceStride, templatePixelPtr, templateWidth, templateHeight, templateStride, coordPtr) =>
             {
                 NativeProcessor.ApplyNCC(sourcePixelPtr, sourceWidth, sourceHeight, sourceStride, templatePixelPtr,
-                    templateWidth, templateHeight, templateStride, 128); // Assuming 128 is a default or placeholder threshold
+                    templateWidth, templateHeight, templateStride, coordPtr);
             });
         }
 
         public BitmapSource ApplySAD(BitmapSource source, BitmapSource template)
         {
             return BitmapProcessorHelper.ProcessTwoBitmapSourcePixels(source, template, (sourcePixelPtr, sourceWidth,
-                sourceHeight, sourceStride, templatePixelPtr, templateWidth, templateHeight, templateStride) =>
+                sourceHeight, sourceStride, templatePixelPtr, templateWidth, templateHeight, templateStride, coordPtr) =>
             {
                 NativeProcessor.ApplySAD(sourcePixelPtr, sourceWidth, sourceHeight, sourceStride, templatePixelPtr,
-                    templateWidth, templateHeight, templateStride, 128); // Assuming 128 is a default or placeholder threshold
+                    templateWidth, templateHeight, templateStride, coordPtr);
             });
         }
 
         public BitmapSource ApplySSD(BitmapSource source, BitmapSource template)
         {
             return BitmapProcessorHelper.ProcessTwoBitmapSourcePixels(source, template, (sourcePixelPtr, sourceWidth,
-                sourceHeight, sourceStride, templatePixelPtr, templateWidth, templateHeight, templateStride) =>
+                sourceHeight, sourceStride, templatePixelPtr, templateWidth, templateHeight, templateStride, coordPtr) =>
             {
                 NativeProcessor.ApplySSD(sourcePixelPtr, sourceWidth, sourceHeight, sourceStride, templatePixelPtr,
-                    templateWidth, templateHeight, templateStride, 128); // Assuming 128 is a default or placeholder threshold
+                    templateWidth, templateHeight, templateStride, coordPtr);
             });
         }
     }

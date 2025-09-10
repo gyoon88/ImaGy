@@ -14,6 +14,7 @@ namespace ImaGy.View
         private ScaleTransform afterScaleTransform;
         private Point lastMousePosition;
         private bool isPanning;
+        private bool isSyncing = false; // Flag to prevent event recursion
         private MainViewModel viewModel;
 
         public Action<BitmapSource>? OnImageLoadedCallback;
@@ -47,88 +48,95 @@ namespace ImaGy.View
 
         public void ResetImageZoom(BitmapSource imageSource)
         {
-            if (imageSource == null) return;
+            if (imageSource == null || BeforeImageScrollViewer.ActualWidth == 0) return;
 
-            // Calculate scale for BeforeImageControl
-            double scaleXBefore = BeforeImageScrollViewer.ActualWidth / imageSource.PixelWidth;
-            double scaleYBefore = BeforeImageScrollViewer.ActualHeight / imageSource.PixelHeight;
-            double initialScaleBefore = Math.Min(scaleXBefore, scaleYBefore);
+            // Calculate the scale required to fit the image to the viewport
+            double scaleX = BeforeImageScrollViewer.ActualWidth / imageSource.PixelWidth;
+            double scaleY = BeforeImageScrollViewer.ActualHeight / imageSource.PixelHeight;
+            double fitScale = Math.Min(scaleX, scaleY);
 
-            beforeScaleTransform.ScaleX = initialScaleBefore;
-            beforeScaleTransform.ScaleY = initialScaleBefore;
+            // The "base" scale for 100% display is always the fit-to-screen scale.
+            viewModel.BaseScale = fitScale;
 
-            // Calculate scale for AfterImageControl (assuming it will display the same image initially)
-            double scaleXAfter = AfterImageScrollViewer.ActualWidth / imageSource.PixelWidth;
-            double scaleYAfter = AfterImageScrollViewer.ActualHeight / imageSource.PixelHeight;
-            double initialScaleAfter = Math.Min(scaleXAfter, scaleYAfter);
+            // The actual initial scale should not be more than 1.0 (1:1 pixel ratio).
+            double initialAbsoluteScale = Math.Min(1.0, fitScale);
 
-            afterScaleTransform.ScaleX = initialScaleAfter;
-            afterScaleTransform.ScaleY = initialScaleAfter;
+            // Apply the initial scale to both image views
+            beforeScaleTransform.ScaleX = initialAbsoluteScale;
+            beforeScaleTransform.ScaleY = initialAbsoluteScale;
+            afterScaleTransform.ScaleX = initialAbsoluteScale;
+            afterScaleTransform.ScaleY = initialAbsoluteScale;
 
             // Reset scroll positions
             BeforeImageScrollViewer.ScrollToHome();
             AfterImageScrollViewer.ScrollToHome();
 
-            // Update ViewModel's ZoomLevel
-            viewModel.UpdateZoomLevel(initialScaleBefore);
+            // Update the ZoomLevel display based on the new base scale
+            viewModel.UpdateZoomLevel(initialAbsoluteScale);
         }
 
         private void BeforeImageScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
         {
+            if (isSyncing) return;
+            isSyncing = true;
+
+            AfterImageScrollViewer.ScrollToHorizontalOffset(e.HorizontalOffset);
+            AfterImageScrollViewer.ScrollToVerticalOffset(e.VerticalOffset);
+
             if (DataContext is MainViewModel viewModel)
             {
-                viewModel.ScrollViewerHorizontalOffset = BeforeImageScrollViewer.HorizontalOffset;
-                viewModel.ScrollViewerVerticalOffset = BeforeImageScrollViewer.VerticalOffset;
-                viewModel.ScrollViewerViewportWidth = BeforeImageScrollViewer.ViewportWidth;
-                viewModel.ScrollViewerViewportHeight = BeforeImageScrollViewer.ViewportHeight;
+                viewModel.ScrollViewerHorizontalOffset = e.HorizontalOffset;
+                viewModel.ScrollViewerVerticalOffset = e.VerticalOffset;
+                viewModel.ScrollViewerViewportWidth = e.ViewportWidth;
+                viewModel.ScrollViewerViewportHeight = e.ViewportHeight;
             }
+            isSyncing = false;
         }
 
         private void AfterImageScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
         {
+            if (isSyncing) return;
+            isSyncing = true;
+
+            BeforeImageScrollViewer.ScrollToHorizontalOffset(e.HorizontalOffset);
+            BeforeImageScrollViewer.ScrollToVerticalOffset(e.VerticalOffset);
+
             if (DataContext is MainViewModel viewModel)
             {
-                viewModel.ScrollViewerHorizontalOffset = AfterImageScrollViewer.HorizontalOffset;
-                viewModel.ScrollViewerVerticalOffset = AfterImageScrollViewer.VerticalOffset;
-                viewModel.ScrollViewerViewportWidth = AfterImageScrollViewer.ViewportWidth;
-                viewModel.ScrollViewerViewportHeight = AfterImageScrollViewer.ViewportHeight;
+                viewModel.ScrollViewerHorizontalOffset = e.HorizontalOffset;
+                viewModel.ScrollViewerVerticalOffset = e.VerticalOffset;
+                viewModel.ScrollViewerViewportWidth = e.ViewportWidth;
+                viewModel.ScrollViewerViewportHeight = e.ViewportHeight;
             }
+            isSyncing = false;
         }
 
         private void ImageControl_MouseWheel(object sender, MouseWheelEventArgs e)
         {
-            e.Handled = true; // Consume the event to prevent ScrollViewer from handling it
+            e.Handled = true; 
 
-            Image imageControl = (Image)sender;
-            ScrollViewer scrollViewer = FindAncestor<ScrollViewer>(imageControl); // Safely get parent ScrollViewer
-            if (scrollViewer == null) return;
-            ScaleTransform scaleTransform = (imageControl == BeforeImageControl) ? beforeScaleTransform : afterScaleTransform;
-
-            double zoomFactor = 1.1; // Zoom in/out factor
+            double zoomFactor = 1.1;
+            double newScale;
 
             if (e.Delta > 0)
             {
-                // Zoom in
-                scaleTransform.ScaleX *= zoomFactor;
-                scaleTransform.ScaleY *= zoomFactor;
+                newScale = beforeScaleTransform.ScaleX * zoomFactor;
             }
             else
             {
-                // Zoom out
-                scaleTransform.ScaleX /= zoomFactor;
-                scaleTransform.ScaleY /= zoomFactor;
+                newScale = beforeScaleTransform.ScaleX / zoomFactor;
             }
 
-            // Update ViewModel
-            viewModel.UpdateZoomLevel(scaleTransform.ScaleX);
+            // Apply the new scale to both transforms to keep them in sync
+            beforeScaleTransform.ScaleX = newScale;
+            beforeScaleTransform.ScaleY = newScale;
+            afterScaleTransform.ScaleX = newScale;
+            afterScaleTransform.ScaleY = newScale;
 
-            // Adjust scroll position to keep the mouse pointer centered (optional, but good UX)
-            Point mousePos = e.GetPosition(imageControl);
-            double centerPointX = mousePos.X / imageControl.ActualWidth;
-            double centerPointY = mousePos.Y / imageControl.ActualHeight;
+            viewModel.UpdateZoomLevel(newScale);
 
-            scrollViewer.ScrollToHorizontalOffset(centerPointX * scrollViewer.ScrollableWidth);
-            scrollViewer.ScrollToVerticalOffset(centerPointY * scrollViewer.ScrollableHeight);
+            // Also update the coordinates in the status bar
+            Image_MouseMove(sender, e);
         }
 
         private void ImageScrollViewer_MouseDown(object sender, MouseButtonEventArgs e)
@@ -208,6 +216,39 @@ namespace ImaGy.View
         private void Slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
 
+        }
+
+        private void Image_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (viewModel == null || sender is not Image imageControl || imageControl.Source == null)
+            {
+                return;
+            }
+
+            ScaleTransform scaleTransform = (imageControl == BeforeImageControl) ? beforeScaleTransform : afterScaleTransform;
+            Point mousePos = e.GetPosition(imageControl);
+
+            // Translate coordinates from control space to image pixel space
+            int actualX = (int)(mousePos.X / scaleTransform.ScaleX);
+            int actualY = (int)(mousePos.Y / scaleTransform.ScaleY);
+
+            // Ensure coordinates are within the image bounds
+            if (actualX >= 0 && actualX < imageControl.Source.Width && actualY >= 0 && actualY < imageControl.Source.Height)
+            {
+                viewModel.UpdateMouseCoordinates(actualX, actualY);
+            }
+            else
+            {
+                viewModel.ClearMouseCoordinates();
+            }
+        }
+
+        private void Image_MouseLeave(object sender, MouseEventArgs e)
+        {
+            if (viewModel != null)
+            {
+                viewModel.ClearMouseCoordinates();
+            }
         }
     }
 }

@@ -19,9 +19,11 @@
         <KeyBinding Modifiers="Control" Key="S" Command="{Binding SaveImageCommand}" />
         <KeyBinding Modifiers="Control" Key="O" Command="{Binding OpenImageCommand}" />
         <KeyBinding Modifiers="Control" Key="Z" Command="{Binding UndoCommand}" />
+        <KeyBinding Modifiers="Control" Key="Y" Command="{Binding RedoCommand}" />
     </Window.InputBindings>
 
-    <DockPanel>  <!-- This DockPanel is the single child of Window -->
+    <DockPanel>
+        <!-- This DockPanel is the single child of Window -->
         <!-- Menu -->
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_파일">
@@ -41,13 +43,11 @@
                 <MenuItem Header="붙여넣기" Command="{Binding PasteImageCommand}"/>
             </MenuItem>
             <MenuItem Header="_보기">
-                <MenuItem Header="작업기록 내보내기" Command="{Binding ExportHistoryCommand}"/>
-                <MenuItem Header="로그 내보내기" Command="{Binding ExportLogCommand}"/>
                 <MenuItem Header="히스토그램 보기" Command="{Binding ViewHistogramCommand}"/>
                 <MenuItem Header="미니맵 보기" Command="{Binding MinimapCommand}"/>
             </MenuItem>
             <MenuItem Header="_도구">
-                <MenuItem Header="자르기"/>
+                <MenuItem Header="자르기" Command="{Binding ApplyCropCommand}"/>
                 <MenuItem Header="ROI 선택" Command="{Binding SelectRoiCommand}"/>
             </MenuItem>
             <MenuItem Header="_도움말">
@@ -68,6 +68,9 @@
             <Separator/>
             <StatusBarItem>
                 <TextBlock Text="{Binding ZoomLevel}"  Foreground="White"/>
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock Text="{Binding MouseCoordinates}"  Foreground="White"/>
             </StatusBarItem>
             <Separator/>
             <StatusBarItem>
@@ -104,14 +107,14 @@
                         Height="1" 
                         Background="{StaticResource SecondaryGrayBrush}" 
                         Margin="5,5" />
-                    
+
                     <!--Here predfine the mouse that mouse can control size of image-->
 
                     <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
                                   x:Name="BeforeImageScrollViewer"
                                   ScrollChanged="BeforeImageScrollViewer_ScrollChanged">
                         <Grid>
-                            <Image Source="{Binding BeforeImage}" Stretch="Uniform" x:Name="BeforeImageControl" MouseWheel="ImageControl_MouseWheel">
+                            <Image Source="{Binding BeforeImage}" Stretch="Uniform" x:Name="BeforeImageControl" MouseWheel="ImageControl_MouseWheel" MouseMove="Image_MouseMove" MouseLeave="Image_MouseLeave">
                                 <Image.LayoutTransform>
                                     <ScaleTransform ScaleX="1.0" ScaleY="1.0"/>
                                 </Image.LayoutTransform>
@@ -228,7 +231,7 @@
                                             <Button Content="FFT" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Laplace_SSE"/>
                                         </StackPanel>
                                     </GroupBox>
-                                
+
 
 
                                     <GroupBox Header="Blur">
@@ -239,7 +242,7 @@
                                             <Button Content="Gaussian" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Gaussian_SSE"/>
                                         </StackPanel>
                                     </GroupBox>
-                                    
+
                                     <GroupBox Header="Blur Parameter" Margin="5">
                                         <StackPanel>
                                             <Grid Margin="5">

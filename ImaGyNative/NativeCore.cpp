@@ -543,18 +543,21 @@ namespace ImaGyNative
         delete[] resultBuffer;
     }
 
-    // Image Matching - I'll complete next week
+    // Image Matching 
     // normailized cross correlation
-    void NativeCore::ApplyNCC(void* pixels, int width, int height, int stride, void* templatePixels, int templateWidth, int templateHeight, int templateStride, unsigned char threshold)
+    void NativeCore::ApplyNCC(void* pixels, int width, int height, int stride, void* templatePixels, int templateWidth, int templateHeight,
+        int templateStride, int* outCoords)
     {
         unsigned char* sourceBuffer = static_cast<unsigned char*>(pixels);
         unsigned char* templateBuffer = static_cast<unsigned char*>(templatePixels);
 
-        // result Buffer
-        unsigned char* resultBuffer = new unsigned char[height * stride];
-        memset(resultBuffer, 0, height * stride); // initialize to black
+        double maxNccValue = -2.0;
+        int bestX = 0;
+        int bestY = 0;
 
-        // Calculate the templete image
+        long long templatePixelCount = (long long)templateWidth * templateHeight;
+
+        // Calculate the mean of the template
         double templateSum = 0.0;
         for (int ty = 0; ty < templateHeight; ++ty)
         {
@@ -563,25 +566,24 @@ namespace ImaGyNative
                 templateSum += templateBuffer[ty * templateStride + tx];
             }
         }
-        double meanT = templateSum / (templateWidth * templateHeight);
+        double meanT = templateSum / templatePixelCount;
 
-        double templateSqSum = 0.0;
+        // Calculate sum of squared differences from the mean for the template
+        double templateSqDiffSum = 0.0;
         for (int ty = 0; ty < templateHeight; ++ty)
         {
             for (int tx = 0; tx < templateWidth; ++tx)
             {
                 double diff = templateBuffer[ty * templateStride + tx] - meanT;
-                templateSqSum += diff * diff;
+                templateSqDiffSum += diff * diff;
             }
         }
-        double stdT = sqrt(templateSqSum / (templateWidth * templateHeight));
 
-        // loop for matching image area
+        // Iterate over the source image
         for (int y = 0; y <= height - templateHeight; ++y)
         {
             for (int x = 0; x <= width - templateWidth; ++x)
             {
-                // Current image patch's mean and std
                 double patchSum = 0.0;
                 for (int py = 0; py < templateHeight; ++py)
                 {
@@ -590,19 +592,9 @@ namespace ImaGyNative
                         patchSum += sourceBuffer[(y + py) * stride + (x + px)];
                     }
                 }
-                double meanI = patchSum / (templateWidth * templateHeight);
+                double meanI = patchSum / templatePixelCount;
 
-                double patchSqSum = 0.0;
-                for (int py = 0; py < templateHeight; ++py)
-                {
-                    for (int px = 0; px < templateWidth; ++px)
-                    {
-                        double diff = sourceBuffer[(y + py) * stride + (x + px)] - meanI;
-                        patchSqSum += diff * diff;
-                    }
-                }
-                double stdI = sqrt(patchSqSum / (templateWidth * templateHeight));
-
+                double patchSqDiffSum = 0.0;
                 double crossCorrelationSum = 0.0;
                 for (int ty = 0; ty < templateHeight; ++ty)
                 {
@@ -610,41 +602,43 @@ namespace ImaGyNative
                     {
                         double imagePixel = sourceBuffer[(y + ty) * stride + (x + tx)];
                         double templatePixel = templateBuffer[ty * templateStride + tx];
-                        crossCorrelationSum += (imagePixel - meanI) * (templatePixel - meanT);
+
+                        double imageDiff = imagePixel - meanI;
+                        double templateDiff = templatePixel - meanT;
+
+                        patchSqDiffSum += imageDiff * imageDiff;
+                        crossCorrelationSum += imageDiff * templateDiff;
                     }
                 }
 
+                double denominator = sqrt(patchSqDiffSum * templateSqDiffSum);
+
                 double nccValue = 0.0;
-                if (stdI > 0 && stdT > 0) // ZeroDivision Error exception
+                if (denominator > 0)
                 {
-                    nccValue = crossCorrelationSum / (stdI * stdT);
+                    nccValue = crossCorrelationSum / denominator;
                 }
 
-                // normalization btween -1 and 1
-                unsigned char outputValue = static_cast<unsigned char>((nccValue + 1.0) * 127.5);
-                resultBuffer[y * stride + x] = outputValue;
+                if (nccValue > maxNccValue)
+                {
+                    maxNccValue = nccValue;
+                    bestX = x;
+                    bestY = y;
+                }
             }
         }
-
-        // Copy the resultData to sourceData
-        memcpy(sourceBuffer, resultBuffer, height * stride);
-
-        // free mem
-        delete[] resultBuffer;
+        outCoords[0] = bestX;
+        outCoords[1] = bestY;
     }
-
-    void NativeCore::ApplySAD(void* pixels, int width, int height, int stride, void* templatePixels, int templateWidth, int templateHeight, int templateStride, unsigned char threshold)
+    void NativeCore::ApplySAD(void* pixels, int width, int height, int stride, void* templatePixels, int templateWidth, int templateHeight, int templateStride, int* outCoords)
     {
         unsigned char* sourceData = static_cast<unsigned char*>(pixels);
         unsigned char* templateData = static_cast<unsigned char*>(templatePixels);
 
-        // 결과 이미지용 버퍼 생성
-        unsigned char* resultData = new unsigned char[height * stride];
-        memset(resultData, 0, height * stride); // 검은색으로 초기화
+        double minSadValue = -1.0;
+        int bestX = 0;
+        int bestY = 0;
 
-        double maxSAD = templateWidth * templateHeight * 255.0; // 가능한 최대 SAD 값 (모든 픽셀이 255만큼 다름)
-
-        // 매칭 영역을 찾기 위해 원본 이미지 반복
         for (int y = 0; y <= height - templateHeight; ++y)
         {
             for (int x = 0; x <= width - templateWidth; ++x)
@@ -660,22 +654,53 @@ namespace ImaGyNative
                     }
                 }
 
-                // SAD 값 정규화: 0 (완벽한 매칭)에서 maxSAD (최악의 매칭)
-                // 0은 흰색 (최고의 매칭), maxSAD는 검은색 (최악의 매칭)으로 0-255에 매핑
-                unsigned char outputValue = static_cast<unsigned char>(255.0 * (1.0 - (currentSAD / maxSAD)));
-                resultData[y * stride + x] = outputValue;
+                if (minSadValue == -1.0 || currentSAD < minSadValue)
+                {
+                    minSadValue = currentSAD;
+                    bestX = x;
+                    bestY = y;
+                }
             }
         }
+        outCoords[0] = bestX;
+        outCoords[1] = bestY;
 
-        // 결과를 원본 픽셀 포인터로 다시 복사
-        memcpy(sourceData, resultData, height * stride);
-
-        // 할당된 메모리 해제
-        delete[] resultData;
     }
 
-    void NativeCore::ApplySSD(void* pixels, int width, int height, int stride, 
-        void* templatePixels, int templateWidth, int templateHeight, int templateStride, unsigned char threshold)
+    void NativeCore::ApplySSD(void* pixels, int width, int height, int stride, void* templatePixels, int templateWidth, int templateHeight, int templateStride, int* outCoords)
     {
+        unsigned char* sourceData = static_cast<unsigned char*>(pixels);
+        unsigned char* templateData = static_cast<unsigned char*>(templatePixels);
+
+        double minSsdValue = -1.0;
+        int bestX = 0;
+        int bestY = 0;
+
+        for (int y = 0; y <= height - templateHeight; ++y)
+        {
+            for (int x = 0; x <= width - templateWidth; ++x)
+            {
+                double currentSSD = 0.0;
+                for (int ty = 0; ty < templateHeight; ++ty)
+                {
+                    for (int tx = 0; tx < templateWidth; ++tx)
+                    {
+                        double imagePixel = sourceData[(y + ty) * stride + (x + tx)];
+                        double templatePixel = templateData[ty * templateStride + tx];
+                        double diff = imagePixel - templatePixel;
+                        currentSSD += diff * diff;
+                    }
+                }
+
+                if (minSsdValue == -1.0 || currentSSD < minSsdValue)
+                {
+                    minSsdValue = currentSSD;
+                    bestX = x;
+                    bestY = y;
+                }
+            }
+        }
+        outCoords[0] = bestX;
+        outCoords[1] = bestY;
     }
 }

@@ -32,13 +32,15 @@ namespace ImaGyNative
         static void ApplyErosion(void* pixels, int width, int height, int stride, int kernelSize);
 
         // Image Matching
+                // Image Matching
         static void ApplyNCC(void* pixels, int width, int height, int stride, 
-            void* templatePixels, int templateWidth, int templateHeight, int templateStride, unsigned char threshold);
-        static void ApplySAD(void* pixels, int width, int height, int stride, 
-            void* templatePixels, int templateWidth, int templateHeight, int templateStride, unsigned char threshold);
-        static void ApplySSD(void* pixels, int width, int height, int stride, 
-            void* templatePixels, int templateWidth, int templateHeight, int templateStride, unsigned char threshold);
+            void* templatePixels, int templateWidth, int templateHeight, int templateStride, int* outCoords);
 
+        static void ApplySAD(void* pixels, int width, int height, int stride, 
+            void* templatePixels, int templateWidth, int templateHeight, int templateStride, int* outCoords);
+
+        static void ApplySSD(void* pixels, int width, int height, int stride, 
+            void* templatePixels, int templateWidth, int templateHeight, int templateStride, int* outCoords);
 
     };
 }

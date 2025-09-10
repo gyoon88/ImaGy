@@ -53,11 +53,11 @@ namespace ImaGy
 
             // Image Matching
             static void ApplyNCC(System::IntPtr pixels, int width, int height, int stride, 
-                System::IntPtr templatePixels, int templateWidth, int templateHeight, int templateStride, unsigned char threshold);
+                System::IntPtr templatePixels, int templateWidth, int templateHeight, int templateStride, System::IntPtr outCoords);
             static void ApplySAD(System::IntPtr pixels, int width, int height, int stride, 
-                System::IntPtr templatePixels, int templateWidth, int templateHeight, int templateStride, unsigned char threshold);
+                System::IntPtr templatePixels, int templateWidth, int templateHeight, int templateStride, System::IntPtr outCoords);
             static void ApplySSD(System::IntPtr pixels, int width, int height, int stride, 
-                System::IntPtr templatePixels, int templateWidth, int templateHeight, int templateStride, unsigned char threshold);
+                System::IntPtr templatePixels, int templateWidth, int templateHeight, int templateStride, System::IntPtr outCoords);
 
 
             // TODO: Add other function declarations here later

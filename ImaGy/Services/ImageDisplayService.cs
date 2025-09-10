@@ -7,33 +7,33 @@ namespace ImaGy.Services
 {
     public class ImageDisplayService : BaseViewModel // Inherit from BaseViewModel for PropertyChanged
     {
-        private double _currentZoomScale;
+        private double currentZoomScale;
         public double CurrentZoomScale
         {
-            get => _currentZoomScale;
-            set => SetProperty(ref _currentZoomScale, value);
+            get => currentZoomScale;
+            set => SetProperty(ref currentZoomScale, value);
         }
 
-        private double _imageHorizontalOffset;
+        private double imageHorizontalOffset;
         public double ImageHorizontalOffset
         {
-            get => _imageHorizontalOffset;
-            set => SetProperty(ref _imageHorizontalOffset, value);
+            get => imageHorizontalOffset;
+            set => SetProperty(ref imageHorizontalOffset, value);
         }
 
-        private double _imageVerticalOffset;
+        private double imageVerticalOffset;
         public double ImageVerticalOffset
         {
-            get => _imageVerticalOffset;
-            set => SetProperty(ref _imageVerticalOffset, value);
+            get => imageVerticalOffset;
+            set => SetProperty(ref imageVerticalOffset, value);
         }
 
         // Callback for View to request scroll (e.g., ScrollToHome, ScrollToOffset)
         // Parameters: newHorizontalOffset, newVerticalOffset, viewportWidth, viewportHeight
         public Action<double, double, double, double>? RequestScrollAction { get; set; }
 
-        private Point _lastMousePositionForPan;
-        private bool _isPanning;
+        private Point lastMousePositionForPan;
+        private bool isPanning;
 
         public ImageDisplayService()
         {
@@ -75,21 +75,21 @@ namespace ImaGy.Services
 
         public void PanMouseDown(Point mousePosition)
         {
-            _lastMousePositionForPan = mousePosition;
-            _isPanning = true;
+            lastMousePositionForPan = mousePosition;
+            isPanning = true;
         }
 
         public void PanMouseMove(Point currentMousePosition)
         {
-            if (_isPanning)
+            if (isPanning)
             {
-                double deltaX = currentMousePosition.X - _lastMousePositionForPan.X;
-                double deltaY = currentMousePosition.Y - _lastMousePositionForPan.Y;
+                double deltaX = currentMousePosition.X - lastMousePositionForPan.X;
+                double deltaY = currentMousePosition.Y - lastMousePositionForPan.Y;
 
                 ImageHorizontalOffset -= deltaX;
                 ImageVerticalOffset -= deltaY;
 
-                _lastMousePositionForPan = currentMousePosition;
+                lastMousePositionForPan = currentMousePosition;
 
                 // Request the view to scroll to the new calculated offsets
                 RequestScrollAction?.Invoke(ImageHorizontalOffset, ImageVerticalOffset, 0, 0);
@@ -98,7 +98,7 @@ namespace ImaGy.Services
 
         public void PanMouseUp()
         {
-            _isPanning = false;
+            isPanning = false;
         }
 
         public void ResetDisplay(double imagePixelWidth, double imagePixelHeight, double viewerActualWidth, double viewerActualHeight)

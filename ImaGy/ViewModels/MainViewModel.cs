@@ -23,6 +23,7 @@ namespace ImaGy.ViewModels
         private string? imageResolution;
         private string? zoomLevel;
         private string? processingTime;
+        private string? mouseCoordinates;
         private bool isProcessing;
         private int threshold = 128;
         private double sigma = 1.0;
@@ -68,6 +69,11 @@ namespace ImaGy.ViewModels
             get => zoomLevel;
             set => SetProperty(ref zoomLevel, value);
         }
+        public string? MouseCoordinates
+        {
+            get => mouseCoordinates;
+            set => SetProperty(ref mouseCoordinates, value);
+        }
         public string? ProcessingTime
         {
             get => processingTime;
@@ -94,32 +100,32 @@ namespace ImaGy.ViewModels
         public string LogText => loggingService.LogText;
 
         // ScrollViewer properties for Minimap
-        private double _scrollViewerViewportWidth;
+        private double scrollViewerViewportWidth;
         public double ScrollViewerViewportWidth
         {
-            get => _scrollViewerViewportWidth;
-            set => SetProperty(ref _scrollViewerViewportWidth, value);
+            get => scrollViewerViewportWidth;
+            set => SetProperty(ref scrollViewerViewportWidth, value);
         }
 
-        private double _scrollViewerViewportHeight;
+        private double scrollViewerViewportHeight;
         public double ScrollViewerViewportHeight
         {
-            get => _scrollViewerViewportHeight;
-            set => SetProperty(ref _scrollViewerViewportHeight, value);
+            get => scrollViewerViewportHeight;
+            set => SetProperty(ref scrollViewerViewportHeight, value);
         }
 
-        private double _scrollViewerHorizontalOffset;
+        private double scrollViewerHorizontalOffset;
         public double ScrollViewerHorizontalOffset
         {
-            get => _scrollViewerHorizontalOffset;
-            set => SetProperty(ref _scrollViewerHorizontalOffset, value);
+            get => scrollViewerHorizontalOffset;
+            set => SetProperty(ref scrollViewerHorizontalOffset, value);
         }
 
-        private double _scrollViewerVerticalOffset;
+        private double scrollViewerVerticalOffset;
         public double ScrollViewerVerticalOffset
         {
-            get => _scrollViewerVerticalOffset;
-            set => SetProperty(ref _scrollViewerVerticalOffset, value);
+            get => scrollViewerVerticalOffset;
+            set => SetProperty(ref scrollViewerVerticalOffset, value);
         }
 
         // Model Class Instances
@@ -163,6 +169,8 @@ namespace ImaGy.ViewModels
         public ICommand ApplyCropCommand { get; }
 
         public Action<BitmapSource>? ImageLoadedCallback { get; set; }
+
+        public double BaseScale { get; set; } = 1.0;
 
         public ScaleTransform beforeScaleTransform { get; set; }
 
@@ -235,6 +243,7 @@ namespace ImaGy.ViewModels
             ImageResolution = "N/A";
             ZoomLevel = "100%";
             ProcessingTime = "0 ms";
+            MouseCoordinates = "X: -, Y: -";
 
             beforeScaleTransform = new ScaleTransform(); // Initialize
         }
@@ -249,9 +258,21 @@ namespace ImaGy.ViewModels
             templateViewer.Show();
         }
 
-        public void UpdateZoomLevel(double scale)
+        public void UpdateZoomLevel(double currentAbsoluteScale)
         {
-            ZoomLevel = $"{scale * 100:F0}%";
+            double displayPercentage = (currentAbsoluteScale / BaseScale) * 100;
+            ZoomLevel = $"{displayPercentage:F0}%";
+        }
+
+        public void UpdateMouseCoordinates(int x, int y)
+        {
+            if (BeforeImage == null) return;
+            MouseCoordinates = $"X: {x}, Y: {y}";
+        }
+
+        public void ClearMouseCoordinates()
+        {
+            MouseCoordinates = "X: -, Y: -";
         }
 
         private void ExecuteSelectRoi(object? parameter)
