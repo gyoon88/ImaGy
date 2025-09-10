@@ -3,6 +3,7 @@ using System.Windows.Input;
 using System.Windows;
 using System;
 using System.Windows.Media; // Added for ScaleTransform
+using ImaGy.ViewModels.Commands;
 
 namespace ImaGy.ViewModels
 {
@@ -46,10 +47,9 @@ namespace ImaGy.ViewModels
             _mainViewModel = mainViewModel;
             _mainViewModel.PropertyChanged += MainViewModel_PropertyChanged;
             UpdateViewport();
-
-            MouseDownCommand = new RelayCommand(ExecuteMouseDown);
-            MouseMoveCommand = new RelayCommand(ExecuteMouseMove);
-            MouseUpCommand = new RelayCommand(ExecuteMouseUp);
+            MouseDownCommand = new RelayCommand<object>(ExecuteMouseDown);
+            MouseMoveCommand = new RelayCommand<object>(ExecuteMouseMove);
+            MouseUpCommand = new RelayCommand<object>(ExecuteMouseUp);
         }
 
         private void MainViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -59,7 +59,7 @@ namespace ImaGy.ViewModels
                 e.PropertyName == nameof(MainViewModel.ScrollViewerVerticalOffset) ||
                 e.PropertyName == nameof(MainViewModel.ScrollViewerViewportWidth) ||
                 e.PropertyName == nameof(MainViewModel.ScrollViewerViewportHeight) ||
-                e.PropertyName == nameof(MainViewModel.beforeScaleTransform))
+                e.PropertyName == nameof(MainViewModel.ZoomLevel)) 
             {
                 OnPropertyChanged(nameof(MainImage));
                 UpdateViewport();
@@ -68,17 +68,16 @@ namespace ImaGy.ViewModels
 
         private void UpdateViewport()
         {
-            if (MainImage != null && _mainViewModel.beforeScaleTransform != null)
+            if (MainImage != null)
             {
-                double scaleX = _mainViewModel.beforeScaleTransform.ScaleX;
-                double scaleY = _mainViewModel.beforeScaleTransform.ScaleY;
+                double scale = _mainViewModel.ImageDisplay.CurrentZoomScale;
 
-                if (scaleX > 0 && scaleY > 0) // Avoid division by zero
+                if (scale > 0) // Avoid division by zero
                 {
-                    ViewportX = _mainViewModel.ScrollViewerHorizontalOffset / scaleX;
-                    ViewportY = _mainViewModel.ScrollViewerVerticalOffset / scaleY;
-                    ViewportWidth = _mainViewModel.ScrollViewerViewportWidth / scaleX;
-                    ViewportHeight = _mainViewModel.ScrollViewerViewportHeight / scaleY;
+                    ViewportX = _mainViewModel.ScrollViewerHorizontalOffset / scale;
+                    ViewportY = _mainViewModel.ScrollViewerVerticalOffset / scale;
+                    ViewportWidth = _mainViewModel.ScrollViewerViewportWidth / scale;
+                    ViewportHeight = _mainViewModel.ScrollViewerViewportHeight / scale;
                 }
             }
         }

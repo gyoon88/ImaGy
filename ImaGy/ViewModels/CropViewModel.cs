@@ -3,6 +3,7 @@ using ImaGy.Services;
 using System.Windows.Media.Imaging;
 using System.Windows.Input;
 using System.Windows;
+using ImaGy.ViewModels.Commands;
 
 namespace ImaGy.ViewModels
 {
@@ -15,7 +16,7 @@ namespace ImaGy.ViewModels
         {
             _mainViewModel = mainViewModel;
             _cropService = cropService;
-            ApplyCropCommand = new RelayCommand(ExecuteApplyCrop); // Added
+            ApplyCropCommand = new RelayCommand<object>(ExecuteApplyCrop); // Added
         }
 
         public ICommand ApplyCropCommand { get; }

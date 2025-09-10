@@ -1,48 +1,59 @@
 using ImaGy.Models;
-using Microsoft.Win32;
+using ImaGy.Services;
+using ImaGy.View;
+using ImaGy.ViewModels.Commands;
 using System;
 using System.Collections.ObjectModel;
-using System.IO;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Media.Imaging;
-using ImaGy.View;
-using ImaGy.Services;
-using ImaGy.ViewModels.Commands;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace ImaGy.ViewModels
 {
     public class MainViewModel : BaseViewModel
     {
-        // Fields
+        // --- 서비스 및 모델 ---
+        public ImageDisplayService ImageDisplay { get; }
+        private readonly ImageProcessor imageProcessor;
+        private readonly ImageProcessorSSE imageProcessorSSE;
+        private readonly FilterProcessor filterProcessor;
+        private readonly MatchingProcessor matchingProcessor;
+        private readonly ColorContrastProcess colorContrastProcess;
+        private readonly MorphologyProcessor morphologyProcessor;
+        public readonly UndoRedoService<BitmapSource?> undoRedoService;
+        public readonly HistoryService historyService;
+        private readonly LoggingService loggingService;
+        private readonly ClipboardImageService clipboardService;
+        private readonly FileService fileService;
+        private readonly ImageProcessingService imageProcessingService;
+        private readonly HistogramService histogramService;
+        private readonly RoiViewModel roiViewModel;
+        private readonly CropService cropService;
+
+
+        private bool isProcessing;
         private BitmapSource? beforeImage;
         private BitmapSource? afterImage;
         private BitmapSource? templateImage;
-        private string? fileName;
-        private string? imageResolution;
-        private string? zoomLevel;
-        private string? processingTime;
-        private string? mouseCoordinates;
-        private bool isProcessing;
         private int threshold = 128;
-        private double sigma = 1.0;
         private int kernelSize = 3;
+        private double sigma = 1.0;
 
-        public bool IsProcessing
-        {
-            get => isProcessing;
-            set
-            {
-                isProcessing = value;
-                OnPropertyChanged(); 
-            }
-        }
-        // Properties
+
+
+
+        // --- 속성 ---
         public BitmapSource? BeforeImage
         {
             get => beforeImage;
-            set => SetProperty(ref beforeImage, value);
+            set
+            {
+                if (SetProperty(ref beforeImage, value) && value != null)
+                {
+                    ImageLoadedCallback?.Invoke(value);
+                }
+            }
         }
         public BitmapSource? AfterImage
         {
@@ -54,73 +65,78 @@ namespace ImaGy.ViewModels
             get => templateImage;
             set => SetProperty(ref templateImage, value);
         }
+        private string? fileName;
         public string? FileName
         {
             get => fileName;
             set => SetProperty(ref fileName, value);
         }
+        private string? imageResolution;
         public string? ImageResolution
         {
             get => imageResolution;
             set => SetProperty(ref imageResolution, value);
         }
-        public string? ZoomLevel
-        {
-            get => zoomLevel;
-            set => SetProperty(ref zoomLevel, value);
-        }
+        private string? mouseCoordinates;
         public string? MouseCoordinates
         {
             get => mouseCoordinates;
             set => SetProperty(ref mouseCoordinates, value);
         }
+        private string? processingTime;
         public string? ProcessingTime
         {
             get => processingTime;
             set => SetProperty(ref processingTime, value);
+        }
+        public int Threshold
+        {
+            get => threshold;
+            set => SetProperty(ref threshold, value);
+        }
+        public int KernelSize
+        {
+            get => kernelSize;
+            set => SetProperty(ref kernelSize, value);
         }
         public double Sigma
         {
             get => sigma;
             set => SetProperty(ref sigma, value);
         }
-
-        public int Threshold
+        public bool IsProcessing
         {
-            get => threshold;
-            set => SetProperty(ref threshold, value);
+            get => isProcessing;
+            set => SetProperty(ref isProcessing, value);
         }
 
-        public int KernelSize
-        {
-            get => kernelSize;
-            set => SetProperty(ref kernelSize, value);
-        }
 
         public string LogText => loggingService.LogText;
+        public ObservableCollection<string> HistoryItems => historyService.HistoryItems;
+        public RoiViewModel RoiViewModel => roiViewModel;
 
-        // ScrollViewer properties for Minimap
+        // ZoomLevel은 이제 ImageDisplayService의 값을 기반으로 계산
+        public string ZoomLevel => $"{ImageDisplay.CurrentZoomScale * 100:F0}%";
+
+        // ScrollViewer properties for Minimap & Pan
         private double scrollViewerViewportWidth;
         public double ScrollViewerViewportWidth
         {
             get => scrollViewerViewportWidth;
             set => SetProperty(ref scrollViewerViewportWidth, value);
         }
-
         private double scrollViewerViewportHeight;
         public double ScrollViewerViewportHeight
         {
             get => scrollViewerViewportHeight;
             set => SetProperty(ref scrollViewerViewportHeight, value);
         }
-
         private double scrollViewerHorizontalOffset;
         public double ScrollViewerHorizontalOffset
         {
             get => scrollViewerHorizontalOffset;
             set => SetProperty(ref scrollViewerHorizontalOffset, value);
         }
-
         private double scrollViewerVerticalOffset;
         public double ScrollViewerVerticalOffset
         {
@@ -128,28 +144,13 @@ namespace ImaGy.ViewModels
             set => SetProperty(ref scrollViewerVerticalOffset, value);
         }
 
-        // Model Class Instances
-        private readonly ImageProcessor imageProcessor;
-        private readonly ImageProcessorSSE imageProcessorSSE;
-
-        private readonly FilterProcessor filterProcessor;
-        private readonly MatchingProcessor matchingProcessor;
-        private readonly ColorContrastProcess colorContrastProcess;
-        private readonly MorphologyProcessor morphologyProcessor;
-
-        public readonly UndoRedoService<BitmapSource?> undoRedoService;
-        public readonly HistoryService historyService;
-        private readonly LoggingService loggingService;
-        private readonly ClipboardImageService clipboardService;
-        private readonly FileService fileService;
-        private readonly ImageProcessingService imageProcessingService;
-        private readonly HistogramService histogramService;
-        private readonly RoiViewModel roiViewModel;
-        private readonly CropService cropService;
-
-        public ObservableCollection<string> HistoryItems => historyService.HistoryItems;
-
-        // Commands
+        // --- 커맨드 ---
+        public ICommand ZoomCommand { get; }
+        public ICommand PanMouseDownCommand { get; }
+        public ICommand PanMouseMoveCommand { get; }
+        public ICommand PanMouseUpCommand { get; }
+        public ICommand UpdateMouseCoordinatesCommand { get; }
+        public ICommand ClearMouseCoordinatesCommand { get; }
         public ICommand OpenImageCommand { get; }
         public ICommand SaveImageCommand { get; }
         public ICommand UndoCommand { get; }
@@ -170,31 +171,21 @@ namespace ImaGy.ViewModels
 
         public Action<BitmapSource>? ImageLoadedCallback { get; set; }
 
-        public double BaseScale { get; set; } = 1.0;
-
-        public ScaleTransform beforeScaleTransform { get; set; }
-
-        public RoiViewModel RoiViewModel => roiViewModel;
-
-        // Constructor
         public MainViewModel()
         {
-            // Service Initialization
+            // --- 서비스 초기화 ---
+            ImageDisplay = new ImageDisplayService();
             undoRedoService = new UndoRedoService<BitmapSource?>();
             loggingService = new LoggingService();
             imageProcessor = new ImageProcessor();
             imageProcessorSSE = new ImageProcessorSSE();
-
             filterProcessor = new FilterProcessor();
             morphologyProcessor = new MorphologyProcessor();
             matchingProcessor = new MatchingProcessor();
             colorContrastProcess = new ColorContrastProcess();
-
             historyService = new HistoryService();
             clipboardService = new ClipboardImageService();
-
             fileService = new FileService();
-
             imageProcessingService = new ImageProcessingService(
                 imageProcessor, imageProcessorSSE,  
                 colorContrastProcess, matchingProcessor, filterProcessor, morphologyProcessor,
@@ -204,13 +195,54 @@ namespace ImaGy.ViewModels
             roiViewModel = new RoiViewModel();
             cropService = new CropService();
 
+            // --- 커맨드 초기화 ---
+            ZoomCommand = new RelayCommand<MouseWheelEventArgs>(e => {
+                if (e.OriginalSource is FrameworkElement element)
+                {
+                    ImageDisplay.Zoom(e.Delta, e.GetPosition(element));
+                }
+            });
 
-            // Commands
+            PanMouseDownCommand = new RelayCommand<MouseButtonEventArgs>(e => {
+                if (e.OriginalSource is FrameworkElement element && element.CaptureMouse())
+                {
+                    ImageDisplay.PanMouseDown(e.GetPosition(element));
+                }
+            });
+
+            PanMouseMoveCommand = new RelayCommand<MouseEventArgs>(e => {
+                if (e.OriginalSource is FrameworkElement element)
+                {
+                    var scrollInfo = new ScrollViewerInfo { HorizontalOffset = ScrollViewerHorizontalOffset, VerticalOffset = ScrollViewerVerticalOffset };
+                    ImageDisplay.PanMouseMove(e.GetPosition(element), scrollInfo);
+                }
+            });
+
+            PanMouseUpCommand = new RelayCommand<MouseButtonEventArgs>(e => {
+                 if (e.OriginalSource is FrameworkElement element)
+                {
+                    element.ReleaseMouseCapture();
+                    ImageDisplay.PanMouseUp();
+                }
+            });
+
+            UpdateMouseCoordinatesCommand = new RelayCommand<MouseEventArgs>(e => {
+                if (e.OriginalSource is FrameworkElement element && BeforeImage != null)
+                {
+                    Point pos = e.GetPosition(element);
+                    int x = (int)(pos.X / ImageDisplay.CurrentZoomScale);
+                    int y = (int)(pos.Y / ImageDisplay.CurrentZoomScale);
+                    UpdateMouseCoordinates(x, y);
+                }
+            });
+
+            ClearMouseCoordinatesCommand = new RelayCommand(() => ClearMouseCoordinates());
+
             OpenImageCommand = new OpenImageCommand(this, fileService, loggingService);
-            SaveImageCommand = new OpenImageCommand(this, fileService, loggingService);
-
+            SaveImageCommand = new SaveImageCommand(this, fileService, loggingService);
             UndoCommand = new UndoCommand(this, undoRedoService);
-            RedoCommand = new UndoCommand(this, undoRedoService);
+            RedoCommand = new RedoCommand(this, undoRedoService);
+
 
             ColorContrastCommand = new ApplyFilterCommand(this, imageProcessingService);
             FilterringCommand = new ApplyFilterCommand(this, imageProcessingService);
@@ -218,18 +250,45 @@ namespace ImaGy.ViewModels
             ImageMatchingCommand = new ApplyImageMatchingCommand(this, imageProcessingService);
             ViewHistogramCommand = new ViewHistogramCommand(this, histogramService);
 
+
             ExportHistoryCommand = new ExportHistoryCommand(this, historyService, loggingService, fileService);
             ExportLogCommand = new ExportLogCommand(this, loggingService, fileService);
             OpenTemplateImageCommand = new OpenTemplateImageCommand(this, fileService, loggingService);
             CopyImageCommand = new CopyImageCommand(this, clipboardService);
             PasteImageCommand = new PasteImageCommand(this, clipboardService);
+            SelectRoiCommand = new RelayCommand(() => { RoiViewModel.IsDrawingRoi = !RoiViewModel.IsDrawingRoi; });
 
+            MinimapCommand = new RelayCommand(() => {
+                MinimapViewModel minimapViewModel = new MinimapViewModel(this);
+                ImaGy.View.MinimapWindow minimapWindow = new ImaGy.View.MinimapWindow
+                {
+                    DataContext = minimapViewModel
+                };
+                minimapWindow.Show();
+            }, () => AfterImage != null);
 
-            SelectRoiCommand = new RelayCommand(ExecuteSelectRoi);
-            MinimapCommand = new RelayCommand(ExecuteMinimapCommand, _ => AfterImage != null);
-            ApplyCropCommand = new RelayCommand(ExecuteApplyCrop, _ => RoiViewModel.CurrentRoi != null && AfterImage != null);
+            ApplyCropCommand = new RelayCommand(() => {
+                if (AfterImage != null && RoiViewModel.CurrentRoi != null)
+                {
+                    var croppedImage = cropService.CropImage(AfterImage, RoiViewModel.CurrentRoi);
+                    if (croppedImage != null)
+                    {
+                        AfterImage = croppedImage;
+                        BeforeImage = croppedImage;
+                        RoiViewModel.CurrentRoi = null;
+                        RoiViewModel.IsDrawingRoi = false;
+                    }
+                }
+            }, () => RoiViewModel.CurrentRoi != null && AfterImage != null);
 
-            // Event Subscription
+            // --- 속성 변경 이벤트 구독 ---
+            ImageDisplay.PropertyChanged += (s, e) => {
+                if (e.PropertyName == nameof(ImageDisplay.CurrentZoomScale))
+                {
+                    OnPropertyChanged(nameof(ZoomLevel)); // ZoomLevel UI 업데이트
+                }
+            };
+            
             loggingService.PropertyChanged += (s, e) =>
             {
                 if (e.PropertyName == nameof(LoggingService.LogText))
@@ -241,27 +300,8 @@ namespace ImaGy.ViewModels
             // Initialize Properties
             FileName = "No file loaded";
             ImageResolution = "N/A";
-            ZoomLevel = "100%";
             ProcessingTime = "0 ms";
             MouseCoordinates = "X: -, Y: -";
-
-            beforeScaleTransform = new ScaleTransform(); // Initialize
-        }
-
-        public void ShowTemplateImageViewer()
-        {
-            TemplateImageViewerViewModel templateViewerViewModel = new TemplateImageViewerViewModel(this);
-            TemplateImageViewer templateViewer = new TemplateImageViewer
-            {
-                DataContext = templateViewerViewModel
-            };
-            templateViewer.Show();
-        }
-
-        public void UpdateZoomLevel(double currentAbsoluteScale)
-        {
-            double displayPercentage = (currentAbsoluteScale / BaseScale) * 100;
-            ZoomLevel = $"{displayPercentage:F0}%";
         }
 
         public void UpdateMouseCoordinates(int x, int y)
@@ -275,34 +315,23 @@ namespace ImaGy.ViewModels
             MouseCoordinates = "X: -, Y: -";
         }
 
-        private void ExecuteSelectRoi(object? parameter)
-        {
-            RoiViewModel.IsDrawingRoi = !RoiViewModel.IsDrawingRoi;
-        }
+        public void ShowTemplateImageViewer()
 
-        private void ExecuteMinimapCommand(object? parameter)
         {
-            MinimapViewModel minimapViewModel = new MinimapViewModel(this);
-            MinimapWindow minimapWindow = new MinimapWindow
+
+            TemplateImageViewerViewModel templateViewerViewModel = new TemplateImageViewerViewModel(this);
+
+            TemplateImageViewer templateViewer = new TemplateImageViewer
+
             {
-                DataContext = minimapViewModel
+
+                DataContext = templateViewerViewModel
+
             };
-            minimapWindow.Show();
-        }
 
-        private void ExecuteApplyCrop(object? parameter)
-        {
-            if (AfterImage != null && RoiViewModel.CurrentRoi != null)
-            {
-                var croppedImage = cropService.CropImage(AfterImage, RoiViewModel.CurrentRoi);
-                if (croppedImage != null)
-                {
-                    AfterImage = croppedImage;
-                    BeforeImage = croppedImage;
-                    RoiViewModel.CurrentRoi = null;
-                    RoiViewModel.IsDrawingRoi = false;
-                }
-            }
+            templateViewer.Show();
+
         }
+        // Other methods like ShowTemplateImageViewer, ExecuteSelectRoi etc. can be kept
     }
 }

@@ -1,134 +1,81 @@
 using System;
 using System.Windows;
-using System.Windows.Media.Imaging;
-using ImaGy.ViewModels; // For BaseViewModel if ImageDisplayService inherits from it
+using ImaGy.ViewModels;
 
 namespace ImaGy.Services
 {
-    public class ImageDisplayService : BaseViewModel // Inherit from BaseViewModel for PropertyChanged
+    public class ImageDisplayService : BaseViewModel
     {
-        private double currentZoomScale;
+        private double _currentZoomScale = 1.0;
         public double CurrentZoomScale
         {
-            get => currentZoomScale;
-            set => SetProperty(ref currentZoomScale, value);
+            get => _currentZoomScale;
+            set => SetProperty(ref _currentZoomScale, value);
         }
 
-        private double imageHorizontalOffset;
-        public double ImageHorizontalOffset
-        {
-            get => imageHorizontalOffset;
-            set => SetProperty(ref imageHorizontalOffset, value);
-        }
+        public Action<double, double>? RequestScrollAction { get; set; }
 
-        private double imageVerticalOffset;
-        public double ImageVerticalOffset
-        {
-            get => imageVerticalOffset;
-            set => SetProperty(ref imageVerticalOffset, value);
-        }
+        private Point _lastMousePositionForPan;
+        private bool _isPanning;
 
-        // Callback for View to request scroll (e.g., ScrollToHome, ScrollToOffset)
-        // Parameters: newHorizontalOffset, newVerticalOffset, viewportWidth, viewportHeight
-        public Action<double, double, double, double>? RequestScrollAction { get; set; }
-
-        private Point lastMousePositionForPan;
-        private bool isPanning;
-
-        public ImageDisplayService()
-        {
-            CurrentZoomScale = 1.0; // Initial zoom
-            ImageHorizontalOffset = 0;
-            ImageVerticalOffset = 0;
-        }
-
-        public void Zoom(double delta, double imageActualWidth, double imageActualHeight, Point mousePosition)
+        public void Zoom(double delta, Point mousePosition)
         {
             double zoomFactor = 1.1;
             double newScale = CurrentZoomScale;
 
-            if (delta > 0) // Zoom in
-            {
-                newScale *= zoomFactor;
-            }
-            else // Zoom out
-            {
-                newScale /= zoomFactor;
-            }
+            if (delta > 0) newScale *= zoomFactor;
+            else newScale /= zoomFactor;
 
-            // Prevent extreme zooming
-            if (newScale < 0.1) newScale = 0.1;
-            if (newScale > 10.0) newScale = 10.0;
-
-            // Calculate new offsets to keep mouse position centered
-            double mouseXRelativeToImage = (ImageHorizontalOffset + mousePosition.X) / CurrentZoomScale;
-            double mouseYRelativeToImage = (ImageVerticalOffset + mousePosition.Y) / CurrentZoomScale;
-
-            ImageHorizontalOffset = (mouseXRelativeToImage * newScale) - mousePosition.X;
-            ImageVerticalOffset = (mouseYRelativeToImage * newScale) - mousePosition.Y;
-
+            if (newScale < 0.05) newScale = 0.05;
+            if (newScale > 50.0) newScale = 50.0;
+            
             CurrentZoomScale = newScale;
-
-            // Request the view to scroll to the new calculated offsets
-            RequestScrollAction?.Invoke(ImageHorizontalOffset, ImageVerticalOffset, 0, 0); // Viewport dimensions not needed here
+            // 확대/축소 후 스크롤 위치 보정은 고급 기능이므로 일단 생략하여 로직을 단순화합니다.
+            // 필요 시 마우스 위치 기반의 스크롤 보정 로직을 추가할 수 있습니다.
         }
 
         public void PanMouseDown(Point mousePosition)
         {
-            lastMousePositionForPan = mousePosition;
-            isPanning = true;
+            _lastMousePositionForPan = mousePosition;
+            _isPanning = true;
         }
 
-        public void PanMouseMove(Point currentMousePosition)
+        public void PanMouseMove(Point currentMousePosition, ScrollViewerInfo scrollInfo)
         {
-            if (isPanning)
+            if (_isPanning)
             {
-                double deltaX = currentMousePosition.X - lastMousePositionForPan.X;
-                double deltaY = currentMousePosition.Y - lastMousePositionForPan.Y;
+                double deltaX = currentMousePosition.X - _lastMousePositionForPan.X;
+                double deltaY = currentMousePosition.Y - _lastMousePositionForPan.Y;
 
-                ImageHorizontalOffset -= deltaX;
-                ImageVerticalOffset -= deltaY;
-
-                lastMousePositionForPan = currentMousePosition;
-
-                // Request the view to scroll to the new calculated offsets
-                RequestScrollAction?.Invoke(ImageHorizontalOffset, ImageVerticalOffset, 0, 0);
+                RequestScrollAction?.Invoke(scrollInfo.HorizontalOffset - deltaX, scrollInfo.VerticalOffset - deltaY);
             }
         }
 
         public void PanMouseUp()
         {
-            isPanning = false;
+            _isPanning = false;
         }
 
         public void ResetDisplay(double imagePixelWidth, double imagePixelHeight, double viewerActualWidth, double viewerActualHeight)
         {
-            if (imagePixelWidth == 0 || imagePixelHeight == 0 || viewerActualWidth == 0 || viewerActualHeight == 0)
+            if (imagePixelWidth == 0 || viewerActualWidth == 0)
             {
                 CurrentZoomScale = 1.0;
-                ImageHorizontalOffset = 0;
-                ImageVerticalOffset = 0;
-                RequestScrollAction?.Invoke(0, 0, 0, 0); // Request scroll to home
                 return;
             }
 
             double scaleX = viewerActualWidth / imagePixelWidth;
             double scaleY = viewerActualHeight / imagePixelHeight;
-            double initialScale = Math.Min(scaleX, scaleY);
+            CurrentZoomScale = Math.Min(scaleX, scaleY);
 
-            CurrentZoomScale = initialScale;
-            ImageHorizontalOffset = 0;
-            ImageVerticalOffset = 0;
-
-            RequestScrollAction?.Invoke(0, 0, 0, 0); // Request scroll to home
+            RequestScrollAction?.Invoke(0, 0); // 스크롤 홈으로
         }
+    }
 
-        // Method for minimap to request pan
-        public void PanFromMinimap(double deltaX, double deltaY)
-        {
-            ImageHorizontalOffset += deltaX;
-            ImageVerticalOffset += deltaY;
-            RequestScrollAction?.Invoke(ImageHorizontalOffset, ImageVerticalOffset, 0, 0);
-        }
+    // ScrollViewer 정보를 전달하기 위한 간단한 구조체
+    public struct ScrollViewerInfo
+    {
+        public double HorizontalOffset { get; set; }
+        public double VerticalOffset { get; set; }
     }
 }

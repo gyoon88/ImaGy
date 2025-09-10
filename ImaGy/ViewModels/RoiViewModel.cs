@@ -1,7 +1,7 @@
 using ImaGy.Models;
 using System.Windows.Input;
 using System.Windows;
-
+using ImaGy.ViewModels.Commands;
 namespace ImaGy.ViewModels
 {
     public class RoiViewModel : BaseViewModel
@@ -28,9 +28,9 @@ namespace ImaGy.ViewModels
 
         public RoiViewModel()
         {
-            MouseDownCommand = new RelayCommand(ExecuteMouseDown);
-            MouseMoveCommand = new RelayCommand(ExecuteMouseMove);
-            MouseUpCommand = new RelayCommand(ExecuteMouseUp);
+            MouseDownCommand = new RelayCommand<object>(ExecuteMouseDown);
+            MouseMoveCommand = new RelayCommand<object>(ExecuteMouseMove);
+            MouseUpCommand = new RelayCommand<object>(ExecuteMouseUp);
         }
 
         private void ExecuteMouseDown(object? parameter)
