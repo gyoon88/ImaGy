@@ -24,12 +24,13 @@ namespace ImaGyNative
         static void ApplyLaplacian (void* pixels, int width, int height, int stride, int kernelSize);
         
         // Blurring
-        static void ApplyAverageBlur(void* pixels, int width, int height, int stride, int kernelSize);
-        static void ApplyGaussianBlur(void* pixels, int width, int height, int stride, double sigma, int kernelSize);
+        static void ApplyGaussianBlur(void* pixels, int width, int height, int stride, double sigma, int kernelSize, bool useCircularKernel);
+        static void ApplyAverageBlur(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel);
 
         // Morphorogy
-        static void ApplyDilation(void* pixels, int width, int height, int stride, int kernelSize);
-        static void ApplyErosion(void* pixels, int width, int height, int stride, int kernelSize);
+        static void ApplyDilation(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel);
+        static void ApplyErosion(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel);
+
 
         // Image Matching
                 // Image Matching
@@ -42,5 +43,13 @@ namespace ImaGyNative
         static void ApplySSD(void* pixels, int width, int height, int stride, 
             void* templatePixels, int templateWidth, int templateHeight, int templateStride, int* outCoords);
 
+
+
+
+        // Color 
+        static void ApplyGaussianBlurColor(void* pixels, int width, int height, int stride, double sigma, int kernelSize, bool useCircularKernel);
+        static void ApplyAverageBlurColor(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel);
+        static void ApplyDilationColor(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel);
+        static void ApplyErosionColor(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel);
     };
 }

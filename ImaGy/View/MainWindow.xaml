@@ -194,28 +194,28 @@
                 </Grid>
             </Border>
 
-            <GridSplitter Grid.Column="3" />
-
+            <GridSplitter Grid.Column="3" Width="5" HorizontalAlignment="Center" VerticalAlignment="Stretch" />
             <!-- Right Side Panel -->
             <Grid Grid.Column="4" Margin="10,10,10,10">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="*" />
+                    <RowDefinition Height="2*" />
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="3*" />
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="3*" />
                 </Grid.RowDefinitions>
 
                 <!-- Button Groups -->
                 <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
                     <GroupBox Header="Image Edittor" Foreground="White">
                         <StackPanel>
-                            <Expander Header="Colour | Contrast" Foreground="White">
+                            <Expander Header="Colour | Contrast" Foreground="White" Margin="0,4,0,4">
                                 <StackPanel>
-                                    <GroupBox Header="Binarization" Margin="5">
+                                    <GroupBox Header="Binarization">
                                         <StackPanel>
                                             <Button Content="Othu's Binarization" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Bin_Othu"/>
                                             <Button Content="Binarization" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Bin"/>
-
-
+                                            <Separator Margin="5" Foreground="Gray"/>
                                             <Grid Margin="5">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
@@ -229,13 +229,17 @@
 
                                         </StackPanel>
                                     </GroupBox>
-                                    <Button Content="GreyScale" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Grey"/>
-                                    <Button Content="Equalization" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Equal" />
-                                    <Button Content="Color Equalization" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Equal_color" />
+                                    <GroupBox Header="Color-Contrast">
+                                        <StackPanel>
+                                            <Button Content="Gray Scale" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Grey"/>
+                                            <Button Content="Equalization" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Equal" />
+                                            <Button Content="Color Equalization" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Equal_color" />
+                                        </StackPanel>                 
+                                    </GroupBox>
                                 </StackPanel>
                             </Expander>
 
-                            <Expander Header="Filterring" Foreground="White">
+                            <Expander Header="Filterring" Foreground="White"  Margin="0,4,0,4">
                                 <StackPanel Cursor="">
 
                                     <GroupBox Header="Edge Detection">
@@ -243,31 +247,39 @@
                                             <Button Content="Differential" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Diff" />
                                             <Button Content="Sobel" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Sobel"/>
                                             <Button Content="Laplacian" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Laplace"/>
-                                            <Button Content="Differential" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Diff_SSE" />
+                                            <!--<Button Content="Differential" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Diff_SSE" />
                                             <Button Content="Sobel" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Sobel_SSE"/>
-                                            <Button Content="Laplacian" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Laplace_SSE" />
+                                            <Button Content="Laplacian" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Laplace_SSE" />-->
                                             <Button Content="FFT" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Laplace_SSE"/>
-                                        </StackPanel>
-                                    </GroupBox>
 
-
-
-                                    <GroupBox Header="Blur">
-                                        <StackPanel>
-                                            <Button Content="Average" Margin="2"  Command="{Binding FilterringCommand}" CommandParameter="Average"/>
-                                            <Button Content="Gaussian" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Gaussian"/>
-                                            <Button Content="Average" Margin="2"  Command="{Binding FilterringCommand}" CommandParameter="Average_SSE"/>
-                                            <Button Content="Gaussian" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Gaussian_SSE"/>
-                                        </StackPanel>
-                                    </GroupBox>
-
-                                    <GroupBox Header="Blur Parameter" Margin="5">
-                                        <StackPanel>
+                                            <Separator Margin="5" Foreground="Gray"/>
                                             <Grid Margin="5">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
                                                     <ColumnDefinition Width="50"/>
                                                     <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="Kernel:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                                <TextBox Grid.Column="1" Text="{Binding KernelSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
+                                                <Slider Grid.Column="2" Value="{Binding KernelSize, Mode=TwoWay}" Minimum="1" Maximum="25" TickFrequency="2" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </StackPanel>
+                                    </GroupBox>
+
+
+                                    <GroupBox Header="Blur Parameter">
+                                        <StackPanel>
+                                            <Button Content="Average" Margin="2"  Command="{Binding FilterringCommand}" CommandParameter="Average"/>
+                                            <Button Content="Gaussian" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Gaussian"/>
+                                            <Separator Margin="5" Foreground="Gray"/>
+
+                                            <ToggleButton Content="Circular Kernel" IsChecked="{Binding UseCircularKernel, Mode=TwoWay}" Margin="60,5,60,5" />
+                                            <Grid Margin="5">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="50"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock Grid.Column="0" Text="Sigma:" VerticalAlignment="Center" Margin="0,0,5,0"/>
                                                 <TextBox Grid.Column="1" Text="{Binding Sigma, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
@@ -289,34 +301,66 @@
                                 </StackPanel>
                             </Expander>
 
-                            <Expander Header="Morphorogy" Foreground="White">
+                            <Expander Header="Morphorogy" Foreground="White"  Margin="0,4,0,4">
                                 <StackPanel>
-                                    <Button Content="팽창" Margin="2" Command="{Binding MorphorogyCommand}" CommandParameter="Dilation"/>
-                                    <Button Content="수축" Margin="2" Command="{Binding MorphorogyCommand}" CommandParameter="Erosion"/>
-                                    <Button Content="팽창" Margin="2" Command="{Binding MorphorogyCommand}" CommandParameter="Dilation_SSE"/>
-                                    <Button Content="수축" Margin="2" Command="{Binding MorphorogyCommand}" CommandParameter="Erosion_SSE"/>
+                                    <GroupBox Header = "Default" Foreground="White">
+                                        <StackPanel>
+                                            <Button Content="Dilation" Margin="2" Command="{Binding MorphorogyCommand}" CommandParameter="Dilation"/>
+                                            <Button Content="Erosion" Margin="2" Command="{Binding MorphorogyCommand}" CommandParameter="Erosion"/>
+                                            <!--<Button Content="팽창" Margin="2" Command="{Binding MorphorogyCommand}" CommandParameter="Dilation_SSE"/>
+                                            <Button Content="수축" Margin="2" Command="{Binding MorphorogyCommand}" CommandParameter="Erosion_SSE"/>-->
+                                            <Separator Margin="5" Foreground="Gray"/>
+
+                                            <ToggleButton Content="Circular Kernel" IsChecked="{Binding UseCircularKernel, Mode=TwoWay}" Margin="60,5,60,5" />
+                                            <Grid Margin="5">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="50"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="Kernel:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                                <TextBox Grid.Column="1" Text="{Binding KernelSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
+                                                <Slider Grid.Column="2" Value="{Binding KernelSize, Mode=TwoWay}" Minimum="1" Maximum="25" TickFrequency="2" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </StackPanel>
+
+                                    </GroupBox>
                                 </StackPanel>
                             </Expander>
 
-                            <Expander Header="Image Matching" Foreground="White">
-                                <StackPanel>
-                                    <Button Content="NCC" Margin="2" Command="{Binding ImageMatchingCommand}" CommandParameter="NCC"/>
-                                    <Button Content="SAD" Margin="2" Command="{Binding ImageMatchingCommand}" CommandParameter="SAD"/>
-                                    <Button Content="SSD" Margin="2" Command="{Binding ImageMatchingCommand}" CommandParameter="SSD"/>
-                                </StackPanel>
+                            <Expander Header="Image Matching" Foreground="White" Margin="0,4,0,4">
+                                
+                                 <GroupBox Header="Score Base">
+                                    <StackPanel>
+                                        <Button Content="NCC" Margin="2" Command="{Binding ImageMatchingCommand}" CommandParameter="NCC"/>
+                                        <Button Content="SAD" Margin="2" Command="{Binding ImageMatchingCommand}" CommandParameter="SAD"/>
+                                        <Button Content="SSD" Margin="2" Command="{Binding ImageMatchingCommand}" CommandParameter="SSD"/>
+                                    </StackPanel>
+
+                                </GroupBox>
                             </Expander>
                         </StackPanel>
                     </GroupBox>
 
                 </ScrollViewer>
-
+                <GridSplitter Grid.Row="1" 
+                  Height="5" 
+                  HorizontalAlignment="Stretch" 
+                  VerticalAlignment="Center" 
+                  Background="{StaticResource SecondaryGrayBrush}"
+                  ShowsPreview="True"/>
                 <!-- History -->
-                <GroupBox Grid.Row="1" Header="작업 내역">
+                <GroupBox Grid.Row="2" Header="작업 내역">
                     <ListBox x:Name="작업내역" ItemsSource="{Binding HistoryItems}" d:ItemsSource="{d:SampleData ItemCount=5}" />
                 </GroupBox>
-
+                <GridSplitter Grid.Row="3" 
+                  Height="5" 
+                  HorizontalAlignment="Stretch" 
+                  VerticalAlignment="Center" 
+                  Background="{StaticResource SecondaryGrayBrush}"
+                  ShowsPreview="True"/>
                 <!-- Log -->
-                <GroupBox Grid.Row="2" Header="로그">
+                <GroupBox Grid.Row="4" Header="로그">
                     <TextBox Text="{Binding LogText, Mode=OneWay}" IsReadOnly="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" />
                 </GroupBox>
             </Grid>

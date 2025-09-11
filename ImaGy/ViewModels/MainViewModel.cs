@@ -39,7 +39,7 @@ namespace ImaGy.ViewModels
         private int threshold = 128;
         private int kernelSize = 3;
         private double sigma = 1.0;
-
+        private bool useCircularKernel = false;
 
 
 
@@ -103,6 +103,11 @@ namespace ImaGy.ViewModels
         {
             get => sigma;
             set => SetProperty(ref sigma, value);
+        }
+        public bool UseCircularKernel
+        {
+            get => useCircularKernel;
+            set => SetProperty(ref useCircularKernel, value);
         }
         public bool IsProcessing
         {
@@ -230,8 +235,8 @@ namespace ImaGy.ViewModels
                 if (e.OriginalSource is FrameworkElement element && BeforeImage != null)
                 {
                     Point pos = e.GetPosition(element);
-                    int x = (int)(pos.X / ImageDisplay.CurrentZoomScale);
-                    int y = (int)(pos.Y / ImageDisplay.CurrentZoomScale);
+                    int x = (int)(pos.X);
+                    int y = (int)(pos.Y);
                     UpdateMouseCoordinates(x, y);
                 }
             });
@@ -256,6 +261,7 @@ namespace ImaGy.ViewModels
             OpenTemplateImageCommand = new OpenTemplateImageCommand(this, fileService, loggingService);
             CopyImageCommand = new CopyImageCommand(this, clipboardService);
             PasteImageCommand = new PasteImageCommand(this, clipboardService);
+
             SelectRoiCommand = new RelayCommand(() => { RoiViewModel.IsDrawingRoi = !RoiViewModel.IsDrawingRoi; });
 
             MinimapCommand = new RelayCommand(() => {

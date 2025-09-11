@@ -52,38 +52,38 @@ namespace ImaGy.Models
 
 
         // Blur process
-        public BitmapSource ApplyAverageBlur(BitmapSource source, int kernelSize)
+        public BitmapSource ApplyAverageBlur(BitmapSource source, int kernelSize, bool useCircularKernel)
         {
             return BitmapProcessorHelper.ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride) =>
             {
-                NativeProcessor.ApplyAverageBlur(pixelPtr, width, height, stride, kernelSize);
+                NativeProcessor.ApplyAverageBlur(pixelPtr, width, height, stride, kernelSize, useCircularKernel);
             });
         }
 
-        public BitmapSource ApplyGaussianBlur(BitmapSource source, double sigma, int kernelSize)
+        public BitmapSource ApplyGaussianBlur(BitmapSource source, double sigma, int kernelSize, bool useCircularKernel)
         {
             return BitmapProcessorHelper.ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride) =>
             {
-                NativeProcessor.ApplyGaussianBlur(pixelPtr, width, height, stride, sigma, kernelSize);
+                NativeProcessor.ApplyGaussianBlur(pixelPtr, width, height, stride, sigma, kernelSize, useCircularKernel);
             });
         }
 
 
         // Mophorogy
-        public BitmapSource ApplyDilation(BitmapSource source)
+        public BitmapSource ApplyDilation(BitmapSource source, bool useCircularKernel)
         {
             return BitmapProcessorHelper.ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride) =>
             {
-                NativeProcessor.ApplyDilation(pixelPtr, width, height, stride, 128); // Assuming 128 is a default or placeholder threshold
+                NativeProcessor.ApplyDilation(pixelPtr, width, height, stride, 128, useCircularKernel); // Assuming 128 is a default or placeholder threshold
             });
 
         }
 
-        public BitmapSource ApplyErosion(BitmapSource source)
+        public BitmapSource ApplyErosion(BitmapSource source, bool useCircularKernel)
         {
             return BitmapProcessorHelper.ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride) =>
             {
-                NativeProcessor.ApplyErosion(pixelPtr, width, height, stride, 128); // Assuming 128 is a default or placeholder threshold
+                NativeProcessor.ApplyErosion(pixelPtr, width, height, stride, 128, useCircularKernel); // Assuming 128 is a default or placeholder threshold
             });
         }
 

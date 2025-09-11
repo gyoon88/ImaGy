@@ -40,19 +40,19 @@ namespace ImaGy.Models
 
 
         // Blur process
-        public BitmapSource ApplyAverageBlur(BitmapSource source, int kernelSize)
+        public BitmapSource ApplyAverageBlur(BitmapSource source, int kernelSize, bool useCircularKernel)
         {
             return BitmapProcessorHelper.ProcessBitmapSourcePixelsWithPadding(source, kernelSize, (pixelPtr, width, height, stride) =>
             {
-                NativeProcessor.ApplyAverageBlur(pixelPtr, width, height, stride, kernelSize);
+                NativeProcessor.ApplyAverageBlur(pixelPtr, width, height, stride, kernelSize, useCircularKernel);
             });
         }
 
-        public BitmapSource ApplyGaussianBlur(BitmapSource source, double sigma, int kernelSize)
+        public BitmapSource ApplyGaussianBlur(BitmapSource source, double sigma, int kernelSize, bool useCircularKernel)
         {
             return BitmapProcessorHelper.ProcessBitmapSourcePixelsWithPadding(source, kernelSize, (pixelPtr, width, height, stride) =>
             {
-                NativeProcessor.ApplyGaussianBlur(pixelPtr, width, height, stride, sigma, kernelSize);
+                NativeProcessor.ApplyGaussianBlur(pixelPtr, width, height, stride, sigma, kernelSize, useCircularKernel);
             });
         }
     }

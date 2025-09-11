@@ -90,21 +90,25 @@ namespace ImaGy.Services
                 "Equal_color" => (image) => _colorContrastProcessor.ApplyColorEqualization(image),
 
                 // Filters
-                "Average" => (image) => _filterProcessor.ApplyAverageBlur(image, vm.KernelSize),
-                "Average_SSE" => (image) => _imageProcessorSse.ApplyAverageBlurSse(image, vm.KernelSize),
-                "Gaussian" => (image) => _filterProcessor.ApplyGaussianBlur(image, vm.Sigma, vm.KernelSize),
-                "Gaussian_SSE" => (image) => _imageProcessorSse.ApplyGaussianBlurSse(image, vm.Sigma, vm.KernelSize),
                 "Diff" => (image) => _filterProcessor.ApplyDifferential(image),
                 "Diff_SSE" => (image) => _imageProcessorSse.ApplyDifferentialSse(image),
+
                 "Sobel" => (image) => _filterProcessor.ApplySobel(image, vm.KernelSize),
                 "Sobel_SSE" => (image) => _imageProcessorSse.ApplySobelSse(image),
+
                 "Laplace" => (image) => _filterProcessor.ApplyLaplacian(image, vm.KernelSize),
                 "Laplace_SSE" => (image) => _imageProcessorSse.ApplyLaplacianSse(image),
 
+                "Average" => (image) => _filterProcessor.ApplyAverageBlur(image, vm.KernelSize, vm.UseCircularKernel),
+                "Average_SSE" => (image) => _imageProcessorSse.ApplyAverageBlurSse(image, vm.KernelSize),
+
+                "Gaussian" => (image) => _filterProcessor.ApplyGaussianBlur(image, vm.Sigma, vm.KernelSize, vm.UseCircularKernel),
+                "Gaussian_SSE" => (image) => _imageProcessorSse.ApplyGaussianBlurSse(image, vm.Sigma, vm.KernelSize),
+
                 // Morphology
-                "Dilation" => (image) => _morphologyProcessor.ApplyDilation(image, vm.KernelSize),
+                "Dilation" => (image) => _morphologyProcessor.ApplyDilation(image, vm.KernelSize, vm.UseCircularKernel),
                 "Dilation_SSE" => (image) => _imageProcessorSse.ApplyDilationSse(image),
-                "Erosion" => (image) => _morphologyProcessor.ApplyErosion(image, vm.KernelSize),
+                "Erosion" => (image) => _morphologyProcessor.ApplyErosion(image, vm.KernelSize, vm.UseCircularKernel),
                 "Erosion_SSE" => (image) => _imageProcessorSse.ApplyErosionSse(image),
 
                 // Matching - Template 이미지가 필요

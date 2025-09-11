@@ -38,17 +38,25 @@ namespace ImaGy
             static void ApplyLaplacianSse(IntPtr pixels, int width, int height, int stride, Byte threshold);
 
             // Blurring
-            static void ApplyAverageBlur(IntPtr pixels, int width, int height, int stride, int kernelSize);
+            static void ApplyAverageBlur(IntPtr pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel);
+            static void ApplyAverageBlurColor(IntPtr pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel);
+            
             static void ApplyAverageBlurSse(IntPtr pixels, int width, int height, int stride, int kernelSize);
 
-            static void ApplyGaussianBlur(IntPtr pixels, int width, int height, int stride, double sigma, int kernelSize);
+            static void ApplyGaussianBlur(IntPtr pixels, int width, int height, int stride, double sigma, int kernelSize, bool useCircularKernel);
+            static void ApplyGaussianBlurColor(IntPtr pixels, int width, int height, int stride, double sigma, int kernelSize, bool useCircularKernel);
+
             static void ApplyGaussianBlurSse(IntPtr pixels, int width, int height, int stride, double sigma, int kernelSize);
 
             // Morphorogy
-            static void ApplyDilation(IntPtr pixels, int width, int height, int stride, int kernelSize);
+            static void ApplyDilation(IntPtr pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel);
+            static void ApplyDilationColor(IntPtr pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel);
+
             static void ApplyDilationSse(IntPtr pixels, int width, int height, int stride, Byte threshold);
 
-            static void ApplyErosion(IntPtr pixels, int width, int height, int stride, int kernelSize);
+            static void ApplyErosion(IntPtr pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel);
+            static void ApplyErosionColor(IntPtr pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel);
+
             static void ApplyErosionSse(IntPtr pixels, int width, int height, int stride, Byte threshold);
 
             // Image Matching
@@ -58,6 +66,8 @@ namespace ImaGy
                 System::IntPtr templatePixels, int templateWidth, int templateHeight, int templateStride, System::IntPtr outCoords);
             static void ApplySSD(System::IntPtr pixels, int width, int height, int stride, 
                 System::IntPtr templatePixels, int templateWidth, int templateHeight, int templateStride, System::IntPtr outCoords);
+
+
 
 
             // TODO: Add other function declarations here later
