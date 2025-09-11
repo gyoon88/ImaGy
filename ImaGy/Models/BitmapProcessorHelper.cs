@@ -235,7 +235,7 @@ namespace ImaGy.Models
         ///  ProcessBitmapSourcePixelsWithPadding �Լ����� ȣ��
         /// </summary>
         /// 
-        private static BitmapSource ProcessGrayscaleImageWithPadding(BitmapSource source, int kernelSize, Action<IntPtr, int, int, int> nativeAction)
+        public static BitmapSource ProcessGrayscaleImageWithPadding(BitmapSource source, int kernelSize, Action<IntPtr, int, int, int> nativeAction)
         {
             int width = source.PixelWidth;
             int height = source.PixelHeight;

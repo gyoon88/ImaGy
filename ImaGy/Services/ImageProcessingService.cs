@@ -81,8 +81,8 @@ namespace ImaGy.Services
             return processCommand switch
             {
                 // Color & Contrast
-                "Bin" => (image) => _colorContrastProcessor.ApplyBinarization(image, vm.Threshold), 
-                "Bin_Othu" => (image) => _colorContrastProcessor.ApplyOtsuBinarization(image),
+                "Bin" => (image) => _colorContrastProcessor.ApplyBinarization(image, vm.Threshold),
+                "Bin_Otsu" => (image) => _colorContrastProcessor.ApplyOtsuBinarization(image),
 
                 "Grey" => (image) => _colorContrastProcessor.ToGrayscale(image), 
 
@@ -97,6 +97,7 @@ namespace ImaGy.Services
                 "Sobel_SSE" => (image) => _imageProcessorSse.ApplySobelSse(image),
 
                 "Laplace" => (image) => _filterProcessor.ApplyLaplacian(image, vm.KernelSize),
+                "FFT" => (image) => _filterProcessor.ApplyFFT(image, vm.KernelSize),
                 "Laplace_SSE" => (image) => _imageProcessorSse.ApplyLaplacianSse(image),
 
                 "Average" => (image) => _filterProcessor.ApplyAverageBlur(image, vm.KernelSize, vm.UseCircularKernel),

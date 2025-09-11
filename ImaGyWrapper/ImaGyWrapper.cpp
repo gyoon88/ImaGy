@@ -22,6 +22,14 @@ namespace ImaGy
         {
             ImaGyNative::NativeCore::ApplyHistogram(pixels.ToPointer(), width, height, stride, hist);
         }
+        void NativeProcessor::ApplyBinarization_CPU(IntPtr pixels, int width, int height, int stride, int threshold)
+        {
+            ImaGyNative::NativeCore::ApplyBinarization_CPU(pixels.ToPointer(), width, height, stride, threshold);
+        }
+        void NativeProcessor::ApplyEqualization_CPU(IntPtr pixels, int width, int height, int stride, Byte threshold)
+        {
+            ImaGyNative::NativeCore::ApplyEqualization_CPU(pixels.ToPointer(), width, height, stride, threshold);
+        }
 
 
         // Edge Detect
@@ -37,6 +45,19 @@ namespace ImaGy
         {
             ImaGyNative::NativeCore::ApplyLaplacian(pixels.ToPointer(), width, height, stride, kernelSize);
         }
+        void NativeProcessor::ApplyFFT(IntPtr pixels, int width, int height, int stride, int kernelSize)
+        {
+            ImaGyNative::NativeCore::ApplyFFT(pixels.ToPointer(), width, height, stride, kernelSize);
+        }
+
+        void NativeProcessor::ApplySobel_CPU(IntPtr pixels, int width, int height, int stride, int kernelSize)
+        {
+            ImaGyNative::NativeCore::ApplySobel_CPU(pixels.ToPointer(), width, height, stride, kernelSize);
+        }
+        void NativeProcessor::ApplyLaplacian_CPU(IntPtr pixels, int width, int height, int stride, int kernelSize)
+        {
+            ImaGyNative::NativeCore::ApplyLaplacian_CPU(pixels.ToPointer(), width, height, stride, kernelSize);
+        }
 
         // Blurring
         void NativeProcessor::ApplyAverageBlur(IntPtr pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
@@ -47,6 +68,15 @@ namespace ImaGy
         void NativeProcessor::ApplyGaussianBlur(IntPtr pixels, int width, int height, int stride, double sigma, int kernelSize, bool useCircularKernel)
         {
             ImaGyNative::NativeCore::ApplyGaussianBlur(pixels.ToPointer(), width, height, stride, sigma, kernelSize, useCircularKernel);
+        }
+        void NativeProcessor::ApplyAverageBlur_CPU(IntPtr pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
+        {
+            ImaGyNative::NativeCore::ApplyAverageBlur_CPU(pixels.ToPointer(), width, height, stride, kernelSize, useCircularKernel);
+        }
+
+        void NativeProcessor::ApplyGaussianBlur_CPU(IntPtr pixels, int width, int height, int stride, double sigma, int kernelSize, bool useCircularKernel)
+        {
+            ImaGyNative::NativeCore::ApplyGaussianBlur_CPU(pixels.ToPointer(), width, height, stride, sigma, kernelSize, useCircularKernel);
         }
 
 
@@ -59,11 +89,24 @@ namespace ImaGy
         {
             ImaGyNative::NativeCore::ApplyErosion(pixels.ToPointer(), width, height, stride, kernelSize, useCircularKernel);
         }
+        // Morphorogy
+        void NativeProcessor::ApplyDilation_CPU(IntPtr pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
+        {
+            ImaGyNative::NativeCore::ApplyDilation_CPU(pixels.ToPointer(), width, height, stride, kernelSize, useCircularKernel);
+        }
+        void NativeProcessor::ApplyErosion_CPU(IntPtr pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
+        {
+            ImaGyNative::NativeCore::ApplyErosion_CPU(pixels.ToPointer(), width, height, stride, kernelSize, useCircularKernel);
+        }
         
         // Image Matching
         void NativeProcessor::ApplyNCC(IntPtr pixels, int width, int height, int stride, IntPtr templatePixels, int templateWidth, int templateHeight, int templateStride, IntPtr outCoords)
         {
             ImaGyNative::NativeCore::ApplyNCC(pixels.ToPointer(), width, height, stride, templatePixels.ToPointer(), templateWidth, templateHeight, templateStride, (int*)outCoords.ToPointer());
+        }
+        void NativeProcessor::ApplyNCC_CPU(IntPtr pixels, int width, int height, int stride, IntPtr templatePixels, int templateWidth, int templateHeight, int templateStride, IntPtr outCoords)
+        {
+            ImaGyNative::NativeCore::ApplyNCC_CPU(pixels.ToPointer(), width, height, stride, templatePixels.ToPointer(), templateWidth, templateHeight, templateStride, (int*)outCoords.ToPointer());
         }
 
         void NativeProcessor::ApplySAD(IntPtr pixels, int width, int height, int stride, IntPtr templatePixels, int templateWidth, int templateHeight, int templateStride, IntPtr outCoords)

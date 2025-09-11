@@ -1,188 +1,209 @@
 // NativeCore.cpp
 #include "pch.h"
 #include "NativeCore.h"
+#include "CudaKernel.cuh" // Include our new CUDA header
 #include <cmath>
 #include <iostream>
 #include <vector>
 #include <iomanip> 
 #include <numeric>
 #include <algorithm>
-
+#include <stdexcept> // 예외 처리를 위해 추가
+#include <cuda_runtime.h>
+namespace ImaGyNative
+{
+    /**
+      * @brief 소벨 X축 커널을 생성
+      * @param kernelSize 커널 크기 (홀수).
+      * @return double 타입의 1D 벡터 커널.
+      */
+    std::vector<double> createSobelKernelX(int kernelSize) {
+        std::vector<double> kernel(kernelSize * kernelSize);
+        int center = kernelSize / 2;
+        for (int y = 0; y < kernelSize; ++y) {
+            for (int x = 0; x < kernelSize; ++x) {
+                if (x == center) {
+                    kernel[y * kernelSize + x] = 0;
+                }
+                else {
+                    kernel[y * kernelSize + x] = (x - center) / (double)((x - center) * (x - center) + (y - center) * (y - center));
+                }
+            }
+        }
+        return kernel;
+    }
 
     /**
-     * @brief 소벨 X축 커널을 생성
+     * @brief 소벨 Y축 커널을 생성
      * @param kernelSize 커널 크기 (홀수).
      * @return double 타입의 1D 벡터 커널.
      */
-std::vector<double> createSobelKernelX(int kernelSize) {
-    std::vector<double> kernel(kernelSize * kernelSize);
-    int center = kernelSize / 2;
-    for (int y = 0; y < kernelSize; ++y) {
-        for (int x = 0; x < kernelSize; ++x) {
-            if (x == center) {
-                kernel[y * kernelSize + x] = 0;
-            }
-            else {
-                kernel[y * kernelSize + x] = (x - center) / (double)((x - center) * (x - center) + (y - center) * (y - center));
-            }
-        }
-    }
-    return kernel;
-}
-
-/**
- * @brief 소벨 Y축 커널을 생성
- * @param kernelSize 커널 크기 (홀수).
- * @return double 타입의 1D 벡터 커널.
- */
-std::vector<double> createSobelKernelY(int kernelSize) {
-    std::vector<double> kernel(kernelSize * kernelSize);
-    int center = kernelSize / 2;
-    for (int y = 0; y < kernelSize; ++y) {
-        for (int x = 0; x < kernelSize; ++x) {
-            if (y == center) {
-                kernel[y * kernelSize + x] = 0;
-            }
-            else {
-                kernel[y * kernelSize + x] = (y - center) / (double)((x - center) * (x - center) + (y - center) * (y - center));
+    std::vector<double> createSobelKernelY(int kernelSize) {
+        std::vector<double> kernel(kernelSize * kernelSize);
+        int center = kernelSize / 2;
+        for (int y = 0; y < kernelSize; ++y) {
+            for (int x = 0; x < kernelSize; ++x) {
+                if (y == center) {
+                    kernel[y * kernelSize + x] = 0;
+                }
+                else {
+                    kernel[y * kernelSize + x] = (y - center) / (double)((x - center) * (x - center) + (y - center) * (y - center));
+                }
             }
         }
-    }
-    return kernel;
-}
-
-/**
- * @brief 라플라시안 커널을 생성 
- * @param kernelSize 커널 크기 (홀수).
- * @return double 타입의 1D 벡터 커널.
- */
-std::vector<double> createLaplacianKernel(int kernelSize)
-{
-    if (kernelSize % 2 == 0) {
-        throw std::invalid_argument("Kernel size must be an odd number.");
-    }
-    std::vector<double> kernel(kernelSize * kernelSize, 1.0);
-    int centerIndex = (kernelSize / 2) * kernelSize + (kernelSize / 2);
-    kernel[centerIndex] = 1.0 - (kernelSize * kernelSize);
-    return kernel;
-}
-
-
-std::vector<double> createGaussianKernel(int kernelSize, double sigma, bool isCircular)
-{
-    const double M_PI = 3.14159265358979323846;
-    if (kernelSize % 2 == 0) {
-        throw std::invalid_argument("Kernel size must be an odd number.");
+        return kernel;
     }
 
-    std::vector<double> kernel(kernelSize * kernelSize);
-    double sum = 0.0;
-    int center = kernelSize / 2;
-    double radiusSq = center * center;
-
-    for (int i = 0; i < kernelSize; ++i) {
-        for (int j = 0; j < kernelSize; ++j) {
-            int x = j - center;
-            int y = i - center;
-
-            if (isCircular && (x * x + y * y) > radiusSq) {
-                kernel[i * kernelSize + j] = 0.0;
-                continue;
-            }
-
-            double value = exp(-(x * x + y * y) / (2 * sigma * sigma)) / (2 * M_PI * sigma * sigma);
-            kernel[i * kernelSize + j] = value;
-            sum += value;
+    /**
+     * @brief 라플라시안 커널을 생성
+     * @param kernelSize 커널 크기 (홀수).
+     * @return double 타입의 1D 벡터 커널.
+     */
+    std::vector<double> createLaplacianKernel(int kernelSize)
+    {
+        if (kernelSize % 2 == 0) {
+            throw std::invalid_argument("Kernel size must be an odd number.");
         }
+        std::vector<double> kernel(kernelSize * kernelSize, 1.0);
+        int centerIndex = (kernelSize / 2) * kernelSize + (kernelSize / 2);
+        kernel[centerIndex] = 1.0 - (kernelSize * kernelSize);
+        return kernel;
     }
 
-    if (sum > 0) { // 0으로 나누는 것을 방지
-        for (double& val : kernel) {
-            val /= sum;
+
+    std::vector<double> createGaussianKernel(int kernelSize, double sigma, bool isCircular)
+    {
+        const double M_PI = 3.14159265358979323846;
+        if (kernelSize % 2 == 0) {
+            throw std::invalid_argument("Kernel size must be an odd number.");
         }
-    }
-    return kernel;
-}
 
-// 평균 필터를 위한 (원형) 커널 생성 함수
-std::vector<double> createAverageKernel(int kernelSize, bool isCircular)
-{
-    if (kernelSize % 2 == 0) kernelSize++;
-    std::vector<double> kernel(kernelSize * kernelSize, 0.0);
-    int center = kernelSize / 2;
-    double radiusSq = center * center;
+        std::vector<double> kernel(kernelSize * kernelSize);
+        double sum = 0.0;
+        int center = kernelSize / 2;
+        double radiusSq = center * center;
 
-    for (int i = 0; i < kernelSize; ++i) {
-        for (int j = 0; j < kernelSize; ++j) {
-            if (isCircular) {
+        for (int i = 0; i < kernelSize; ++i) {
+            for (int j = 0; j < kernelSize; ++j) {
                 int x = j - center;
                 int y = i - center;
-                if ((x * x + y * y) <= radiusSq) {
+
+                if (isCircular && (x * x + y * y) > radiusSq) {
+                    kernel[i * kernelSize + j] = 0.0;
+                    continue;
+                }
+
+                double value = exp(-(x * x + y * y) / (2 * sigma * sigma)) / (2 * M_PI * sigma * sigma);
+                kernel[i * kernelSize + j] = value;
+                sum += value;
+            }
+        }
+
+        if (sum > 0) { // 0으로 나누는 것을 방지
+            for (double& val : kernel) {
+                val /= sum;
+            }
+        }
+        return kernel;
+    }
+
+    // 평균 필터를 위한 (원형) 커널 생성 함수
+    std::vector<double> createAverageKernel(int kernelSize, bool isCircular)
+    {
+        if (kernelSize % 2 == 0) kernelSize++;
+        std::vector<double> kernel(kernelSize * kernelSize, 0.0);
+        int center = kernelSize / 2;
+        double radiusSq = center * center;
+
+        for (int i = 0; i < kernelSize; ++i) {
+            for (int j = 0; j < kernelSize; ++j) {
+                if (isCircular) {
+                    int x = j - center;
+                    int y = i - center;
+                    if ((x * x + y * y) <= radiusSq) {
+                        kernel[i * kernelSize + j] = 1.0;
+                    }
+                }
+                else {
                     kernel[i * kernelSize + j] = 1.0;
                 }
             }
-            else {
-                kernel[i * kernelSize + j] = 1.0;
+        }
+        return kernel;
+    }
+
+
+    /**
+     * 오츠 알고리즘으로 임계값 산정
+     */
+    int OtsuThreshold(const unsigned char* sourcePixels, int width, int height, int stride)
+    {
+        int hist[256] = { 0 };
+        int total = width * height;
+        // Hitogram Distribution Calculation
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                int idx = sourcePixels[y * stride + x];
+                hist[idx]++;
             }
         }
-    }
-    return kernel;
-}
-
-
-/**
- * 오츠 알고리즘으로 임계값 산정
- */
-int OtsuThreshold(const unsigned char* sourcePixels, int width, int height, int stride)
-{
-    int hist[256] = { 0 };
-    int total = width * height;
-    // Hitogram Distribution Calculation
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            int idx = sourcePixels[y * stride + x];
-            hist[idx]++;
+        // Expetation Calculation
+        double sumAll = 0;
+        for (int i = 0; i < 256; i++) {
+            sumAll += i * hist[i];
         }
-    }
-    // Expetation Calculation
-    double sumAll = 0;
-    for (int i = 0; i < 256; i++) {
-        sumAll += i * hist[i];
-    }
-    
-    double sumB = 0;   
-    int wB = 0;        
-    int wF = 0;       
 
-    double maxVar = 0;
-    int threshold = 0;
+        double sumB = 0;
+        int wB = 0;
+        int wF = 0;
 
-    for (int t = 0; t < 256; t++) {
-        wB += hist[t];
-        if (wB == 0) continue;
+        double maxVar = 0;
+        int threshold = 0;
 
-        wF = total - wB;
-        if (wF == 0) break;
+        for (int t = 0; t < 256; t++) {
+            wB += hist[t];
+            if (wB == 0) continue;
 
-        sumB += (double)(t * hist[t]);
+            wF = total - wB;
+            if (wF == 0) break;
 
-        double mB = sumB / wB;                
-        double mF = (sumAll - sumB) / wF;      
-        double varBetween = (double)wB * (double)wF * (mB - mF) * (mB - mF);
+            sumB += (double)(t * hist[t]);
 
-        if (varBetween > maxVar) {
-            maxVar = varBetween;
-            threshold = t;
+            double mB = sumB / wB;
+            double mF = (sumAll - sumB) / wF;
+            double varBetween = (double)wB * (double)wF * (mB - mF) * (mB - mF);
+
+            if (varBetween > maxVar) {
+                maxVar = varBetween;
+                threshold = t;
+            }
         }
-    }
 
-    return threshold;
+        return threshold;
+    }
 }
+ 
 
 
 
 namespace ImaGyNative
 {
+
+    bool IsCudaAvailable() {
+        static bool initialized = false;
+        static bool is_available = false;
+
+        if (!initialized) {
+            int deviceCount = 0;
+            cudaError_t err = cudaGetDeviceCount(&deviceCount);
+            is_available = (err == cudaSuccess && deviceCount > 0);
+            initialized = true;
+        }
+        return is_available;
+    }
+
+
+
     // Convolution Helper Method
     void ApplyConvolution(const unsigned char* sourcePixels, unsigned char* destPixels,
         int width, int height, int stride, const std::vector<double>& kernel, int kernelSize)
@@ -214,7 +235,7 @@ namespace ImaGyNative
         }
     }
 
-    // NEW: 32비트 BGRA 컬러 컨볼루션
+    // 32비트 BGRA 컬러 컨볼루션
     void ApplyConvolutionColor(const unsigned char* sourcePixels, unsigned char* destPixels,
         int width, int height, int stride, const std::vector<double>& kernel, int kernelSize)
     {
@@ -259,31 +280,31 @@ namespace ImaGyNative
 
     // // Color Contrast
     // Binarization - Complete
-    void NativeCore::ApplyBinarization(void* pixels, int width, int height, int stride, int threshold)
+    void NativeCore::ApplyBinarization_CPU(void* pixels, int width, int height, int stride, int threshold)
     {
         unsigned char* pixelData = static_cast<unsigned char*>(pixels);
         if (threshold == -1) {
-            threshold = OtsuThreshold(pixelData, width, height, stride);
-        }
+            threshold = threshold = OtsuThreshold(pixelData, width, height, stride);
+        }        
         for (int y = 0; y < height; ++y)
         {
             for (int x = 0; x < width; ++x)
             {
                 int index = y * stride + x;
                 pixelData[index] = (pixelData[index] > threshold) ? 255 : 0;
-            }
+            }            
         }
     }
 
     // Equalization - Complete
-    void NativeCore::ApplyEqualization(void* pixels, int width, int height, int stride, unsigned char threshold)
+    void NativeCore::ApplyEqualization_CPU(void* pixels, int width, int height, int stride, unsigned char threshold)
     {
         unsigned char* pixelData = static_cast<unsigned char*>(pixels);
         long long histogram[256] = { 0 }; // Calcuate the Distibution
         long long cdf[256] = { 0 };
         long long totalPixels = width * height;
 
-        // 1. Calculate Histogram
+        // Calculate Histogram
         for (int y = 0; y < height; ++y)
         {
             for (int x = 0; x < width; ++x)
@@ -292,7 +313,7 @@ namespace ImaGyNative
             }
         }
 
-        // 2. Calculate Cumulative Distribution Function (CDF)
+        // Calculate Cumulative Distribution Function (CDF)
         cdf[0] = histogram[0];
         for (int i = 1; i < 256; ++i)
         {
@@ -310,7 +331,7 @@ namespace ImaGyNative
             }
         }
 
-        // 3. Apply Mapping
+        // Apply Mapping
         for (int y = 0; y < height; ++y)
         {
             for (int x = 0; x < width; ++x)
@@ -380,10 +401,14 @@ namespace ImaGyNative
         delete[] resultBuffer;
     }
   
+
+
+    ///////// 
+    // CPUCPU
    // Sobel - Complete
-    void NativeCore::ApplySobel(void* pixels, int width, int height, int stride, int kernelSize)
+    void NativeCore::ApplySobel_CPU(void* pixels, int width, int height, int stride, int kernelSize)
     {
-        // 커널 크기는 홀수여야 합니다.
+        // 커널 크기는 홀수
         if (kernelSize % 2 == 0) kernelSize++;
 
         std::vector<double> kernelX = createSobelKernelX(kernelSize);
@@ -431,9 +456,9 @@ namespace ImaGyNative
     }
 
     // Laplacian - Complete
-    void NativeCore::ApplyLaplacian(void* pixels, int width, int height, int stride, int kernelSize)
+    void NativeCore::ApplyLaplacian_CPU(void* pixels, int width, int height, int stride, int kernelSize)
     {
-        // 커널 크기는 홀수여야 합니다.
+        // 커널 크기 검증 
         if (kernelSize % 2 == 0) kernelSize++;
 
         std::vector<double> kernel = createLaplacianKernel(kernelSize);
@@ -451,7 +476,7 @@ namespace ImaGyNative
 
     // // Blurring
     // Gaussian - Complete
-    void NativeCore::ApplyGaussianBlur(void* pixels, int width, int height, int stride, double sigma, int kernelSize, bool useCircularKernel)
+    void NativeCore::ApplyGaussianBlur_CPU(void* pixels, int width, int height, int stride, double sigma, int kernelSize, bool useCircularKernel)
     {
         std::vector<double> kernel = createGaussianKernel(kernelSize, sigma, useCircularKernel);
         unsigned char* pixelData = static_cast<unsigned char*>(pixels);
@@ -464,8 +489,8 @@ namespace ImaGyNative
         delete[] resultBuffer;
     }
 
-    // 평균 블러 (원형 커널)
-    void NativeCore::ApplyAverageBlur(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
+    // 평균 블러
+    void NativeCore::ApplyAverageBlur_CPU(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
     {
         std::vector<double> kernel = createAverageKernel(kernelSize, useCircularKernel);
         unsigned char* pixelData = static_cast<unsigned char*>(pixels);
@@ -480,8 +505,8 @@ namespace ImaGyNative
 
 
     // Morphorogy
-    // 팽창 (원형 커널 )
-    void NativeCore::ApplyDilation(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
+    // 팽창 
+    void NativeCore::ApplyDilation_CPU(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
     {
         if (kernelSize % 2 == 0) kernelSize++;
         int center = kernelSize / 2;
@@ -511,8 +536,8 @@ namespace ImaGyNative
         delete[] sourceBuffer;
     }
 
-    // 침식 (원형 커널 )
-    void NativeCore::ApplyErosion(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
+    // 침식
+    void NativeCore::ApplyErosion_CPU(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
     {
         if (kernelSize % 2 == 0) kernelSize++;
         int center = kernelSize / 2;
@@ -546,7 +571,7 @@ namespace ImaGyNative
 
     // Image Matching 
     // normailized cross correlation
-    void NativeCore::ApplyNCC(void* pixels, int width, int height, int stride, void* templatePixels, int templateWidth, int templateHeight,
+    void NativeCore::ApplyNCC_CPU(void* pixels, int width, int height, int stride, void* templatePixels, int templateWidth, int templateHeight,
         int templateStride, int* outCoords)
     {
         unsigned char* sourceBuffer = static_cast<unsigned char*>(pixels);
@@ -631,6 +656,109 @@ namespace ImaGyNative
         outCoords[0] = bestX;
         outCoords[1] = bestY;
     }
+    ///////// 
+    // CPUCPU
+
+
+    void NativeCore::ApplyBinarization(void* pixels, int width, int height, int stride, int threshold)
+    {
+        // static 변수를 사용하여 분기
+        if (IsCudaAvailable()) {
+            if (LaunchBinarizationKernel(static_cast<unsigned char*>(pixels), width, height, stride, threshold)) {
+                return; // CUDA 성공 시 종료
+            }
+        }
+        // CUDA 실패 또는 사용 불가 시 CPU 코드 실행
+        ApplyBinarization_CPU(pixels, width, height, stride, threshold);
+    }
+
+    // Equalization
+    void NativeCore::ApplyEqualization(void* pixels, int width, int height, int stride, unsigned char threshold)
+    {
+        if (IsCudaAvailable()) {
+            if (LaunchEqualizationKernel(static_cast<unsigned char*>(pixels), width, height, stride)) {
+                return;
+            }
+        }
+        ApplyEqualization_CPU(pixels, width, height, stride, threshold);
+    }
+
+    // Gaussian Blur
+    void NativeCore::ApplyGaussianBlur(void* pixels, int width, int height, int stride, double sigma, int kernelSize, bool useCircularKernel)
+    {
+        if (IsCudaAvailable()) {
+            if (LaunchGaussianBlurKernel(static_cast<unsigned char*>(pixels), width, height, stride, sigma, kernelSize, useCircularKernel)) {
+                return;
+            }
+        }
+        ApplyGaussianBlur_CPU(pixels, width, height, stride, sigma, kernelSize, useCircularKernel);
+    }
+
+    // Average Blur
+    void NativeCore::ApplyAverageBlur(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
+    {
+        if (IsCudaAvailable()) {
+            if (LaunchAverageBlurKernel(static_cast<unsigned char*>(pixels), width, height, stride, kernelSize, useCircularKernel)) {
+                return;
+            }
+        }
+        ApplyAverageBlur_CPU(pixels, width, height, stride, kernelSize, useCircularKernel);
+    }
+
+    // Sobel
+    void NativeCore::ApplySobel(void* pixels, int width, int height, int stride, int kernelSize)
+    {
+        if (IsCudaAvailable()) {
+            if (LaunchSobelKernel(static_cast<unsigned char*>(pixels), width, height, stride, kernelSize)) {
+                return;
+            }
+        }
+        ApplySobel_CPU(pixels, width, height, stride, kernelSize);
+    }
+
+    // Laplacian
+    void NativeCore::ApplyLaplacian(void* pixels, int width, int height, int stride, int kernelSize)
+    {
+        if (IsCudaAvailable()) {
+            if (LaunchLaplacianKernel(static_cast<unsigned char*>(pixels), width, height, stride, kernelSize)) {
+                return;
+            }
+        }
+        ApplyLaplacian_CPU(pixels, width, height, stride, kernelSize);
+    }
+
+    // Dilation
+    void NativeCore::ApplyDilation(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
+    {
+        if (IsCudaAvailable()) {
+            if (LaunchDilationKernel(static_cast<unsigned char*>(pixels), width, height, stride, kernelSize, useCircularKernel)) {
+                return;
+            }
+        }
+        ApplyDilation_CPU(pixels, width, height, stride, kernelSize, useCircularKernel);
+    }
+
+    // Erosion
+    void NativeCore::ApplyErosion(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
+    {
+        if (IsCudaAvailable()) {
+            if (LaunchErosionKernel(static_cast<unsigned char*>(pixels), width, height, stride, kernelSize, useCircularKernel)) {
+                return;
+            }
+        }
+        ApplyErosion_CPU(pixels, width, height, stride, kernelSize, useCircularKernel);
+    }
+
+    // NCC
+    void NativeCore::ApplyNCC(void* pixels, int width, int height, int stride, void* templatePixels, int templateWidth, int templateHeight, int templateStride, int* outCoords)
+    {
+        if (IsCudaAvailable()) {
+            if (LaunchNccKernel(static_cast<const unsigned char*>(pixels), width, height, stride, static_cast<const unsigned char*>(templatePixels), templateWidth, templateHeight, templateStride, &outCoords[0], &outCoords[1])) {
+                return;
+            }
+        }
+        ApplyNCC_CPU(pixels, width, height, stride, templatePixels, templateWidth, templateHeight, templateStride, outCoords);
+    }
     void NativeCore::ApplySAD(void* pixels, int width, int height, int stride, void* templatePixels, int templateWidth, int templateHeight, int templateStride, int* outCoords)
     {
         unsigned char* sourceData = static_cast<unsigned char*>(pixels);
@@ -706,7 +834,15 @@ namespace ImaGyNative
     }
 
 
+    void NativeCore::ApplyFFT(void* pixels, int width, int height, int stride, int kernelSize)
+    {
+        if (IsCudaAvailable()) {
+            if (LaunchFftFilterKernel(static_cast<unsigned char*>(pixels), width, height, stride,  kernelSize)) {
+                return;
+            }
+        }
 
+    }
 
     void NativeCore::ApplyGaussianBlurColor(void* pixels, int width, int height, int stride, double sigma, int kernelSize, bool useCircularKernel)
     {

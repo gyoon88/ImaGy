@@ -213,7 +213,7 @@
                                 <StackPanel>
                                     <GroupBox Header="Binarization">
                                         <StackPanel>
-                                            <Button Content="Othu's Binarization" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Bin_Othu"/>
+                                            <Button Content="Otsu's Binarization" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Bin_Otsu"/>
                                             <Button Content="Binarization" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Bin"/>
                                             <Separator Margin="5" Foreground="Gray"/>
                                             <Grid Margin="5">
@@ -250,7 +250,7 @@
                                             <!--<Button Content="Differential" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Diff_SSE" />
                                             <Button Content="Sobel" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Sobel_SSE"/>
                                             <Button Content="Laplacian" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Laplace_SSE" />-->
-                                            <Button Content="FFT" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Laplace_SSE"/>
+                                            <Button Content="FFT" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="FFT"/>
 
                                             <Separator Margin="5" Foreground="Gray"/>
                                             <Grid Margin="5">
@@ -278,8 +278,7 @@
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
                                                     <ColumnDefinition Width="50"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                    
+                                                    <ColumnDefinition Width="*"/>                                                    
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock Grid.Column="0" Text="Sigma:" VerticalAlignment="Center" Margin="0,0,5,0"/>
                                                 <TextBox Grid.Column="1" Text="{Binding Sigma, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
@@ -293,7 +292,7 @@
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock Grid.Column="0" Text="Kernel:" VerticalAlignment="Center" Margin="0,0,5,0"/>
                                                 <TextBox Grid.Column="1" Text="{Binding KernelSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
-                                                <Slider Grid.Column="2" Value="{Binding KernelSize, Mode=TwoWay}" Minimum="1" Maximum="25" TickFrequency="2" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
+                                                <Slider Grid.Column="2" Value="{Binding KernelSize, Mode=TwoWay}" Minimum="1" Maximum="15" TickFrequency="2" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
                                             </Grid>
                                         </StackPanel>
                                     </GroupBox>

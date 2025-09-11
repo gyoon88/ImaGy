@@ -13,6 +13,8 @@ namespace ImaGyNative
     {
     public:
         // Applies binarization to grayscale pixel data.
+        static void ApplyBinarization_CPU(void* pixels, int width, int height, int stride, int threshold);
+        static void ApplyEqualization_CPU(void* pixels, int width, int height, int stride, unsigned char threshold);
         static void ApplyBinarization(void* pixels, int width, int height, int stride, int threshold);
         static void ApplyEqualization(void* pixels, int width, int height, int stride, unsigned char threshold);
         
@@ -22,19 +24,37 @@ namespace ImaGyNative
         static void ApplyDifferential(void* pixels, int width, int height, int stride, unsigned char threshold);
         static void ApplySobel(void* pixels, int width, int height, int stride, int kernelSize);
         static void ApplyLaplacian (void* pixels, int width, int height, int stride, int kernelSize);
+        static void ApplyFFT(void* pixels, int width, int height, int stride, int kernelSize);
+
+
+        static void ApplySobel_CPU(void* pixels, int width, int height, int stride, int kernelSize);
+        static void ApplyLaplacian_CPU(void* pixels, int width, int height, int stride, int kernelSize);
         
         // Blurring
         static void ApplyGaussianBlur(void* pixels, int width, int height, int stride, double sigma, int kernelSize, bool useCircularKernel);
         static void ApplyAverageBlur(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel);
+        // Blurring
+        static void ApplyGaussianBlur_CPU(void* pixels, int width, int height, int stride, double sigma, int kernelSize, bool useCircularKernel);
+        static void ApplyAverageBlur_CPU(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel);
+
 
         // Morphorogy
         static void ApplyDilation(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel);
         static void ApplyErosion(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel);
 
 
+        // Morphorogy
+        static void ApplyDilation_CPU(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel);
+        static void ApplyErosion_CPU(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel);
+
+
+
+
         // Image Matching
                 // Image Matching
         static void ApplyNCC(void* pixels, int width, int height, int stride, 
+            void* templatePixels, int templateWidth, int templateHeight, int templateStride, int* outCoords);
+        static void ApplyNCC_CPU(void* pixels, int width, int height, int stride, 
             void* templatePixels, int templateWidth, int templateHeight, int templateStride, int* outCoords);
 
         static void ApplySAD(void* pixels, int width, int height, int stride, 

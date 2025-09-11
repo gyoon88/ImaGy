@@ -30,11 +30,11 @@ namespace ImaGy.Models
                 NativeProcessor.ApplyLaplacian(pixelPtr, width, height, stride, kernelSize);
             });
         }
-        public BitmapSource ApplyFFT(BitmapSource source)
+        public BitmapSource ApplyFFT(BitmapSource source, int kernelSize)
         {
-            return BitmapProcessorHelper.ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride) =>
+            return BitmapProcessorHelper.ProcessGrayscaleImageWithPadding(source, kernelSize, (pixelPtr, width, height, stride) =>
             {
-                NativeProcessor.ApplyLaplacian(pixelPtr, width, height, stride, 128); 
+                NativeProcessor.ApplyFFT(pixelPtr, width, height, stride, kernelSize); 
             });
         }
 

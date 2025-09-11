@@ -27,6 +27,9 @@
     <ClInclude Include="NativeCoreSse.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="CudaKernel.cuh">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -41,5 +44,10 @@
     <ClCompile Include="NativeCoreSse.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="CudaKernel.cu">
+      <Filter>소스 파일</Filter>
+    </CudaCompile>
   </ItemGroup>
 </Project>
