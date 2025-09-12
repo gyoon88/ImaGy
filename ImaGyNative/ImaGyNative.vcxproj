@@ -158,6 +158,7 @@
   <ItemGroup>
     <ClInclude Include="CudaKernel.cuh" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="CudaColorKernel.cuh" />
     <ClInclude Include="ImageProcessingUtils.h" />
     <ClInclude Include="NativeCore.h" />
     <ClInclude Include="NativeCoreSse.h" />
@@ -178,6 +179,7 @@
     <ClCompile Include="ImageProcessingUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <CudaCompile Include="CudaColorKernel.cu" />
     <CudaCompile Include="CudaKernel.cu">
       <FileType>Document</FileType>
     </CudaCompile>

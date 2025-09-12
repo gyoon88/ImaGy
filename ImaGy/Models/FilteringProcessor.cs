@@ -14,7 +14,6 @@ namespace ImaGy.Models
             BitmapSource gray;
             if (isColor)
             {
-                var result = MessageBox.Show("이미지를 흑백으로 변환합니다.");
                 source = new FormatConvertedBitmap(source, PixelFormats.Gray8, null, 0);
             }
             return BitmapProcessorHelper.ApplyEffect(source, (pixelPtr, width, height, stride) =>
@@ -29,7 +28,6 @@ namespace ImaGy.Models
             BitmapSource gray;
             if (isColor)
             {
-                var result = MessageBox.Show("이미지를 흑백으로 변환합니다.");
                 source = new FormatConvertedBitmap(source, PixelFormats.Gray8, null, 0);
             }
             return BitmapProcessorHelper.ApplyKernelEffect(source, kernelSize, (pixelPtr, width, height, stride) =>
@@ -43,7 +41,6 @@ namespace ImaGy.Models
             BitmapSource gray;
             if (isColor)
             {
-                var result = MessageBox.Show("이미지를 흑백으로 변환합니다.");
                 source = new FormatConvertedBitmap(source, PixelFormats.Gray8, null, 0);
             }
             
@@ -57,13 +54,15 @@ namespace ImaGy.Models
         {
             if (isColor)
             {
+                //MessageBox.Show("Calling ApplyFFTColor (for color images)");
                 return BitmapProcessorHelper.ApplyKernelEffect(source, kernelSize, (pixelPtr, width, height, stride) =>
                 {
-                    NativeProcessor.ApplyFFT(pixelPtr, width, height, stride, kernelSize);
+                    NativeProcessor.ApplyFFTColor(pixelPtr, width, height, stride, kernelSize);
                 });
             }
             else
             {
+                //MessageBox.Show("Calling ApplyFFT (for grayscale images)");
                 return BitmapProcessorHelper.ApplyKernelEffect(source, kernelSize, (pixelPtr, width, height, stride) =>
                 {
                     NativeProcessor.ApplyFFT(pixelPtr, width, height, stride, kernelSize);

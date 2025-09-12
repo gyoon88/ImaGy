@@ -82,7 +82,7 @@ namespace ImaGy.Models
             }
             return BitmapProcessorHelper.ApplyEffect(source, (pixelPtr, width, height, stride) =>
             {
-                NativeProcessor.ApplyEqualization(pixelPtr, width, height, stride, 128);
+                NativeProcessor.ApplyEqualizationColor(pixelPtr, width, height, stride, 128);
             });
         }
     }

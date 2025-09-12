@@ -17,6 +17,10 @@ namespace ImaGy
         {
             ImaGyNative::NativeCore::ApplyEqualization(pixels.ToPointer(), width, height, stride, threshold);
         }
+        void NativeProcessor::ApplyEqualizationColor(IntPtr pixels, int width, int height, int stride, Byte threshold)
+        {
+            ImaGyNative::NativeCore::ApplyEqualizationColor(pixels.ToPointer(), width, height, stride, threshold);
+        }
         void NativeProcessor::ApplyHistogram(IntPtr pixels, int width, int height, int stride, int* hist)
         {
             ImaGyNative::NativeCore::ApplyHistogram(pixels.ToPointer(), width, height, stride, hist);
@@ -39,26 +43,50 @@ namespace ImaGy
         {
             ImaGyNative::NativeCore::ApplyFFT(pixels.ToPointer(), width, height, stride, kernelSize);
         }
+        void NativeProcessor::ApplyFFTColor(IntPtr pixels, int width, int height, int stride, int kernelSize)
+        {
+            ImaGyNative::NativeCore::ApplyFFTColor(pixels.ToPointer(), width, height, stride, kernelSize);
+        }
 
         // Blurring
         void NativeProcessor::ApplyAverageBlur(IntPtr pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
         {
             ImaGyNative::NativeCore::ApplyAverageBlur(pixels.ToPointer(), width, height, stride, kernelSize, useCircularKernel);
         }
+        void NativeProcessor::ApplyAverageBlurColor(IntPtr pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
+        {
+            ImaGyNative::NativeCore::ApplyAverageBlurColor(pixels.ToPointer(), width, height, stride, kernelSize, useCircularKernel);
+        }
+
         void NativeProcessor::ApplyGaussianBlur(IntPtr pixels, int width, int height, int stride, double sigma, int kernelSize, bool useCircularKernel)
         {
             ImaGyNative::NativeCore::ApplyGaussianBlur(pixels.ToPointer(), width, height, stride, sigma, kernelSize, useCircularKernel);
         }
+        void NativeProcessor::ApplyGaussianBlurColor(IntPtr pixels, int width, int height, int stride, double sigma, int kernelSize, bool useCircularKernel)
+        {
+            ImaGyNative::NativeCore::ApplyGaussianBlurColor(pixels.ToPointer(), width, height, stride, sigma, kernelSize, useCircularKernel);
+        }
+
 
         // Morphorogy
         void NativeProcessor::ApplyDilation(IntPtr pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
         {
             ImaGyNative::NativeCore::ApplyDilation(pixels.ToPointer(), width, height, stride, kernelSize, useCircularKernel);
         }
+        void NativeProcessor::ApplyDilationColor(IntPtr pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
+        {
+            ImaGyNative::NativeCore::ApplyDilationColor(pixels.ToPointer(), width, height, stride, kernelSize, useCircularKernel);
+        }
+
         void NativeProcessor::ApplyErosion(IntPtr pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
         {
             ImaGyNative::NativeCore::ApplyErosion(pixels.ToPointer(), width, height, stride, kernelSize, useCircularKernel);
         }
+        void NativeProcessor::ApplyErosionColor(IntPtr pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
+        {
+            ImaGyNative::NativeCore::ApplyErosionColor(pixels.ToPointer(), width, height, stride, kernelSize, useCircularKernel);
+        }
+
 
         // Image Matching
         void NativeProcessor::ApplyNCC(IntPtr pixels, int width, int height, int stride, IntPtr templatePixels, int templateWidth, int templateHeight, int templateStride, IntPtr outCoords)
@@ -74,21 +102,5 @@ namespace ImaGy
             ImaGyNative::NativeCore::ApplySSD(pixels.ToPointer(), width, height, stride, templatePixels.ToPointer(), templateWidth, templateHeight, templateStride, (int*)outCoords.ToPointer());
         }
 
-        // Color claculator
-        void NativeProcessor::ApplyGaussianBlurColor(IntPtr pixels, int width, int height, int stride, double sigma, int kernelSize, bool useCircularKernel)
-        {
-            ImaGyNative::NativeCore::ApplyGaussianBlurColor(pixels.ToPointer(), width, height, stride, sigma, kernelSize, useCircularKernel);
-        }
-        void NativeProcessor::ApplyAverageBlurColor(IntPtr pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
-        {
-            ImaGyNative::NativeCore::ApplyAverageBlurColor(pixels.ToPointer(), width, height, stride, kernelSize, useCircularKernel);
-        }
-        void NativeProcessor::ApplyDilationColor(IntPtr pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
-        {
-            ImaGyNative::NativeCore::ApplyDilationColor(pixels.ToPointer(), width, height, stride, kernelSize, useCircularKernel);
-        }
-        void NativeProcessor::ApplyErosionColor(IntPtr pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
-        {
-            ImaGyNative::NativeCore::ApplyErosionColor(pixels.ToPointer(), width, height, stride, kernelSize, useCircularKernel);
-        }
     }
+}

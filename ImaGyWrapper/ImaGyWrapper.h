@@ -24,8 +24,7 @@ namespace ImaGy
             // // Color Contrast
             static void ApplyBinarization(IntPtr pixels, int width, int height, int stride, int threshold);
             static void ApplyEqualization(IntPtr pixels, int width, int height, int stride, Byte threshold);
-            static void ApplyBinarization_CPU(IntPtr pixels, int width, int height, int stride, int threshold);
-            static void ApplyEqualization_CPU(IntPtr pixels, int width, int height, int stride, Byte threshold);
+            static void ApplyEqualizationColor(IntPtr pixels, int width, int height, int stride, Byte threshold);
 
             static void ApplyHistogram(IntPtr pixels, int width, int height, int stride, int* hist);
 
@@ -34,6 +33,7 @@ namespace ImaGy
             static void ApplySobel(IntPtr pixels, int width, int height, int stride, int kernelSize);
             static void ApplyLaplacian(IntPtr pixels, int width, int height, int stride, int kernelSize);
             static void ApplyFFT(IntPtr pixels, int width, int height, int stride, int kernelSize);
+            static void ApplyFFTColor(IntPtr pixels, int width, int height, int stride, int kernelSize);
 
             // Blurring
             static void ApplyAverageBlur(IntPtr pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel);
