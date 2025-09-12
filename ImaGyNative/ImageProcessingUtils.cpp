@@ -1,14 +1,11 @@
 #include "pch.h"
-#include "NativeCore.h"
-#include "CudaKernel.cuh" // Include our new CUDA header
+#include "ImageProcessingUtils.h"
 #include <cmath>
 #include <iostream>
 #include <vector>
 #include <iomanip> 
 #include <numeric>
 #include <algorithm>
-#include <stdexcept> // 예외 처리를 위해 추가
-#include <cuda_runtime.h>
 
 namespace ImaGyNative
 {
@@ -107,7 +104,9 @@ namespace ImaGyNative
         return kernel;
     }
 
-    // 평균 필터를 위한 (원형) 커널 생성 함수
+     /**
+     * 평균 필터를 위한 (원형) 커널 생성 함수
+     */
     std::vector<double> createAverageKernel(int kernelSize, bool isCircular)
     {
         if (kernelSize % 2 == 0) kernelSize++;

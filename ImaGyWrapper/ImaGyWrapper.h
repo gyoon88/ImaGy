@@ -31,59 +31,32 @@ namespace ImaGy
 
             // EdgeDetect
             static void ApplyDifferential(IntPtr pixels, int width, int height, int stride, Byte threshold);
-            static void ApplyDifferentialSse(IntPtr pixels, int width, int height, int stride, Byte threshold);
-
             static void ApplySobel(IntPtr pixels, int width, int height, int stride, int kernelSize);
-            static void ApplySobel_CPU(IntPtr pixels, int width, int height, int stride, int kernelSize);
-            static void ApplySobelSse(IntPtr pixels, int width, int height, int stride, Byte threshold);
-
             static void ApplyLaplacian(IntPtr pixels, int width, int height, int stride, int kernelSize);
-            static void ApplyLaplacian_CPU(IntPtr pixels, int width, int height, int stride, int kernelSize);
-            static void ApplyLaplacianSse(IntPtr pixels, int width, int height, int stride, Byte threshold);
-
             static void ApplyFFT(IntPtr pixels, int width, int height, int stride, int kernelSize);
-
 
             // Blurring
             static void ApplyAverageBlur(IntPtr pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel);
-            static void ApplyAverageBlur_CPU(IntPtr pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel);
             static void ApplyAverageBlurColor(IntPtr pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel);
             
-            static void ApplyAverageBlurSse(IntPtr pixels, int width, int height, int stride, int kernelSize);
-
             static void ApplyGaussianBlur(IntPtr pixels, int width, int height, int stride, double sigma, int kernelSize, bool useCircularKernel);
-            static void ApplyGaussianBlur_CPU(IntPtr pixels, int width, int height, int stride, double sigma, int kernelSize, bool useCircularKernel);
             static void ApplyGaussianBlurColor(IntPtr pixels, int width, int height, int stride, double sigma, int kernelSize, bool useCircularKernel);
-
-            static void ApplyGaussianBlurSse(IntPtr pixels, int width, int height, int stride, double sigma, int kernelSize);
 
             // Morphorogy
             static void ApplyDilation(IntPtr pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel);
-            static void ApplyDilation_CPU(IntPtr pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel);
             static void ApplyDilationColor(IntPtr pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel);
 
-            static void ApplyDilationSse(IntPtr pixels, int width, int height, int stride, Byte threshold);
-
             static void ApplyErosion(IntPtr pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel);
-            static void ApplyErosion_CPU(IntPtr pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel);
             static void ApplyErosionColor(IntPtr pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel);
 
-            static void ApplyErosionSse(IntPtr pixels, int width, int height, int stride, Byte threshold);
 
             // Image Matching
             static void ApplyNCC(System::IntPtr pixels, int width, int height, int stride, 
-                System::IntPtr templatePixels, int templateWidth, int templateHeight, int templateStride, System::IntPtr outCoords);
-            static void ApplyNCC_CPU(System::IntPtr pixels, int width, int height, int stride,
                 System::IntPtr templatePixels, int templateWidth, int templateHeight, int templateStride, System::IntPtr outCoords);
             static void ApplySAD(System::IntPtr pixels, int width, int height, int stride, 
                 System::IntPtr templatePixels, int templateWidth, int templateHeight, int templateStride, System::IntPtr outCoords);
             static void ApplySSD(System::IntPtr pixels, int width, int height, int stride, 
                 System::IntPtr templatePixels, int templateWidth, int templateHeight, int templateStride, System::IntPtr outCoords);
-
-
-
-
-            // TODO: Add other function declarations here later
         };
     }
 }
