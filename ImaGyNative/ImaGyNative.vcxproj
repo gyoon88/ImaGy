@@ -158,11 +158,14 @@
   <ItemGroup>
     <ClInclude Include="CudaKernel.cuh" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="ImageProcessingUtils.h" />
     <ClInclude Include="NativeCore.h" />
     <ClInclude Include="NativeCoreSse.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="CPUImageProcessor.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CPUImageProcessor.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="NativeCore.cpp" />
     <ClCompile Include="NativeCoreSse.cpp" />
@@ -172,6 +175,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="ImageProcessingUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="CudaKernel.cu">

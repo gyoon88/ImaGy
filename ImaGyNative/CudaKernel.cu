@@ -227,6 +227,66 @@ __global__ void EqualizationKernel(unsigned char* data, int width, int height, i
     data[idx] = (unsigned char)fmaxf(0.f, fminf(255.f, (float)newVal));
 }
 
+
+/**
+ * @brief FFT 결과를 받아 Magnitude를 계산하고, 로그 스케일링 및 중앙 정렬을 수행합니다.
+ * @param fft_input cufftExecR2C의 결과인 복소수 데이터 포인터
+ * @param magnitude_output 계산된 실수(float) Magnitude가 저장될 포인터
+ * @param width 이미지 너비
+ * @param height 이미지 높이
+ */
+__global__ void FftShiftAndLogMagnitudeKernel(
+    const cufftComplex* fft_input,
+    float* magnitude_output,
+    int width,
+    int height)
+{
+    int x = blockIdx.x * blockDim.x + threadIdx.x;
+    int y = blockIdx.y * blockDim.y + threadIdx.y;
+
+    if (x >= width || y >= height) return;
+
+    // 1. 결과 이미지를 중앙 정렬하기 위한 좌표 계산 (FFT Shift)
+    int shifted_x = (x + width / 2) % width;
+    int shifted_y = (y + height / 2) % height;
+
+    // cuFFT R2C 결과는 너비가 절반+1 크기로 저장되므로, 원본 좌표를 계산
+    int complex_width = width / 2 + 1;
+    int input_idx = shifted_y * complex_width + (shifted_x % complex_width);
+
+    // 2. Magnitude 계산: sqrt(real^2 + imag^2)
+    cufftComplex val = fft_input[input_idx];
+    float magnitude = sqrtf(val.x * val.x + val.y * val.y);
+
+    // 3. 로그 스케일 적용 (어두운 부분을 잘 보이게 함)
+    magnitude_output[y * width + x] = log10f(1.0f + magnitude);
+}
+
+/**
+ * @brief float 버퍼를 0~255 범위의 unsigned char 이미지로 정규화합니다.
+ */
+__global__ void NormalizeFloatToUcharKernel(
+    const float* float_input,
+    unsigned char* uchar_output,
+    int N,
+    float min_val,
+    float max_val)
+{
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i >= N) return;
+
+    float range = max_val - min_val;
+    // 범위가 0이면 픽셀을 0으로 설정하여 0으로 나누기 방지
+    if (range <= 1e-6f) {
+        uchar_output[i] = 0;
+        return;
+    }
+
+    // (현재값 - 최소값) / (최대값 - 최소값) * 255
+    float normalized_val = 255.0f * (float_input[i] - min_val) / range;
+    uchar_output[i] = (unsigned char)fmaxf(0.f, fminf(255.f, normalized_val));
+}
+
 __global__ void NccKernel(const unsigned char* image, const unsigned char* templ, float* result,
     int width, int height, int stride,
     int tempWidth, int tempHeight, int tempStride,
@@ -589,3 +649,66 @@ bool LaunchFftFilterKernel(unsigned char* pixels, int width, int height, int str
     return true;
 }
 
+/**
+ * @brief 이미지의 FFT 스펙트럼을 계산하여 시각적인 이미지로 변환합니다.
+ * @param pixels 입출력 버퍼. 원본 이미지가 들어가고, 결과 스펙트럼 이미지로 덮어쓰입니다.
+ * @param width 이미지 너비
+ * @param height 이미지 높이
+ * @param stride 이미지 스트라이드 (width와 같아야 함)
+ * @return 성공 시 true, 실패 시 false
+ */
+bool LaunchFftSpectrumKernel(unsigned char* pixels, int width, int height, int stride) {
+    if (width != stride) return false; // 패딩 없는 이미지만 지원
+
+    const int N = width * height;
+    const int complexWidth = (width / 2 + 1);
+
+    cufftHandle planR2C;
+    float* d_input_float = nullptr;
+    float* d_magnitude_float = nullptr;
+    cufftComplex* d_input_complex = nullptr;
+
+    // --- 1. 사전 준비 ---
+    CUFFT_CHECK(cufftPlan2d(&planR2C, height, width, CUFFT_R2C));
+    CUDA_CHECK(cudaMalloc(&d_input_float, N * sizeof(float)));
+    CUDA_CHECK(cudaMalloc(&d_magnitude_float, N * sizeof(float)));
+    CUDA_CHECK(cudaMalloc(&d_input_complex, complexWidth * height * sizeof(cufftComplex)));
+
+    dim3 grid((width + 15) / 16, (height + 15) / 16);
+    dim3 block(16, 16);
+
+    // --- 2. 원본 이미지를 GPU의 float 버퍼로 변환 ---
+    dim3 grid1D((N + 255) / 256);
+    dim3 block1D(256);
+    UcharToFloatKernel << <grid1D, block1D >> > (pixels, d_input_float, N);
+
+    // --- 3. FFT 수행 (실수 -> 복소수) ---
+    CUFFT_CHECK(cufftExecR2C(planR2C, d_input_float, d_input_complex));
+
+    // --- 4. FFT 결과를 Magnitude 스펙트럼으로 변환 ---
+    FftShiftAndLogMagnitudeKernel << <grid, block >> > (d_input_complex, d_magnitude_float, width, height);
+
+    // --- 5. 정규화를 위해 CPU에서 Min/Max 값 찾기 ---
+    std::vector<float> h_magnitude(N);
+    CUDA_CHECK(cudaMemcpy(h_magnitude.data(), d_magnitude_float, N * sizeof(float), cudaMemcpyDeviceToHost));
+
+    // std::minmax_element를 사용하여 최소/최대값 동시에 찾기
+    auto result_pair = std::minmax_element(h_magnitude.begin(), h_magnitude.end());
+    auto min_it = result_pair.first;
+    auto max_it = result_pair.second;
+
+    float min_val = *min_it;
+    float max_val = *max_it;   
+
+    // --- 6. Magnitude를 0~255 범위의 이미지로 정규화 ---
+    NormalizeFloatToUcharKernel << <grid1D, block1D >> > (d_magnitude_float, pixels, N, min_val, max_val);
+    CUDA_CHECK(cudaDeviceSynchronize());
+
+    // --- 7. 자원 해제 ---
+    CUFFT_CHECK(cufftDestroy(planR2C));
+    cudaFree(d_input_float);
+    cudaFree(d_magnitude_float);
+    cudaFree(d_input_complex);
+
+    return true;
+}

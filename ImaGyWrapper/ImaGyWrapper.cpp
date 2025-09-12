@@ -143,39 +143,39 @@ namespace ImaGy
         // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // SSE ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        // Edge Detect
-        void NativeProcessor::ApplyDifferentialSse(IntPtr pixels, int width, int height, int stride, Byte threshold)
-        {
-            ImaGyNative::SSE::ApplyDifferentialSse(pixels.ToPointer(), width, height, stride, threshold);
-        }
-        void NativeProcessor::ApplySobelSse(IntPtr pixels, int width, int height, int stride, Byte threshold)
-        {
-            ImaGyNative::SSE::ApplySobelSse(pixels.ToPointer(), width, height, stride, threshold);
-        }
-        void NativeProcessor::ApplyLaplacianSse(IntPtr pixels, int width, int height, int stride, Byte threshold)
-        {
-            ImaGyNative::SSE::ApplyLaplacianSse(pixels.ToPointer(), width, height, stride, threshold);
-        }
+        //// Edge Detect
+        //void NativeProcessor::ApplyDifferentialSse(IntPtr pixels, int width, int height, int stride, Byte threshold)
+        //{
+        //    ImaGyNative::SSE::ApplyDifferentialSse(pixels.ToPointer(), width, height, stride, threshold);
+        //}
+        //void NativeProcessor::ApplySobelSse(IntPtr pixels, int width, int height, int stride, Byte threshold)
+        //{
+        //    ImaGyNative::SSE::ApplySobelSse(pixels.ToPointer(), width, height, stride, threshold);
+        //}
+        //void NativeProcessor::ApplyLaplacianSse(IntPtr pixels, int width, int height, int stride, Byte threshold)
+        //{
+        //    ImaGyNative::SSE::ApplyLaplacianSse(pixels.ToPointer(), width, height, stride, threshold);
+        //}
 
-        // Blurring
-        void NativeProcessor::ApplyAverageBlurSse(IntPtr pixels, int width, int height, int stride, int kernelSize)
-        {
-            ImaGyNative::SSE::ApplyAverageBlurSse(pixels.ToPointer(), width, height, stride, kernelSize);
-        }
+        //// Blurring
+        //void NativeProcessor::ApplyAverageBlurSse(IntPtr pixels, int width, int height, int stride, int kernelSize)
+        //{
+        //    ImaGyNative::SSE::ApplyAverageBlurSse(pixels.ToPointer(), width, height, stride, kernelSize);
+        //}
 
-        void NativeProcessor::ApplyGaussianBlurSse(IntPtr pixels, int width, int height, int stride, double sigma, int kernelSize)
-        {
-            ImaGyNative::SSE::ApplyGaussianBlurSse(pixels.ToPointer(), width, height, stride, sigma, kernelSize);
-        }
+        //void NativeProcessor::ApplyGaussianBlurSse(IntPtr pixels, int width, int height, int stride, double sigma, int kernelSize)
+        //{
+        //    ImaGyNative::SSE::ApplyGaussianBlurSse(pixels.ToPointer(), width, height, stride, sigma, kernelSize);
+        //}
 
-        // Morphorogy
-        void NativeProcessor::ApplyDilationSse(IntPtr pixels, int width, int height, int stride, Byte threshold)
-        {
-            ImaGyNative::SSE::ApplyDilationSse(pixels.ToPointer(), width, height, stride, threshold);
-        }
-        void NativeProcessor::ApplyErosionSse(IntPtr pixels, int width, int height, int stride, Byte threshold)
-        {
-            ImaGyNative::SSE::ApplyErosionSse(pixels.ToPointer(), width, height, stride, threshold);
-        }
+        //// Morphorogy
+        //void NativeProcessor::ApplyDilationSse(IntPtr pixels, int width, int height, int stride, Byte threshold)
+        //{
+        //    ImaGyNative::SSE::ApplyDilationSse(pixels.ToPointer(), width, height, stride, threshold);
+        //}
+        //void NativeProcessor::ApplyErosionSse(IntPtr pixels, int width, int height, int stride, Byte threshold)
+        //{
+        //    ImaGyNative::SSE::ApplyErosionSse(pixels.ToPointer(), width, height, stride, threshold);
+        //}
     }
 }

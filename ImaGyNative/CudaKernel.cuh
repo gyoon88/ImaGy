@@ -21,4 +21,5 @@ bool LaunchNccKernel(const unsigned char* image, int width, int height, int stri
 
 // FFT Filter
 bool LaunchFftFilterKernel(unsigned char* pixels, int width, int height, int stride, int kernelSize);
+bool LaunchFftSpectrumKernel(unsigned char* pixels, int width, int height, int stride);
 

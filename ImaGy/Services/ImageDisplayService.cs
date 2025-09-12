@@ -30,8 +30,6 @@ namespace ImaGy.Services
             if (newScale > 50.0) newScale = 50.0;
             
             CurrentZoomScale = newScale;
-            // 확대/축소 후 스크롤 위치 보정은 고급 기능이므로 일단 생략하여 로직을 단순화합니다.
-            // 필요 시 마우스 위치 기반의 스크롤 보정 로직을 추가할 수 있습니다.
         }
 
         public void PanMouseDown(Point mousePosition)
