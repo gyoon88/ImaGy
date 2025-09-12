@@ -233,7 +233,7 @@
                                         <StackPanel>
                                             <Button Content="Gray Scale" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Grey"/>
                                             <Button Content="Equalization" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Equal" />
-                                            <Button Content="Color Equalization" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Equal_color" />
+                                            <Button Content="Color Equalization" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Equal_color"  IsEnabled="{Binding IsColor}"/>
                                         </StackPanel>                 
                                     </GroupBox>
                                 </StackPanel>

@@ -5,7 +5,7 @@
 #include <numeric>
 #include <algorithm>
 #include <cmath>
-#include <cufft.h> // FFT를 위해 추가
+#include <cufft.h> // FFT 사용
 
 // --- Helper Macro & Constant Memory ---
 #define CUDA_CHECK(err_code) do { cudaError_t _err = (err_code); if (_err != cudaSuccess) { return false; } } while (0)

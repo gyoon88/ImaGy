@@ -9,8 +9,6 @@ namespace ImaGy.Services
 {
     public class ImageProcessingService
     {
-        private readonly ImageProcessor _imageProcessor;
-        private readonly ImageProcessorSSE _imageProcessorSse;
 
         private readonly ColorContrastProcess _colorContrastProcessor;
         private readonly MatchingProcessor _matchingProcessor;
@@ -22,8 +20,6 @@ namespace ImaGy.Services
         private readonly LoggingService _loggingService;
 
         public ImageProcessingService(
-            ImageProcessor imageProcessor,
-            ImageProcessorSSE imageProcessorSse,
             ColorContrastProcess colorContrastProcessor,
             MatchingProcessor matchingProcessor,
             FilterProcessor filterProcessor,
@@ -34,9 +30,6 @@ namespace ImaGy.Services
             HistoryService historyService,
             LoggingService loggingService)
         {
-            _imageProcessor = imageProcessor;
-            _imageProcessorSse = imageProcessorSse;
-
             _colorContrastProcessor = colorContrastProcessor;
             _matchingProcessor = matchingProcessor;
             _filterProcessor = filterProcessor;
@@ -87,30 +80,23 @@ namespace ImaGy.Services
                 "Grey" => (image) => _colorContrastProcessor.ToGrayscale(image), 
 
                 "Equal" => (image) => _colorContrastProcessor.ApplyEqualization(image),
-                "Equal_color" => (image) => _colorContrastProcessor.ApplyColorEqualization(image),
+                "Equal_color" => (image) => _colorContrastProcessor.ApplyColorEqualization(image), // UI 에서 못하게 되어있음으로 넘기고 
 
                 // Filters
-                "Diff" => (image) => _filterProcessor.ApplyDifferential(image),
-                "Diff_SSE" => (image) => _imageProcessorSse.ApplyDifferentialSse(image),
+                "Diff" => (image) => _filterProcessor.ApplyDifferential(image, vm.IsColor),
+                "Sobel" => (image) => _filterProcessor.ApplySobel(image, vm.KernelSize, vm.IsColor),
 
-                "Sobel" => (image) => _filterProcessor.ApplySobel(image, vm.KernelSize),
-                "Sobel_SSE" => (image) => _imageProcessorSse.ApplySobelSse(image),
+                "Laplace" => (image) => _filterProcessor.ApplyLaplacian(image, vm.KernelSize, vm.IsColor),
 
-                "Laplace" => (image) => _filterProcessor.ApplyLaplacian(image, vm.KernelSize),
-                "FFT" => (image) => _filterProcessor.ApplyFFT(image, vm.KernelSize),
-                "Laplace_SSE" => (image) => _imageProcessorSse.ApplyLaplacianSse(image),
+                "FFT" => (image) => _filterProcessor.ApplyFFT(image, vm.KernelSize, vm.IsColor),
 
-                "Average" => (image) => _filterProcessor.ApplyAverageBlur(image, vm.KernelSize, vm.UseCircularKernel),
-                "Average_SSE" => (image) => _imageProcessorSse.ApplyAverageBlurSse(image, vm.KernelSize),
+                "Average" => (image) => _filterProcessor.ApplyAverageBlur(image, vm.KernelSize, vm.UseCircularKernel, vm.IsColor),
 
-                "Gaussian" => (image) => _filterProcessor.ApplyGaussianBlur(image, vm.Sigma, vm.KernelSize, vm.UseCircularKernel),
-                "Gaussian_SSE" => (image) => _imageProcessorSse.ApplyGaussianBlurSse(image, vm.Sigma, vm.KernelSize),
+                "Gaussian" => (image) => _filterProcessor.ApplyGaussianBlur(image, vm.Sigma, vm.KernelSize, vm.UseCircularKernel, vm.IsColor),
 
                 // Morphology
-                "Dilation" => (image) => _morphologyProcessor.ApplyDilation(image, vm.KernelSize, vm.UseCircularKernel),
-                "Dilation_SSE" => (image) => _imageProcessorSse.ApplyDilationSse(image),
-                "Erosion" => (image) => _morphologyProcessor.ApplyErosion(image, vm.KernelSize, vm.UseCircularKernel),
-                "Erosion_SSE" => (image) => _imageProcessorSse.ApplyErosionSse(image),
+                "Dilation" => (image) => _morphologyProcessor.ApplyDilation(image, vm.KernelSize, vm.UseCircularKernel, vm.IsColor),
+                "Erosion" => (image) => _morphologyProcessor.ApplyErosion(image, vm.KernelSize, vm.UseCircularKernel, vm.IsColor),
 
                 // Matching - Template 이미지가 필요
                 "NCC" => (image) => _matchingProcessor.ApplyNCC(image, vm.TemplateImage),

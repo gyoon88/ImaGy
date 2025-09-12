@@ -6,21 +6,42 @@ namespace ImaGy.Models
     public class MorphologyProcessor
     {
         // Mophorogy
-        public BitmapSource ApplyDilation(BitmapSource source, int kernelSize, bool useCircularKernel)
+        public BitmapSource ApplyDilation(BitmapSource source, int kernelSize, bool useCircularKernel, bool isColor)
         {
-            return BitmapProcessorHelper.ProcessBitmapSourcePixelsWithPadding(source, kernelSize, (pixelPtr, width, height, stride) =>
+            if (isColor)
             {
-                NativeProcessor.ApplyDilation(pixelPtr, width, height, stride, kernelSize, useCircularKernel); 
-            });
+                return BitmapProcessorHelper.ApplyKernelEffect(source, kernelSize, (pixelPtr, width, height, stride) =>
+                {
+                    NativeProcessor.ApplyDilationColor(pixelPtr, width, height, stride, kernelSize, useCircularKernel);
+                });
+            }
+            else
+            {
+                return BitmapProcessorHelper.ApplyKernelEffect(source, kernelSize, (pixelPtr, width, height, stride) =>
+                {
+                    NativeProcessor.ApplyDilation(pixelPtr, width, height, stride, kernelSize, useCircularKernel);
+                });
+            }
+
 
         }
 
-        public BitmapSource ApplyErosion(BitmapSource source, int kernelSize, bool useCircularKernel)
+        public BitmapSource ApplyErosion(BitmapSource source, int kernelSize, bool useCircularKernel, bool isColor)
         {
-            return BitmapProcessorHelper.ProcessBitmapSourcePixelsWithPadding(source, kernelSize, (pixelPtr, width, height, stride) =>
+            if (isColor)
             {
-                NativeProcessor.ApplyErosion(pixelPtr, width, height, stride, kernelSize, useCircularKernel);
-            });
+                return BitmapProcessorHelper.ApplyKernelEffect(source, kernelSize, (pixelPtr, width, height, stride) =>
+                {
+                    NativeProcessor.ApplyErosionColor(pixelPtr, width, height, stride, kernelSize, useCircularKernel);
+                });
+            }
+            else
+            {
+                return BitmapProcessorHelper.ApplyKernelEffect(source, kernelSize, (pixelPtr, width, height, stride) =>
+                {
+                    NativeProcessor.ApplyErosion(pixelPtr, width, height, stride, kernelSize, useCircularKernel);
+                });
+            }
         }
     }
 }

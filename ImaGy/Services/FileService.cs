@@ -4,6 +4,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace ImaGy.Services
@@ -19,26 +20,28 @@ namespace ImaGy.Services
 
             if (openDialog.ShowDialog() == true)
             {
-                var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-                var bitmap = await Task.Run(() =>
+                try
                 {
-                    var bmp = new BitmapImage();
-                    bmp.BeginInit();
-                    bmp.UriSource = new Uri(openDialog.FileName);
-                    bmp.CacheOption = BitmapCacheOption.OnLoad;
-                    bmp.EndInit();
-                    bmp.Freeze();
-                    return bmp;
-                });
-                stopwatch.Stop();
+                    var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
-                return new ImageLoadResult
+                    // 새로운 표준화 메서드를 비동기적으로 호출
+                    var bitmap = await Task.Run(() => LoadAndStandardizeImage(openDialog.FileName));
+
+                    stopwatch.Stop();
+
+                    return new ImageLoadResult
+                    {
+                        Bitmap = bitmap,
+                        FileName = System.IO.Path.GetFileName(openDialog.FileName),
+                        Resolution = $"{bitmap.PixelWidth}x{bitmap.PixelHeight}",
+                        LoadTime = stopwatch.Elapsed.TotalMilliseconds
+                    };
+                }
+                catch (Exception ex)
                 {
-                    Bitmap = bitmap,
-                    FileName = System.IO.Path.GetFileName(openDialog.FileName),
-                    Resolution = $"{bitmap.PixelWidth}x{bitmap.PixelHeight}",
-                    LoadTime = stopwatch.Elapsed.TotalMilliseconds
-                };
+                    MessageBox.Show($"이미지를 여는 데 실패했습니다.\n\n오류: {ex.Message}",
+                                    "파일 열기 오류", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
             return null;
         }
@@ -58,6 +61,9 @@ namespace ImaGy.Services
             return null;
         }
 
+        /// <summary>
+        /// REFACTOR: 템플릿 이미지를 열고 표준 포맷으로 변환
+        /// </summary>
         public BitmapSource? OpenTemplateImage()
         {
             OpenFileDialog openDialog = new OpenFileDialog
@@ -68,22 +74,18 @@ namespace ImaGy.Services
             {
                 try
                 {
-                    var bitmap = new BitmapImage();
-                    bitmap.BeginInit();
-                    bitmap.UriSource = new Uri(openDialog.FileName);
-                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                    bitmap.EndInit();
-                    bitmap.Freeze();
-                    return bitmap;
+                    // REFACTOR: 새로운 표준화 메서드를 직접 호출
+                    return LoadAndStandardizeImage(openDialog.FileName);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Failed to load the template image.\n\nError: {ex.Message}",
-                        "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"템플릿 이미지를 여는 데 실패했습니다.\n\n오류: {ex.Message}",
+                                    "오류", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             return null;
         }
+
 
         public void SaveImage(BitmapSource image)
         {
@@ -118,6 +120,43 @@ namespace ImaGy.Services
                     MessageBox.Show($"Failed to save the image.\n\nError: {ex.Message}",
                      "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
+            }
+        }
+
+    /// <summary>
+    /// NEW: 지정된 경로의 이미지를 로드하고 Gray8 또는 Bgra32 포맷으로 표준화하는 헬퍼 메서드
+    /// </summary>
+    /// <param name="filePath">이미지 파일 경로</param>
+    /// <returns>표준화된 BitmapSource</returns>
+    private BitmapSource LoadAndStandardizeImage(string filePath)
+    {
+        BitmapImage originalBitmap = new BitmapImage();
+        originalBitmap.BeginInit();
+        originalBitmap.UriSource = new Uri(filePath);
+        originalBitmap.CacheOption = BitmapCacheOption.OnLoad;
+        originalBitmap.EndInit();
+        originalBitmap.Freeze();
+
+        if (originalBitmap.Format == PixelFormats.Gray8 ||  originalBitmap.Format == PixelFormats.BlackWhite)
+        {
+            if (originalBitmap.Format == PixelFormats.Gray8)
+            {
+                return originalBitmap;
+            }
+            var grayBitmap = new FormatConvertedBitmap(originalBitmap, PixelFormats.Gray8, null, 0);
+            grayBitmap.Freeze();
+            return grayBitmap;
+        }
+        else
+        {
+            if (originalBitmap.Format == PixelFormats.Bgra32)
+            {
+                return originalBitmap;
+
+            }               
+            var colorBitmap = new FormatConvertedBitmap(originalBitmap, PixelFormats.Bgra32, null, 0);
+            colorBitmap.Freeze();
+            return colorBitmap;
             }
         }
     }

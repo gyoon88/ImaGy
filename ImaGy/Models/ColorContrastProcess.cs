@@ -36,7 +36,7 @@ namespace ImaGy.Models
         {
             BitmapSource graySource = ToGrayscale(source);
 
-            return BitmapProcessorHelper.ProcessBitmapSourcePixels(graySource, (pixelPtr, width, height, stride) =>
+            return BitmapProcessorHelper.ApplyEffect(graySource, (pixelPtr, width, height, stride) =>
             {
                 NativeProcessor.ApplyBinarization(pixelPtr, width, height, stride, threshold);
             });
@@ -50,7 +50,7 @@ namespace ImaGy.Models
         {
             BitmapSource graySource = ToGrayscale(source);
 
-            return BitmapProcessorHelper.ProcessBitmapSourcePixels(graySource, (pixelPtr, width, height, stride) =>
+            return BitmapProcessorHelper.ApplyEffect(graySource, (pixelPtr, width, height, stride) =>
             {
                 NativeProcessor.ApplyBinarization(pixelPtr, width, height, stride, -1);
             });
@@ -63,7 +63,7 @@ namespace ImaGy.Models
         {
             BitmapSource graySource = ToGrayscale(source);
 
-            return BitmapProcessorHelper.ProcessBitmapSourcePixels(graySource, (pixelPtr, width, height, stride) =>
+            return BitmapProcessorHelper.ApplyEffect(graySource, (pixelPtr, width, height, stride) =>
             {
                 NativeProcessor.ApplyEqualization(pixelPtr, width, height, stride, 128);
             });
@@ -80,9 +80,7 @@ namespace ImaGy.Models
             {
                 return ApplyEqualization(source);
             }
-
-            // 컬러 이미지의 경우, BitmapProcessorHelper가 자동으로 채널 분리/처리/병합을 수행합니다.
-            return BitmapProcessorHelper.ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride) =>
+            return BitmapProcessorHelper.ApplyEffect(source, (pixelPtr, width, height, stride) =>
             {
                 NativeProcessor.ApplyEqualization(pixelPtr, width, height, stride, 128);
             });

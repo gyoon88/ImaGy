@@ -1,5 +1,7 @@
-using System.Windows.Media.Imaging;
 using ImaGy.Wrapper;
+using System.Windows;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 
 namespace ImaGy.Models
@@ -7,53 +9,105 @@ namespace ImaGy.Models
     public class FilterProcessor
     {
         // Edge detect process
-        public BitmapSource ApplyDifferential(BitmapSource source)
+        public BitmapSource ApplyDifferential(BitmapSource source, bool isColor)
         {
-            return BitmapProcessorHelper.ProcessBitmapSourcePixels(source, (pixelPtr, width, height, stride) =>
+            BitmapSource gray;
+            if (isColor)
+            {
+                var result = MessageBox.Show("이미지를 흑백으로 변환합니다.");
+                source = new FormatConvertedBitmap(source, PixelFormats.Gray8, null, 0);
+            }
+            return BitmapProcessorHelper.ApplyEffect(source, (pixelPtr, width, height, stride) =>
             {
                 NativeProcessor.ApplyDifferential(pixelPtr, width, height, stride, 128);
             });
         }
 
-        public BitmapSource ApplySobel(BitmapSource source, int kernelSize)
+        public BitmapSource ApplySobel(BitmapSource source, int kernelSize, bool isColor)
+
         {
-            return BitmapProcessorHelper.ProcessBitmapSourcePixelsWithPadding(source, kernelSize, (pixelPtr, width, height, stride) =>
+            BitmapSource gray;
+            if (isColor)
+            {
+                var result = MessageBox.Show("이미지를 흑백으로 변환합니다.");
+                source = new FormatConvertedBitmap(source, PixelFormats.Gray8, null, 0);
+            }
+            return BitmapProcessorHelper.ApplyKernelEffect(source, kernelSize, (pixelPtr, width, height, stride) =>
             {
                 NativeProcessor.ApplySobel(pixelPtr, width, height, stride, kernelSize);
             });
         }
 
-        public BitmapSource ApplyLaplacian(BitmapSource source, int kernelSize)
+        public BitmapSource ApplyLaplacian(BitmapSource source, int kernelSize, bool isColor)
         {
-            return BitmapProcessorHelper.ProcessBitmapSourcePixelsWithPadding(source, kernelSize, (pixelPtr, width, height, stride) =>
+            BitmapSource gray;
+            if (isColor)
+            {
+                var result = MessageBox.Show("이미지를 흑백으로 변환합니다.");
+                source = new FormatConvertedBitmap(source, PixelFormats.Gray8, null, 0);
+            }
+            
+
+            return BitmapProcessorHelper.ApplyKernelEffect(source, kernelSize, (pixelPtr, width, height, stride) =>
             {
                 NativeProcessor.ApplyLaplacian(pixelPtr, width, height, stride, kernelSize);
             });
         }
-        public BitmapSource ApplyFFT(BitmapSource source, int kernelSize)
+        public BitmapSource ApplyFFT(BitmapSource source, int kernelSize, bool isColor)
         {
-            return BitmapProcessorHelper.ProcessGrayscaleImageWithPadding(source, kernelSize, (pixelPtr, width, height, stride) =>
+            if (isColor)
             {
-                NativeProcessor.ApplyFFT(pixelPtr, width, height, stride, kernelSize); 
-            });
+                return BitmapProcessorHelper.ApplyKernelEffect(source, kernelSize, (pixelPtr, width, height, stride) =>
+                {
+                    NativeProcessor.ApplyFFT(pixelPtr, width, height, stride, kernelSize);
+                });
+            }
+            else
+            {
+                return BitmapProcessorHelper.ApplyKernelEffect(source, kernelSize, (pixelPtr, width, height, stride) =>
+                {
+                    NativeProcessor.ApplyFFT(pixelPtr, width, height, stride, kernelSize);
+                });
+            }
+
         }
 
 
         // Blur process
-        public BitmapSource ApplyAverageBlur(BitmapSource source, int kernelSize, bool useCircularKernel)
+        public BitmapSource ApplyAverageBlur(BitmapSource source, int kernelSize, bool useCircularKernel, bool isColor)
         {
-            return BitmapProcessorHelper.ProcessBitmapSourcePixelsWithPadding(source, kernelSize, (pixelPtr, width, height, stride) =>
+            if (isColor)
             {
-                NativeProcessor.ApplyAverageBlur(pixelPtr, width, height, stride, kernelSize, useCircularKernel);
-            });
+                return BitmapProcessorHelper.ApplyKernelEffect(source, kernelSize, (pixelPtr, width, height, stride) =>
+                {
+                    NativeProcessor.ApplyAverageBlurColor(pixelPtr, width, height, stride, kernelSize, useCircularKernel);
+                });
+            }
+            else
+            {
+                return BitmapProcessorHelper.ApplyKernelEffect(source, kernelSize, (pixelPtr, width, height, stride) =>
+                {
+                    NativeProcessor.ApplyAverageBlur(pixelPtr, width, height, stride, kernelSize, useCircularKernel);
+                });
+            }
         }
 
-        public BitmapSource ApplyGaussianBlur(BitmapSource source, double sigma, int kernelSize, bool useCircularKernel)
+        public BitmapSource ApplyGaussianBlur(BitmapSource source, double sigma, int kernelSize, bool useCircularKernel, bool isColor)
         {
-            return BitmapProcessorHelper.ProcessBitmapSourcePixelsWithPadding(source, kernelSize, (pixelPtr, width, height, stride) =>
+            if(isColor){
+                return BitmapProcessorHelper.ApplyKernelEffect(source, kernelSize, (pixelPtr, width, height, stride) =>
+                {
+                    NativeProcessor.ApplyGaussianBlurColor(pixelPtr, width, height, stride, sigma, kernelSize, useCircularKernel);
+                });
+            }
+            else
             {
-                NativeProcessor.ApplyGaussianBlur(pixelPtr, width, height, stride, sigma, kernelSize, useCircularKernel);
-            });
+                return BitmapProcessorHelper.ApplyKernelEffect(source, kernelSize, (pixelPtr, width, height, stride) =>
+                {
+                    NativeProcessor.ApplyGaussianBlur(pixelPtr, width, height, stride, sigma, kernelSize, useCircularKernel);
+                });
+            }
+
         }
     }
 }

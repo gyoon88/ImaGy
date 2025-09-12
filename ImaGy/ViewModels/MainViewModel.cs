@@ -15,8 +15,6 @@ namespace ImaGy.ViewModels
     {
         // --- 서비스 및 모델 ---
         public ImageDisplayService ImageDisplay { get; }
-        private readonly ImageProcessor imageProcessor;
-        private readonly ImageProcessorSSE imageProcessorSSE;
         private readonly FilterProcessor filterProcessor;
         private readonly MatchingProcessor matchingProcessor;
         private readonly ColorContrastProcess colorContrastProcess;
@@ -42,7 +40,12 @@ namespace ImaGy.ViewModels
         private bool useCircularKernel = false;
 
 
-
+        private bool isColor;
+        public bool IsColor
+        {
+            get => isColor;
+            private set => SetProperty(ref isColor, value); // 외부에서는 값을 변경할 수 없도록 private set
+        }
         // --- 속성 ---
         public BitmapSource? BeforeImage
         {
@@ -58,7 +61,14 @@ namespace ImaGy.ViewModels
         public BitmapSource? AfterImage
         {
             get => afterImage;
-            set => SetProperty(ref afterImage, value);
+            set        
+            {
+                if (SetProperty(ref afterImage, value)) // 값이 변경되었을 때만 실행
+                {
+                    // ✨ 핵심: CurrentImage가 바뀔 때 IsColor 속성도 함께 업데이트
+                    IsColor = afterImage?.Format == PixelFormats.Bgra32;
+                }
+            }
         }
         public BitmapSource? TemplateImage
         {
@@ -182,8 +192,6 @@ namespace ImaGy.ViewModels
             ImageDisplay = new ImageDisplayService();
             undoRedoService = new UndoRedoService<BitmapSource?>();
             loggingService = new LoggingService();
-            imageProcessor = new ImageProcessor();
-            imageProcessorSSE = new ImageProcessorSSE();
             filterProcessor = new FilterProcessor();
             morphologyProcessor = new MorphologyProcessor();
             matchingProcessor = new MatchingProcessor();
@@ -192,7 +200,6 @@ namespace ImaGy.ViewModels
             clipboardService = new ClipboardImageService();
             fileService = new FileService();
             imageProcessingService = new ImageProcessingService(
-                imageProcessor, imageProcessorSSE,  
                 colorContrastProcess, matchingProcessor, filterProcessor, morphologyProcessor,
                 undoRedoService, historyService, loggingService
                 );
