@@ -26,7 +26,7 @@ namespace ImaGy.ViewModels
         private readonly FileService fileService;
         private readonly ImageProcessingService imageProcessingService;
         private readonly HistogramService histogramService;
-        private readonly RoiViewModel roiViewModel;
+        
         private readonly CropService cropService;
 
 
@@ -34,10 +34,7 @@ namespace ImaGy.ViewModels
         private BitmapSource? beforeImage;
         private BitmapSource? afterImage;
         private BitmapSource? templateImage;
-        private int threshold = 128;
-        private int kernelSize = 3;
-        private double sigma = 1.0;
-        private bool useCircularKernel = false;
+        public ProcessingParameters Parameters { get; }
 
 
         private bool isColor;
@@ -93,54 +90,19 @@ namespace ImaGy.ViewModels
             get => processingTime;
             set => SetProperty(ref processingTime, value);
         }
-        public int Threshold
-        {
-            get => threshold;
-            set => SetProperty(ref threshold, value);
-        }
-        public int KernelSize
-        {
-            get => kernelSize;
-            set => SetProperty(ref kernelSize, value);
-        }
-        public double Sigma
-        {
-            get => sigma;
-            set => SetProperty(ref sigma, value);
-        }
-        public bool UseCircularKernel
-        {
-            get => useCircularKernel;
-            set => SetProperty(ref useCircularKernel, value);
-        }
+        
         public bool IsProcessing
         {
             get => isProcessing;
             set => SetProperty(ref isProcessing, value);
         }
 
-        public bool IsImageLoading { get; set; }
-
-        private bool isInCropMode;
-        public bool IsInCropMode
-        {
-            get => isInCropMode;
-            set => SetProperty(ref isInCropMode, value);
-        }
-
-        private Rect cropRectangle;
-        public Rect CropRectangle
-        {
-            get => cropRectangle;
-            set => SetProperty(ref cropRectangle, value);
-        }
-
-        private Point cropStartPoint;
+        public bool IsImageLoading { get; set; }           
 
 
         public string LogText => loggingService.LogText;
         public ObservableCollection<string> HistoryItems => historyService.HistoryItems;
-        public RoiViewModel RoiViewModel => roiViewModel;
+        
 
         public string ZoomLevel
         {
@@ -151,8 +113,6 @@ namespace ImaGy.ViewModels
                 return $"{relativeZoom:F0}%";
             }
         }
-
-        
 
         // --- 커맨드 ---
         public ICommand ZoomCommand { get; }
@@ -173,14 +133,17 @@ namespace ImaGy.ViewModels
         public ICommand OpenTemplateImageCommand { get; }
         public ICommand CopyImageCommand { get; }
         public ICommand PasteImageCommand { get; }
-        public ICommand SelectRoiCommand { get; }
+        
         public ICommand MinimapCommand { get; }
         public ICommand ApplyCropCommand { get; }
+
+        public ImageViewerInteractionService InteractionService { get; }
 
         
 
         public MainViewModel()
         {
+            Parameters = new ProcessingParameters();
             // --- 서비스 초기화 ---
             ImageDisplay = new ImageDisplayService();
             undoRedoService = new UndoRedoService<BitmapSource?>();
@@ -198,95 +161,18 @@ namespace ImaGy.ViewModels
                 );
             histogramService = new HistogramService();
             cropService = new CropService();
+            InteractionService = new ImageViewerInteractionService(this, ImageDisplay, cropService, historyService);
 
             // --- 커맨드 초기화 ---
             // Mouse Command
-            ZoomCommand = new RelayCommand<MouseWheelEventArgs>(e => {
-                if (e.OriginalSource is FrameworkElement element)
-                {
-                    ImageDisplay.Zoom(e.Delta, e.GetPosition(element));
-                }
-            });
-
-            PanMouseDownCommand = new RelayCommand<MouseButtonEventArgs>(e =>
+            ZoomCommand = new RelayCommand<MouseWheelEventArgs>(e => ImageDisplay.Zoom(e.Delta, e.GetPosition((IInputElement)e.Source)));
+            PanMouseDownCommand = new RelayCommand<MouseButtonEventArgs>(InteractionService.MouseDown);
+            PanMouseMoveCommand = new RelayCommand<MouseEventArgs>(InteractionService.MouseMove);
+            PanMouseUpCommand = new RelayCommand<MouseButtonEventArgs>(InteractionService.MouseUp);
+            UpdateMouseCoordinatesCommand = new RelayCommand<MouseEventArgs>(e =>
             {
-                if (e.OriginalSource is FrameworkElement element)
-                {
-                    if (IsInCropMode)
-                    {
-                        element.CaptureMouse();
-                        cropStartPoint = e.GetPosition(element);
-                        CropRectangle = new Rect(cropStartPoint, cropStartPoint);
-                    }
-                    else if (element.CaptureMouse())
-                    {
-                        ImageDisplay.PanMouseDown(e.GetPosition(element));
-                    }
-                }
-            });
-
-            PanMouseMoveCommand = new RelayCommand<MouseEventArgs>(e =>
-            {
-                if (e.OriginalSource is FrameworkElement element)
-                {
-                    if (IsInCropMode && e.LeftButton == MouseButtonState.Pressed)
-                    {
-                        Point currentPoint = e.GetPosition(element);
-                        CropRectangle = new Rect(cropStartPoint, currentPoint);
-                    }
-                    else
-                    {
-                        ImageDisplay.PanMouseMove(e.GetPosition(element));
-                    }
-                    UpdateMouseCoordinates((int)e.GetPosition(element).X, (int)e.GetPosition(element).Y);
-                }
-            });
-
-            PanMouseUpCommand = new RelayCommand<MouseButtonEventArgs>(e =>
-            {
-                if (e.OriginalSource is FrameworkElement element)
-                {
-                    if (IsInCropMode)
-                    {
-                        element.ReleaseMouseCapture();
-                        if (CropRectangle.Width > 0 && CropRectangle.Height > 0 && BeforeImage != null)
-                        {
-                            // Convert screen coordinates to image coordinates
-                            double scale = ImageDisplay.CurrentZoomScale;
-                            var roi = new RoiModel(
-                                CropRectangle.X / scale,
-                                CropRectangle.Y / scale,
-                                CropRectangle.Width / scale,
-                                CropRectangle.Height / scale
-                            );
-
-                            var cropped = cropService.CropImage(BeforeImage, roi);
-                            if (cropped != null)
-                            {
-                                BeforeImage = cropped;
-                                AfterImage = cropped;
-                                historyService.AddHistory("Crop", 0);
-                            }
-                        }
-                        IsInCropMode = false;
-                        CropRectangle = new Rect(); // Reset rectangle
-                    }
-                    else
-                    {
-                        element.ReleaseMouseCapture();
-                        ImageDisplay.PanMouseUp();
-                    }
-                }
-            });
-
-            UpdateMouseCoordinatesCommand = new RelayCommand<MouseEventArgs>(e => {
-                if (e.OriginalSource is FrameworkElement element && BeforeImage != null)
-                {
-                    Point pos = e.GetPosition(element);
-                    int x = (int)(pos.X);
-                    int y = (int)(pos.Y);
-                    UpdateMouseCoordinates(x, y);
-                }
+                Point pos = e.GetPosition((IInputElement)e.Source);
+                UpdateMouseCoordinates((int)pos.X, (int)pos.Y);
             });
             ClearMouseCoordinatesCommand = new RelayCommand(() => ClearMouseCoordinates());
             // File Command

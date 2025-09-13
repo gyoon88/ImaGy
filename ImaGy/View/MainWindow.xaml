@@ -44,7 +44,7 @@
             </MenuItem>
             <MenuItem Header="_도구">
                 <MenuItem Header="자르기" Command="{Binding ApplyCropCommand}"/>
-                <MenuItem Header="ROI 선택" Command="{Binding SelectRoiCommand}"/>
+                
             </MenuItem>
             <MenuItem Header="_도움말">
                 <MenuItem Header="단축키 안내"/>
@@ -134,11 +134,11 @@
                             </Image>
                             <Canvas>
                                 <Rectangle Stroke="Cyan" StrokeThickness="2" StrokeDashArray="4 2"
-                                           Visibility="{Binding IsInCropMode, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                           Canvas.Left="{Binding CropRectangle.X}"
-                                           Canvas.Top="{Binding CropRectangle.Y}"
-                                           Width="{Binding CropRectangle.Width}"
-                                           Height="{Binding CropRectangle.Height}"/>
+                                           Visibility="{Binding InteractionService.IsInCropMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                           Canvas.Left="{Binding InteractionService.CropRectangle.X}"
+                                           Canvas.Top="{Binding InteractionService.CropRectangle.Y}"
+                                           Width="{Binding InteractionService.CropRectangle.Width}"
+                                           Height="{Binding InteractionService.CropRectangle.Height}"/>
                             </Canvas>
                         </Grid>
                     </ScrollViewer>
@@ -224,8 +224,8 @@
                                                     <ColumnDefinition Width="*"/>
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock Grid.Column="0" Text="Threshold:" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                                <TextBox Grid.Column="1" Text="{Binding Threshold, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
-                                                <Slider Grid.Column="2" Value="{Binding Threshold, Mode=TwoWay}" Minimum="0" Maximum="255" TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
+                                                <TextBox Grid.Column="1" Text="{Binding Parameters.Threshold, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
+                                                <Slider Grid.Column="2" Value="{Binding Parameters.Threshold, Mode=TwoWay}" Minimum="0" Maximum="255" TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
                                             </Grid>
                                         </StackPanel>
                                     </GroupBox>
@@ -255,8 +255,8 @@
                                                     <ColumnDefinition Width="*"/>
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock Grid.Column="0" Text="Kernel:" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                                <TextBox Grid.Column="1" Text="{Binding KernelSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
-                                                <Slider Grid.Column="2" Value="{Binding KernelSize, Mode=TwoWay}" Minimum="1" Maximum="25" TickFrequency="2" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
+                                                <TextBox Grid.Column="1" Text="{Binding Parameters.KernelSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
+                                                <Slider Grid.Column="2" Value="{Binding Parameters.KernelSize, Mode=TwoWay}" Minimum="1" Maximum="25" TickFrequency="2" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
                                             </Grid>
                                         </StackPanel>
                                     </GroupBox>
@@ -265,7 +265,7 @@
                                             <Button Content="Average" Margin="2"  Command="{Binding FilterringCommand}" CommandParameter="Average"/>
                                             <Button Content="Gaussian" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Gaussian"/>
                                             <Separator Margin="5" Foreground="Gray"/>
-                                            <ToggleButton Content="Circular Kernel" IsChecked="{Binding UseCircularKernel, Mode=TwoWay}" Margin="60,5,60,5" />
+                                            <ToggleButton Content="Circular Kernel" IsChecked="{Binding Parameters.UseCircularKernel, Mode=TwoWay}" Margin="60,5,60,5" />
                                             <Grid Margin="5">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
@@ -273,8 +273,8 @@
                                                     <ColumnDefinition Width="*"/>                                                    
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock Grid.Column="0" Text="Sigma:" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                                <TextBox Grid.Column="1" Text="{Binding Sigma, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
-                                                <Slider Grid.Column="2" Value="{Binding Sigma, Mode=TwoWay}" Minimum="0.1" Maximum="15" TickFrequency="0.1" VerticalAlignment="Center"/>
+                                                <TextBox Grid.Column="1" Text="{Binding Parameters.Sigma, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
+                                                <Slider Grid.Column="2" Value="{Binding Parameters.Sigma, Mode=TwoWay}" Minimum="0.1" Maximum="15" TickFrequency="0.1" VerticalAlignment="Center"/>
                                             </Grid>
                                             <Grid Margin="5">
                                                 <Grid.ColumnDefinitions>
@@ -283,8 +283,8 @@
                                                     <ColumnDefinition Width="*"/>
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock Grid.Column="0" Text="Kernel:" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                                <TextBox Grid.Column="1" Text="{Binding KernelSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
-                                                <Slider Grid.Column="2" Value="{Binding KernelSize, Mode=TwoWay}" Minimum="1" Maximum="15" TickFrequency="2" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
+                                                <TextBox Grid.Column="1" Text="{Binding Parameters.KernelSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
+                                                <Slider Grid.Column="2" Value="{Binding Parameters.KernelSize, Mode=TwoWay}" Minimum="1" Maximum="15" TickFrequency="2" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
                                             </Grid>
                                         </StackPanel>
                                     </GroupBox>
@@ -298,7 +298,7 @@
                                             <Button Content="Dilation" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Dilation"/>
                                             <Button Content="Erosion" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Erosion"/>
                                             <Separator Margin="5" Foreground="Gray"/>
-                                            <ToggleButton Content="Circular Kernel" IsChecked="{Binding UseCircularKernel, Mode=TwoWay}" Margin="60,5,60,5" />
+                                            <ToggleButton Content="Circular Kernel" IsChecked="{Binding Parameters.UseCircularKernel, Mode=TwoWay}" Margin="60,5,60,5" />
                                             <Grid Margin="5">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
@@ -306,8 +306,8 @@
                                                     <ColumnDefinition Width="*"/>
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock Grid.Column="0" Text="Kernel:" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                                <TextBox Grid.Column="1" Text="{Binding KernelSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
-                                                <Slider Grid.Column="2" Value="{Binding KernelSize, Mode=TwoWay}" Minimum="1" Maximum="25" TickFrequency="2" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
+                                                <TextBox Grid.Column="1" Text="{Binding Parameters.KernelSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
+                                                <Slider Grid.Column="2" Value="{Binding Parameters.KernelSize, Mode=TwoWay}" Minimum="1" Maximum="25" TickFrequency="2" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
                                             </Grid>
                                         </StackPanel>
 

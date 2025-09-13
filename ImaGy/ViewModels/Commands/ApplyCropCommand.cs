@@ -27,13 +27,7 @@ namespace ImaGy.ViewModels.Commands
 
         public void Execute(object? parameter)
         {
-            // Toggle crop mode
-            _viewModel.IsInCropMode = !_viewModel.IsInCropMode;
-            // Reset any existing crop rectangle when entering the mode
-            if (_viewModel.IsInCropMode)
-            {
-                _viewModel.CropRectangle = new System.Windows.Rect();
-            }
+            _viewModel.InteractionService.ToggleCropMode();
         }
     }
 }

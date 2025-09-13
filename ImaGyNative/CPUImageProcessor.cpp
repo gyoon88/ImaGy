@@ -2,14 +2,13 @@
 #include "NativeCore.h"
 #include "ImageProcessingUtils.h"
 #include "CPUImageProcessor.h"
-#include "CudaKernel.cuh" // Include our new CUDA header
 #include <cmath>
 #include <iostream>
 #include <vector>
 #include <iomanip> 
 #include <numeric>
 #include <algorithm>
-#include <stdexcept> // 예외 처리를 위해 추가
+#include <stdexcept> // 예외 처리
 #include <cuda_runtime.h>
 
 namespace ImaGyNative

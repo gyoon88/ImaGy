@@ -9,7 +9,6 @@ namespace ImaGy.Services
 {
     public class ImageProcessingService
     {
-
         private readonly ColorContrastProcess _colorContrastProcessor;
         private readonly MatchingProcessor _matchingProcessor;
         private readonly FilterProcessor _filterProcessor;
@@ -25,7 +24,6 @@ namespace ImaGy.Services
             FilterProcessor filterProcessor,
             MorphologyProcessor morphologyProcessor,
 
-
             UndoRedoService<BitmapSource?> undoRedoService,
             HistoryService historyService,
             LoggingService loggingService)
@@ -34,7 +32,6 @@ namespace ImaGy.Services
             _matchingProcessor = matchingProcessor;
             _filterProcessor = filterProcessor;
             _morphologyProcessor = morphologyProcessor;
-
             _undoRedoService = undoRedoService;
             _historyService = historyService;
             _loggingService = loggingService;
@@ -68,42 +65,41 @@ namespace ImaGy.Services
         }
 
 
-
         public Func<BitmapSource, BitmapSource> GetProcessAction(string processCommand, ViewModels.MainViewModel vm)
         {
             return processCommand switch
             {
                 // Color & Contrast
-                "Bin" => (image) => _colorContrastProcessor.ApplyBinarization(image, vm.Threshold),
+                "Bin" => (image) => _colorContrastProcessor.ApplyBinarization(image, vm.Parameters.Threshold),
                 "Bin_Otsu" => (image) => _colorContrastProcessor.ApplyOtsuBinarization(image),
 
                 "Grey" => (image) => _colorContrastProcessor.ToGrayscale(image), 
 
                 "Equal" => (image) => _colorContrastProcessor.ApplyEqualization(image),
-                "Equal_color" => (image) => _colorContrastProcessor.ApplyColorEqualization(image), // UI 에서 못하게 되어있음으로 넘기고 
+                "Equal_color" => (image) => _colorContrastProcessor.ApplyColorEqualization(image), // UI 에서 못하게 되어있음
 
                 // Filters
                 "Diff" => (image) => _filterProcessor.ApplyDifferential(image, vm.IsColor),
-                "Sobel" => (image) => _filterProcessor.ApplySobel(image, vm.KernelSize, vm.IsColor),
+                "Sobel" => (image) => _filterProcessor.ApplySobel(image, vm.Parameters.KernelSize, vm.IsColor),
 
-                "Laplace" => (image) => _filterProcessor.ApplyLaplacian(image, vm.KernelSize, vm.IsColor),
+                "Laplace" => (image) => _filterProcessor.ApplyLaplacian(image, vm.Parameters.KernelSize, vm.IsColor),
 
-                "FFT" => (image) => _filterProcessor.ApplyFFT(image, vm.KernelSize, vm.IsColor),
+                "FFT" => (image) => _filterProcessor.ApplyFFT(image, vm.Parameters.KernelSize, vm.IsColor),
 
-                "Average" => (image) => _filterProcessor.ApplyAverageBlur(image, vm.KernelSize, vm.UseCircularKernel, vm.IsColor),
+                "Average" => (image) => _filterProcessor.ApplyAverageBlur(image, vm.Parameters.KernelSize, vm.Parameters.UseCircularKernel, vm.IsColor),
 
-                "Gaussian" => (image) => _filterProcessor.ApplyGaussianBlur(image, vm.Sigma, vm.KernelSize, vm.UseCircularKernel, vm.IsColor),
+                "Gaussian" => (image) => _filterProcessor.ApplyGaussianBlur(image, vm.Parameters.Sigma, vm.Parameters.KernelSize, vm.Parameters.UseCircularKernel, vm.IsColor),
 
                 // Morphology
-                "Dilation" => (image) => _morphologyProcessor.ApplyDilation(image, vm.KernelSize, vm.UseCircularKernel, vm.IsColor),
-                "Erosion" => (image) => _morphologyProcessor.ApplyErosion(image, vm.KernelSize, vm.UseCircularKernel, vm.IsColor),
+                "Dilation" => (image) => _morphologyProcessor.ApplyDilation(image, vm.Parameters.KernelSize, vm.Parameters.UseCircularKernel, vm.IsColor),
+                "Erosion" => (image) => _morphologyProcessor.ApplyErosion(image, vm.Parameters.KernelSize, vm.Parameters.UseCircularKernel, vm.IsColor),
 
                 // Matching - Template 이미지가 필요
                 "NCC" => (image) => _matchingProcessor.ApplyNCC(image, vm.TemplateImage),
                 "SAD" => (image) => _matchingProcessor.ApplySAD(image, vm.TemplateImage),
                 "SSD" => (image) => _matchingProcessor.ApplySSD(image, vm.TemplateImage),
 
-                _ => null, // 잘못된 명령에 대해 null 반환하여 ApplyProcessing에서 처리
+                _ => null, // 잘못된 명령
             };
         }
     }

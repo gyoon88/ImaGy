@@ -11,25 +11,23 @@ namespace ImaGy.Services
         {
             if (source == null || roi == null) return null;
 
-            // Ensure ROI is within image bounds
             int x = (int)roi.X;
             int y = (int)roi.Y;
             int width = (int)roi.Width;
             int height = (int)roi.Height;
 
-            // Adjust ROI to be within image boundaries
             x = Math.Max(0, x);
             y = Math.Max(0, y);
             width = Math.Min(width, source.PixelWidth - x);
             height = Math.Min(height, source.PixelHeight - y);
 
-            if (width <= 0 || height <= 0) return null; // Invalid ROI
+            if (width <= 0 || height <= 0) return null; 
 
             CroppedBitmap croppedBitmap = new CroppedBitmap(
                 source,
                 new Int32Rect(x, y, width, height));
 
-            croppedBitmap.Freeze(); // Freeze the object to make it thread-safe
+            croppedBitmap.Freeze(); // Freeze 로 다른 쓰레드에서 접근 가능! 
             return croppedBitmap;
         }
     }
