@@ -13,7 +13,7 @@ namespace ImaGy.Models
         // =================================================================
 
         /// <summary>
-        /// [일반 처리용] 패딩 없이 네이티브 액션을 적용합니다.
+        /// [일반 처리용] 패딩 없이 네이티브 액션을 적용
         /// </summary>
         public static BitmapSource ApplyEffect(BitmapSource source, Action<IntPtr, int, int, int> nativeAction)
         {
@@ -79,7 +79,7 @@ namespace ImaGy.Models
         }
 
         // =================================================================
-        // --- 패딩/크롭 전용 헬퍼 (private) ---
+        // --- 패딩/크롭 전용 헬퍼 ---
         // =================================================================
 
         private static byte[] PadBuffer(byte[] originalPixels, int width, int height, int kernelSize, int pixelSize, out int paddedWidth, out int paddedHeight)
@@ -201,7 +201,12 @@ namespace ImaGy.Models
             {
                 drawingContext.DrawImage(drawingSource, new Rect(0, 0, drawingSource.PixelWidth, drawingSource.PixelHeight));
                 Pen redPen = new Pen(Brushes.Red, 2);
-                drawingContext.DrawRectangle(Brushes.Transparent, redPen, new Rect(box.X, box.Y, box.Width, box.Height));
+                // 50% 투명도를 가진 빨간색 브러시 (A:128, R:255, G:0, B:0)
+                Brush semiTransparentRedBrush = new SolidColorBrush(Color.FromArgb(64, 255, 0, 0));
+
+
+                // 3. 사각형을 그립니다. (내부를 redBrush로 채우고, 테두리는 redPen으로 그립니다)
+                drawingContext.DrawRectangle(semiTransparentRedBrush, redPen, new Rect(box.X, box.Y, box.Width, box.Height));
             }
             var renderTarget = new RenderTargetBitmap(drawingSource.PixelWidth, drawingSource.PixelHeight, drawingSource.DpiX, drawingSource.DpiY, PixelFormats.Pbgra32);
             renderTarget.Render(drawingVisual);

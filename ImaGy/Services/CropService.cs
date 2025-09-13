@@ -29,6 +29,7 @@ namespace ImaGy.Services
                 source,
                 new Int32Rect(x, y, width, height));
 
+            croppedBitmap.Freeze(); // Freeze the object to make it thread-safe
             return croppedBitmap;
         }
     }

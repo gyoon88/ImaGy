@@ -41,13 +41,12 @@ namespace ImaGy.ViewModels.Commands
                 var result = await _fileService.OpenImage();
                 if (result != null)
                 {
+                    _mainViewModel.IsImageLoading = true; // Set flag before updating properties
                     _mainViewModel.BeforeImage = result.Bitmap;
                     _mainViewModel.AfterImage = result.Bitmap;
                     _mainViewModel.FileName = result.FileName;
                     _mainViewModel.ImageResolution = result.Resolution;
                     _mainViewModel.ProcessingTime = $"Load Time: {result.LoadTime:F2} ms";
-
-                    // _mainViewModel.ImageLoadedCallback?.Invoke(result.Bitmap); // This needs to be handled
 
                     _mainViewModel.undoRedoService.Clear();
                     _mainViewModel.historyService.Clear();

@@ -7,25 +7,20 @@
         xmlns:vm="clr-namespace:ImaGy.ViewModels"
         xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
         mc:Ignorable="d"
-
-        Title="ImaGy" Height="900" Width="1600" MinHeight="500" MinWidth="1000">
+        Title="ImaGy" Height="800" Width="1300" MinHeight="500" MinWidth="1000">
     <Window.DataContext>
         <vm:MainViewModel/>
     </Window.DataContext>
-
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     </Window.Resources>
-
     <Window.InputBindings>
         <KeyBinding Modifiers="Control" Key="S" Command="{Binding SaveImageCommand}" />
         <KeyBinding Modifiers="Control" Key="O" Command="{Binding OpenImageCommand}" />
         <KeyBinding Modifiers="Control" Key="Z" Command="{Binding UndoCommand}" />
         <KeyBinding Modifiers="Control" Key="Y" Command="{Binding RedoCommand}" />
     </Window.InputBindings>
-
-    <DockPanel>
-        <!-- This DockPanel is the single child of Window -->
+    <DockPanel>        
         <!-- Menu -->
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_파일">
@@ -35,7 +30,6 @@
                 <Separator />
                 <MenuItem Header="작업기록 내보내기" Command="{Binding ExportHistoryCommand}"/>
                 <MenuItem Header="로그 내보내기" Command="{Binding ExportLogCommand}"/>
-
             </MenuItem>
             <MenuItem Header="_편집">
                 <MenuItem Header="되돌리기" Command="{Binding UndoCommand}"/>
@@ -111,7 +105,8 @@
 
                     <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
                                   x:Name="BeforeImageScrollViewer"
-                                  ScrollChanged="ScrollViewer_Sync">
+                                  ScrollChanged="ScrollViewer_Sync"
+                                  SizeChanged="BeforeImageScrollViewer_SizeChanged">
                         <Grid>
                             <Image Source="{Binding BeforeImage}" Stretch="None">
                                 <Image.LayoutTransform>
@@ -128,7 +123,6 @@
                                     </b:EventTrigger>
                                     <b:EventTrigger EventName="MouseMove">
                                         <b:InvokeCommandAction Command="{Binding PanMouseMoveCommand}" PassEventArgsToCommand="True" />
-                                        <b:InvokeCommandAction Command="{Binding UpdateMouseCoordinatesCommand}" PassEventArgsToCommand="True" />
                                     </b:EventTrigger>
                                     <b:EventTrigger EventName="MouseUp">
                                         <b:InvokeCommandAction Command="{Binding PanMouseUpCommand}" PassEventArgsToCommand="True" />
@@ -138,7 +132,15 @@
                                     </b:EventTrigger>
                                 </b:Interaction.Triggers>
                             </Image>
-                            </Grid>
+                            <Canvas>
+                                <Rectangle Stroke="Cyan" StrokeThickness="2" StrokeDashArray="4 2"
+                                           Visibility="{Binding IsInCropMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                           Canvas.Left="{Binding CropRectangle.X}"
+                                           Canvas.Top="{Binding CropRectangle.Y}"
+                                           Width="{Binding CropRectangle.Width}"
+                                           Height="{Binding CropRectangle.Height}"/>
+                            </Canvas>
+                        </Grid>
                     </ScrollViewer>
                 </Grid>
             </Border>
@@ -204,7 +206,6 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="3*" />
                 </Grid.RowDefinitions>
-
                 <!-- Button Groups -->
                 <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
                     <GroupBox Header="Image Edittor" Foreground="White">
@@ -213,8 +214,8 @@
                                 <StackPanel>
                                     <GroupBox Header="Binarization">
                                         <StackPanel>
-                                            <Button Content="Otsu's Binarization" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Bin_Otsu"/>
-                                            <Button Content="Binarization" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Bin"/>
+                                            <Button Content="Otsu's Binarization" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Bin_Otsu"/>
+                                            <Button Content="Binarization" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Bin"/>
                                             <Separator Margin="5" Foreground="Gray"/>
                                             <Grid Margin="5">
                                                 <Grid.ColumnDefinitions>
@@ -226,14 +227,13 @@
                                                 <TextBox Grid.Column="1" Text="{Binding Threshold, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
                                                 <Slider Grid.Column="2" Value="{Binding Threshold, Mode=TwoWay}" Minimum="0" Maximum="255" TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
                                             </Grid>
-
                                         </StackPanel>
                                     </GroupBox>
                                     <GroupBox Header="Color-Contrast">
                                         <StackPanel>
-                                            <Button Content="Gray Scale" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Grey"/>
-                                            <Button Content="Equalization" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Equal" />
-                                            <Button Content="Color Equalization" Margin="2" Command="{Binding ColorContrastCommand}" CommandParameter="Equal_color"  IsEnabled="{Binding IsColor}"/>
+                                            <Button Content="Gray Scale" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Grey"/>
+                                            <Button Content="Equalization" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Equal" />
+                                            <Button Content="Color Equalization" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Equal_color"  IsEnabled="{Binding IsColor}"/>
                                         </StackPanel>                 
                                     </GroupBox>
                                 </StackPanel>
@@ -241,17 +241,12 @@
 
                             <Expander Header="Filterring" Foreground="White"  Margin="0,4,0,4">
                                 <StackPanel Cursor="">
-
                                     <GroupBox Header="Edge Detection">
                                         <StackPanel>
                                             <Button Content="Differential" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Diff" />
                                             <Button Content="Sobel" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Sobel"/>
                                             <Button Content="Laplacian" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Laplace"/>
-                                            <!--<Button Content="Differential" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Diff_SSE" />
-                                            <Button Content="Sobel" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Sobel_SSE"/>
-                                            <Button Content="Laplacian" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Laplace_SSE" />-->
                                             <Button Content="FFT" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="FFT"/>
-
                                             <Separator Margin="5" Foreground="Gray"/>
                                             <Grid Margin="5">
                                                 <Grid.ColumnDefinitions>
@@ -265,14 +260,11 @@
                                             </Grid>
                                         </StackPanel>
                                     </GroupBox>
-
-
                                     <GroupBox Header="Blur Parameter">
                                         <StackPanel>
                                             <Button Content="Average" Margin="2"  Command="{Binding FilterringCommand}" CommandParameter="Average"/>
                                             <Button Content="Gaussian" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Gaussian"/>
                                             <Separator Margin="5" Foreground="Gray"/>
-
                                             <ToggleButton Content="Circular Kernel" IsChecked="{Binding UseCircularKernel, Mode=TwoWay}" Margin="60,5,60,5" />
                                             <Grid Margin="5">
                                                 <Grid.ColumnDefinitions>
@@ -296,7 +288,6 @@
                                             </Grid>
                                         </StackPanel>
                                     </GroupBox>
-
                                 </StackPanel>
                             </Expander>
 
@@ -304,12 +295,9 @@
                                 <StackPanel>
                                     <GroupBox Header = "Default" Foreground="White">
                                         <StackPanel>
-                                            <Button Content="Dilation" Margin="2" Command="{Binding MorphorogyCommand}" CommandParameter="Dilation"/>
-                                            <Button Content="Erosion" Margin="2" Command="{Binding MorphorogyCommand}" CommandParameter="Erosion"/>
-                                            <!--<Button Content="팽창" Margin="2" Command="{Binding MorphorogyCommand}" CommandParameter="Dilation_SSE"/>
-                                            <Button Content="수축" Margin="2" Command="{Binding MorphorogyCommand}" CommandParameter="Erosion_SSE"/>-->
+                                            <Button Content="Dilation" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Dilation"/>
+                                            <Button Content="Erosion" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Erosion"/>
                                             <Separator Margin="5" Foreground="Gray"/>
-
                                             <ToggleButton Content="Circular Kernel" IsChecked="{Binding UseCircularKernel, Mode=TwoWay}" Margin="60,5,60,5" />
                                             <Grid Margin="5">
                                                 <Grid.ColumnDefinitions>
@@ -326,16 +314,13 @@
                                     </GroupBox>
                                 </StackPanel>
                             </Expander>
-
-                            <Expander Header="Image Matching" Foreground="White" Margin="0,4,0,4">
-                                
+                            <Expander Header="Image Matching" Foreground="White" Margin="0,4,0,4">                                
                                  <GroupBox Header="Score Base">
                                     <StackPanel>
                                         <Button Content="NCC" Margin="2" Command="{Binding ImageMatchingCommand}" CommandParameter="NCC"/>
                                         <Button Content="SAD" Margin="2" Command="{Binding ImageMatchingCommand}" CommandParameter="SAD"/>
                                         <Button Content="SSD" Margin="2" Command="{Binding ImageMatchingCommand}" CommandParameter="SSD"/>
                                     </StackPanel>
-
                                 </GroupBox>
                             </Expander>
                         </StackPanel>
