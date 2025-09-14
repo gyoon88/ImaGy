@@ -4,12 +4,12 @@ namespace ImaGy.ViewModels.Commands
 {
     public class ApplyCropCommand : ICommand
     {
-        private readonly MainViewModel _viewModel;
+        private readonly MainViewModel _mainViewModel;
 
         public ApplyCropCommand(MainViewModel viewModel)
         {
-            _viewModel = viewModel;
-            _viewModel.PropertyChanged += (s, e) =>
+            _mainViewModel = viewModel;
+            _mainViewModel.PropertyChanged += (s, e) =>
             {
                 if (e.PropertyName == nameof(MainViewModel.IsProcessing) || e.PropertyName == nameof(MainViewModel.BeforeImage))
                 {
@@ -22,12 +22,12 @@ namespace ImaGy.ViewModels.Commands
 
         public bool CanExecute(object? parameter)
         {
-            return !_viewModel.IsProcessing && _viewModel.BeforeImage != null;
+            return !_mainViewModel.IsProcessing && _mainViewModel.BeforeImage != null;
         }
 
         public void Execute(object? parameter)
         {
-            _viewModel.InteractionService.ToggleCropMode();
+            _mainViewModel.InteractionService.ToggleCropMode();
         }
     }
 }

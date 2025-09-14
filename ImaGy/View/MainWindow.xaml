@@ -16,6 +16,7 @@
     </Window.Resources>
     <Window.InputBindings>
         <KeyBinding Modifiers="Control" Key="S" Command="{Binding SaveImageCommand}" />
+        <KeyBinding Modifiers="Control" Key="C" Command="{Binding CopyImageCommand}" />
         <KeyBinding Modifiers="Control" Key="O" Command="{Binding OpenImageCommand}" />
         <KeyBinding Modifiers="Control" Key="Z" Command="{Binding UndoCommand}" />
         <KeyBinding Modifiers="Control" Key="Y" Command="{Binding RedoCommand}" />
@@ -133,6 +134,10 @@
                                 </b:Interaction.Triggers>
                             </Image>
                             <Canvas>
+                                <Canvas.LayoutTransform>
+                                    <ScaleTransform ScaleX="{Binding ImageDisplay.CurrentZoomScale}" 
+                                                  ScaleY="{Binding ImageDisplay.CurrentZoomScale}"/>
+                                </Canvas.LayoutTransform>
                                 <Rectangle Stroke="Cyan" StrokeThickness="2" StrokeDashArray="4 2"
                                            Visibility="{Binding InteractionService.IsInCropMode, Converter={StaticResource BooleanToVisibilityConverter}}"
                                            Canvas.Left="{Binding InteractionService.CropRectangle.X}"

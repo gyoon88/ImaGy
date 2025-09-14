@@ -91,8 +91,8 @@ namespace ImaGy.Services
                     {
                         double scale = _imageDisplayService.CurrentZoomScale;
                         var roi = new RoiModel(
-                            CropRectangle.X / scale,
-                            CropRectangle.Y / scale,
+                            (CropRectangle.X + _imageDisplayService.HorizontalOffset) / scale,
+                            (CropRectangle.Y + _imageDisplayService.VerticalOffset) / scale,
                             CropRectangle.Width / scale,
                             CropRectangle.Height / scale
                         );

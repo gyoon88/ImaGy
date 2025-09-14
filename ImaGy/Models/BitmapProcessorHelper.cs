@@ -204,8 +204,6 @@ namespace ImaGy.Models
                 // 50% 투명도를 가진 빨간색 브러시 (A:128, R:255, G:0, B:0)
                 Brush semiTransparentRedBrush = new SolidColorBrush(Color.FromArgb(64, 255, 0, 0));
 
-
-                // 3. 사각형을 그립니다. (내부를 redBrush로 채우고, 테두리는 redPen으로 그립니다)
                 drawingContext.DrawRectangle(semiTransparentRedBrush, redPen, new Rect(box.X, box.Y, box.Width, box.Height));
             }
             var renderTarget = new RenderTargetBitmap(drawingSource.PixelWidth, drawingSource.PixelHeight, drawingSource.DpiX, drawingSource.DpiY, PixelFormats.Pbgra32);

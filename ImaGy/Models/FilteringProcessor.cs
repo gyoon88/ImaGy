@@ -71,7 +71,6 @@ namespace ImaGy.Models
 
         }
 
-
         // Blur process
         public BitmapSource ApplyAverageBlur(BitmapSource source, int kernelSize, bool useCircularKernel, bool isColor)
         {

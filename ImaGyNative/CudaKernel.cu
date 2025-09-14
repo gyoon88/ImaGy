@@ -806,7 +806,7 @@ namespace ImaGyNative
 		float* d_magnitude_float = nullptr;
 		cufftComplex* d_input_complex = nullptr;
 
-		// --- 1.  غ ---
+		// --- 1.
 		CUFFT_CHECK(cufftPlan2d(&planR2C, height, width, CUFFT_R2C));
 		CUDA_CHECK(cudaMalloc(&d_input_float, N * sizeof(float)));
 		CUDA_CHECK(cudaMalloc(&d_magnitude_float, N * sizeof(float)));
@@ -815,22 +815,22 @@ namespace ImaGyNative
 		dim3 grid((width + 15) / 16, (height + 15) / 16);
 		dim3 block(16, 16);
 
-		// --- 2.  ̹ GPU float ۷ ȯ ---
+		// --- 2. GPU float 
 		dim3 grid1D((N + 255) / 256);
 		dim3 block1D(256);
 		UcharToFloatKernel << <grid1D, block1D >> > (pixels, d_input_float, N);
 
-		// --- 3. FFT  (Ǽ -> Ҽ) ---
+		// --- 3. FFT 
 		CUFFT_CHECK(cufftExecR2C(planR2C, d_input_float, d_input_complex));
 
 		// --- 4. FFT  Magnitude Ʈ ȯ ---
 		FftShiftAndLogMagnitudeKernel << <grid, block >> > (d_input_complex, d_magnitude_float, width, height);
 
-		// --- 5. ȭ  CPU Min/Max  ã ---
+		// --- 5. ȭ  CPU Min/Max 
 		std::vector<float> h_magnitude(N);
 		CUDA_CHECK(cudaMemcpy(h_magnitude.data(), d_magnitude_float, N * sizeof(float), cudaMemcpyDeviceToHost));
 
-		// std::minmax_element Ͽ ּ/ִ밪 ÿ ã
+		// std::minmax_element 
 		auto result_pair = std::minmax_element(h_magnitude.begin(), h_magnitude.end());
 		auto min_it = result_pair.first;
 		auto max_it = result_pair.second;
@@ -838,11 +838,11 @@ namespace ImaGyNative
 		float min_val = *min_it;
 		float max_val = *max_it;
 
-		// --- 6. Magnitude 0~255  ̹ ȭ ---
+		// --- 6. Magnitude 0~255 
 		NormalizeFloatToUcharKernel << <grid1D, block1D >> > (d_magnitude_float, pixels, N, min_val, max_val);
 		CUDA_CHECK(cudaDeviceSynchronize());
 
-		// --- 7. ڿ  ---
+		// 
 		CUFFT_CHECK(cufftDestroy(planR2C));
 		cudaFree(d_input_float);
 		cudaFree(d_magnitude_float);

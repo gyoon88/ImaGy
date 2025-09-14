@@ -1,0 +1,360 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="ImaGy.Models.BitmapProcessorHelper" Collapsed="true">
+    <Position X="35.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAEAAAgAAAAAAACAACAAAAAAIAEAAAAA=</HashCode>
+      <FileName>Models\BitmapProcessorHelper.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ImaGy.Models.ColorContrastProcess" Collapsed="true">
+    <Position X="28.25" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAQIAAAAAGAAAAAAAEAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\ColorContrastProcess.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ImaGy.Models.FilterProcessor" Collapsed="true">
+    <Position X="30" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAiAAAAAAAEAACAAAAABIAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\FilteringProcessor.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ImaGy.Models.ImageChannelUtils" Collapsed="true">
+    <Position X="35.25" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAIAAIAAAAAA=</HashCode>
+      <FileName>Models\ImageChannelUtils.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ImaGy.Models.ImageLoadResult" Collapsed="true">
+    <Position X="37" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAgAAAAAAAAgAAAAAAAAAIBAAAA=</HashCode>
+      <FileName>Models\ImageLoadResult.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ImaGy.Models.MatchingProcessor" Collapsed="true">
+    <Position X="31.75" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAIAAAAAAQAA=</HashCode>
+      <FileName>Models\MatchingProcessor.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ImaGy.Models.MorphologyProcessor" Collapsed="true">
+    <Position X="35.25" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAEAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\MorphologyProcessor.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ImaGy.Models.ProcessingParameters" Collapsed="true">
+    <Position X="3.25" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAABAAACIQAAAmAAAABAA=</HashCode>
+      <FileName>Models\ProcessingParameters.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ImaGy.Models.ProcessTime" Collapsed="true">
+    <Position X="31.75" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\ProcessTime.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ImaGy.Models.RoiModel" Collapsed="true">
+    <Position X="28.25" Y="5.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAABAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAYAA=</HashCode>
+      <FileName>Models\RoiModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ImaGy.Models.ServeHistogram" Collapsed="true">
+    <Position X="31.75" Y="5.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>EAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAABAAAAAAAAA=</HashCode>
+      <FileName>Models\ServeHistogram.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ImaGy.Services.ClipboardImageService" Collapsed="true">
+    <Position X="37" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAEQAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Services\ClipboardImageService.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ImaGy.Services.CropService" Collapsed="true">
+    <Position X="31.75" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Services\CropService.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ImaGy.Services.CsvExporter" Collapsed="true">
+    <Position X="33.5" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAABAAAAAABAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Services\CsvExporter.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ImaGy.Services.FileService" Collapsed="true">
+    <Position X="28.25" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAEAAAAAIAAAAAAAAAAAAAAAAAAAACAAAAAAAAEBA=</HashCode>
+      <FileName>Services\FileService.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ImaGy.Services.HistogramService" Collapsed="true">
+    <Position X="31.75" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Services\HistogramService.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ImaGy.Services.HistoryService" Collapsed="true">
+    <Position X="12.25" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAABAAAAAAAAAAAAAAAAAAAQAAAAAAAABAQAA=</HashCode>
+      <FileName>Services\HistoryService.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ImaGy.Services.ImageDisplayService" Collapsed="true">
+    <Position X="16.75" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AgEAAQAAIAAAAAAAEAEIABIBCIISEAAAABAGAAAAAAA=</HashCode>
+      <FileName>Services\ImageDisplayService.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ImaGy.Services.ImageProcessingService" Collapsed="true">
+    <Position X="28.25" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AACBAAAgAAAIAAAAAAAAAAAAFAIAAAAAAAAAAQAQAAA=</HashCode>
+      <FileName>Services\ImageProcessingService.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ImaGy.Services.ImageViewerInteractionService" Collapsed="true">
+    <Position X="23.5" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ACAAAAAggAAAQEgQAAAAAAAAEAAAEAAAgBAIAACAAAA=</HashCode>
+      <FileName>Services\ImageViewerInteractionService.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ImaGy.Services.LoggingService" Collapsed="true">
+    <Position X="25.75" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAEAAAAUAA=</HashCode>
+      <FileName>Services\LoggingService.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ImaGy.Services.UndoRedoService&lt;T&gt;" Collapsed="true">
+    <Position X="5.5" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAABAAABAAAAAAAAAADAAAgAAAAAAAAAAFACAA=</HashCode>
+      <FileName>Services\UndoRedoService.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ImaGy.View.HistogramWindow" BaseTypeListCollapsed="true">
+    <Position X="40" Y="4" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ABAABBQAAAIAAAAQQRAAAAAAAEAAAABAAAAAAAEAAAA=</HashCode>
+      <FileName>View\HistogramWindow.xaml.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ImaGy.View.MainWindow" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="30" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAQAAAAgAAAAAAAAAAAAAAEQAA=</HashCode>
+      <FileName>View\MainWindow.xaml.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ImaGy.View.MinimapWindow" BaseTypeListCollapsed="true">
+    <Position X="33.25" Y="6.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>BAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAgAAAAAA=</HashCode>
+      <FileName>View\MinimapWindow.xaml.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ImaGy.View.TemplateImageViewer" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="33.5" Y="5.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>View\TemplateImageViewer.xaml.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ImaGy.ViewModels.Commands.ApplyCropCommand" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="30" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAACAAQQAEAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ViewModels\Commands\ApplyCropCommand.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ImaGy.ViewModels.Commands.ApplyFilterCommand" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="31.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAACQAQAAEBAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ViewModels\Commands\ApplyFilterCommand.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ImaGy.ViewModels.Commands.ApplyImageMatchingCommand" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="33.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAACQAQAAEBAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ViewModels\Commands\ApplyImageMatchingCommand.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ImaGy.ViewModels.Commands.CopyImageCommand" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="30" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAACQAQAEEAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ViewModels\Commands\CopyImageCommand.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ImaGy.ViewModels.Commands.ExportHistoryCommand" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="35.25" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AACAAAAAAAACYAQAAEAAAAAAEAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ViewModels\Commands\ExportHistoryCommand.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ImaGy.ViewModels.Commands.ExportLogCommand" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="37" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AACAAAAAAAACYAQAAEAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ViewModels\Commands\ExportLogCommand.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ImaGy.ViewModels.Commands.OpenImageCommand" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="37" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AACAAAAAAAACYAQAAEAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ViewModels\Commands\OpenImageCommand.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ImaGy.ViewModels.Commands.OpenTemplateImageCommand" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="28.25" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AACAAAAAAAACYAQAAEAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ViewModels\Commands\OpenTemplateImageCommand.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ImaGy.ViewModels.Commands.PasteImageCommand" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="30" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAACQAQAEEAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ViewModels\Commands\PasteImageCommand.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ImaGy.ViewModels.Commands.RedoCommand" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="33.5" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAACQAQAAEAAAAAABAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ViewModels\Commands\RedoCommand.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ImaGy.ViewModels.Commands.SaveImageCommand" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="30" Y="5.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AACAAAAAAAACYAQAAEAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ViewModels\Commands\SaveImageCommand.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ImaGy.ViewModels.Commands.UndoCommand" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="35.25" Y="5.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAACQAQAAEAAAAAABAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ViewModels\Commands\UndoCommand.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ImaGy.ViewModels.Commands.ViewHistogramCommand" BaseTypeListCollapsed="true">
+    <Position X="37" Y="5.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AACAAAAAAAACQAQAAEAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ViewModels\Commands\ViewHistogramCommand.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ImaGy.ViewModels.Commands.RelayCommand&lt;T&gt;" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="37" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAEACAAQAAECAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ViewModels\RelayCommand.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ImaGy.ViewModels.Commands.RelayCommand" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="35.25" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAEACAAQAAECAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ViewModels\RelayCommand.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="ImaGy.ViewModels.BaseViewModel" Collapsed="true">
+    <Position X="14.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAIAAAAAAAgAEAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ViewModels\BaseViewModel.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="ImaGy.ViewModels.CropViewModel" Collapsed="true">
+    <Position X="7.75" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAQAAQAAAAAACAAAAAAAAAAAAAAAAAAAE=</HashCode>
+      <FileName>ViewModels\CropViewModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ImaGy.ViewModels.HistogramViewModel" Collapsed="true">
+    <Position X="10" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAQABAAAAAAAAABIgAAAAAQgBAAEgAAAAEAAAAAAAA=</HashCode>
+      <FileName>ViewModels\HistogramViewModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ImaGy.ViewModels.MainViewModel" Collapsed="true">
+    <Position X="14.5" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>woEQE0MAAgwBIBA4AADAgIiADIAIIxgAQOAYAdBzEAA=</HashCode>
+      <FileName>ViewModels\MainViewModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ImaGy.ViewModels.MinimapViewModel" Collapsed="true">
+    <Position X="19" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>QABACIAAQAAAAAIAIAACEAgAAAAIIABAIAAAAEAAAAA=</HashCode>
+      <FileName>ViewModels\MinimapViewModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ImaGy.ViewModels.TemplateImageViewerViewModel" Collapsed="true">
+    <Position X="21.25" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAgAQAAIAAAAAAAAABAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ViewModels\TemplateImageViewerViewModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ImaGy.App" Collapsed="true">
+    <Position X="28.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>App.xaml.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="맑은 고딕" Size="9.43" />
+</ClassDiagram>
