@@ -76,7 +76,7 @@ namespace ImaGy.Services
                 "Grey" => (image) => _colorContrastProcessor.ToGrayscale(image), 
 
                 "Equal" => (image) => _colorContrastProcessor.ApplyEqualization(image),
-                "Equal_color" => (image) => _colorContrastProcessor.ApplyColorEqualization(image), // UI ¿¡¼­ ¸øÇÏ°Ô µÇ¾îÀÖÀ½
+                "Equal_color" => (image) => _colorContrastProcessor.ApplyColorEqualization(image), // UI ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ï°ï¿½ ï¿½Ç¾ï¿½ï¿½ï¿½ï¿½ï¿½
 
                 // Filters
                 "Diff" => (image) => _filterProcessor.ApplyDifferential(image, vm.IsColor),
@@ -91,15 +91,18 @@ namespace ImaGy.Services
                 "Gaussian" => (image) => _filterProcessor.ApplyGaussianBlur(image, vm.Parameters.Sigma, vm.Parameters.KernelSize, vm.Parameters.UseCircularKernel, vm.IsColor),
 
                 // Morphology
+                // Morphology
                 "Dilation" => (image) => _morphologyProcessor.ApplyDilation(image, vm.Parameters.KernelSize, vm.Parameters.UseCircularKernel, vm.IsColor),
                 "Erosion" => (image) => _morphologyProcessor.ApplyErosion(image, vm.Parameters.KernelSize, vm.Parameters.UseCircularKernel, vm.IsColor),
+                "Opening" => (image) => _morphologyProcessor.ApplyDilation(_morphologyProcessor.ApplyErosion(image, vm.Parameters.KernelSize, vm.Parameters.UseCircularKernel, vm.IsColor), vm.Parameters.KernelSize, vm.Parameters.UseCircularKernel, vm.IsColor),
+                "Closing" => (image) => _morphologyProcessor.ApplyErosion(_morphologyProcessor.ApplyDilation(image, vm.Parameters.KernelSize, vm.Parameters.UseCircularKernel, vm.IsColor), vm.Parameters.KernelSize, vm.Parameters.UseCircularKernel, vm.IsColor),
 
-                // Matching - Template ÀÌ¹ÌÁö°¡ ÇÊ¿ä
+                // Matching - Template ï¿½Ì¹ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¿ï¿½
                 "NCC" => (image) => _matchingProcessor.ApplyNCC(image, vm.TemplateImage),
                 "SAD" => (image) => _matchingProcessor.ApplySAD(image, vm.TemplateImage),
                 "SSD" => (image) => _matchingProcessor.ApplySSD(image, vm.TemplateImage),
 
-                _ => null, // Àß¸øµÈ ¸í·É
+                _ => null, // ï¿½ß¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
             };
         }
     }

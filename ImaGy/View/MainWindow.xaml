@@ -300,22 +300,25 @@
                                 <StackPanel>
                                     <GroupBox Header = "Default" Foreground="White">
                                         <StackPanel>
-                                            <Button Content="Dilation" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Dilation"/>
-                                            <Button Content="Erosion" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Erosion"/>
-                                            <Separator Margin="5" Foreground="Gray"/>
-                                            <ToggleButton Content="Circular Kernel" IsChecked="{Binding Parameters.UseCircularKernel, Mode=TwoWay}" Margin="60,5,60,5" />
-                                            <Grid Margin="5">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="50"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock Grid.Column="0" Text="Kernel:" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                                <TextBox Grid.Column="1" Text="{Binding Parameters.KernelSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
-                                                <Slider Grid.Column="2" Value="{Binding Parameters.KernelSize, Mode=TwoWay}" Minimum="1" Maximum="25" TickFrequency="2" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
-                                            </Grid>
+                                            <StackPanel>
+                                                <Button Content="Dilation" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Dilation"/>
+                                                <Button Content="Erosion" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Erosion"/>
+                                                <Button Content="Opening" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Opening"/>
+                                                <Button Content="Closing" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Closing"/>
+                                                <Separator Margin="5" Foreground="Gray"/>
+                                                <ToggleButton Content="Circular Kernel" IsChecked="{Binding Parameters.UseCircularKernel, Mode=TwoWay}" Margin="60,5,60,5" />
+                                                <Grid Margin="5">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="50"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="0" Text="Kernel:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                                    <TextBox Grid.Column="1" Text="{Binding Parameters.KernelSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
+                                                    <Slider Grid.Column="2" Value="{Binding Parameters.KernelSize, Mode=TwoWay}" Minimum="1" Maximum="25" TickFrequency="2" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
+                                                </Grid>
+                                            </StackPanel>
                                         </StackPanel>
-
                                     </GroupBox>
                                 </StackPanel>
                             </Expander>
