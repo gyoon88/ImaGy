@@ -89,12 +89,11 @@ namespace ImaGy.Services
                     element.ReleaseMouseCapture();
                     if (CropRectangle.Width > 0 && CropRectangle.Height > 0 && _mainViewModel.BeforeImage != null)
                     {
-                        double scale = _imageDisplayService.CurrentZoomScale;
                         var roi = new RoiModel(
-                            (CropRectangle.X + _imageDisplayService.HorizontalOffset) / scale,
-                            (CropRectangle.Y + _imageDisplayService.VerticalOffset) / scale,
-                            CropRectangle.Width / scale,
-                            CropRectangle.Height / scale
+                            CropRectangle.X,
+                            CropRectangle.Y,
+                            CropRectangle.Width,
+                            CropRectangle.Height
                         );
 
                         var cropped = _cropService.CropImage(_mainViewModel.BeforeImage, roi);
@@ -102,6 +101,7 @@ namespace ImaGy.Services
                         {
                             _mainViewModel.BeforeImage = cropped;
                             _mainViewModel.AfterImage = cropped;
+                            _mainViewModel.ImageResolution = $"{cropped.PixelWidth}x{cropped.PixelHeight}";
                             _historyService.AddHistory("Crop", 0);
                         }
                     }

@@ -46,27 +46,20 @@ namespace ImaGy.Services
 
             // 1. Calculate new scale
             double zoomFactor = 1.1;
-            double newScale = oldScale;
-            if (delta > 0) newScale *= zoomFactor;
-            else newScale /= zoomFactor;
-
+            double newScale = (delta > 0) ? oldScale * zoomFactor : oldScale / zoomFactor;
             if (newScale < 0.05) newScale = 0.05;
             if (newScale > 50.0) newScale = 50.0;
+            if (Math.Abs(newScale - oldScale) < 0.001) return;
 
-            // 2. Get the point on the full-resolution image under the mouse
-            Point pointToKeepCentered = new Point(
-                (HorizontalOffset + mousePosition.X) / oldScale,
-                (VerticalOffset + mousePosition.Y) / oldScale
-            );
+            // mousePosition is the unscaled coordinate 'U'
+            Point unscaledMousePos = mousePosition;
 
-            // 3. Apply the new scale
+            // Calculate the new offset using the formula: O_new = O_old + U * (S_new - S_old)
+            double newHorizontalOffset = HorizontalOffset + unscaledMousePos.X * (newScale - oldScale);
+            double newVerticalOffset = VerticalOffset + unscaledMousePos.Y * (newScale - oldScale);
+
+            // Apply the new scale and scroll to the new offsets
             CurrentZoomScale = newScale;
-
-            // 4. Calculate new offsets to keep the point centered
-            double newHorizontalOffset = (pointToKeepCentered.X * newScale) - mousePosition.X;
-            double newVerticalOffset = (pointToKeepCentered.Y * newScale) - mousePosition.Y;
-
-            // 5. Request the scroll viewer to scroll to the new offsets
             RequestScrollAction?.Invoke(newHorizontalOffset, newVerticalOffset);
         }
 

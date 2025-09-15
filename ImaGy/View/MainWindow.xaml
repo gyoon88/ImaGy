@@ -108,44 +108,44 @@
                                   x:Name="BeforeImageScrollViewer"
                                   ScrollChanged="ScrollViewer_Sync"
                                   SizeChanged="BeforeImageScrollViewer_SizeChanged">
-                        <Grid>
-                            <Image Source="{Binding BeforeImage}" Stretch="None">
-                                <Image.LayoutTransform>
-                                    <ScaleTransform ScaleX="{Binding ImageDisplay.CurrentZoomScale}" 
-                                                  ScaleY="{Binding ImageDisplay.CurrentZoomScale}"/>
-                                </Image.LayoutTransform>
-                                
-                                <b:Interaction.Triggers>
-                                    <b:EventTrigger EventName="MouseWheel">
-                                        <b:InvokeCommandAction Command="{Binding ZoomCommand}" PassEventArgsToCommand="True" />
-                                    </b:EventTrigger>
-                                    <b:EventTrigger EventName="MouseDown">
-                                        <b:InvokeCommandAction Command="{Binding PanMouseDownCommand}" PassEventArgsToCommand="True" />
-                                    </b:EventTrigger>
-                                    <b:EventTrigger EventName="MouseMove">
-                                        <b:InvokeCommandAction Command="{Binding PanMouseMoveCommand}" PassEventArgsToCommand="True" />
-                                    </b:EventTrigger>
-                                    <b:EventTrigger EventName="MouseUp">
-                                        <b:InvokeCommandAction Command="{Binding PanMouseUpCommand}" PassEventArgsToCommand="True" />
-                                    </b:EventTrigger>
-                                    <b:EventTrigger EventName="MouseLeave">
-                                        <b:InvokeCommandAction Command="{Binding ClearMouseCoordinatesCommand}" />
-                                    </b:EventTrigger>
-                                </b:Interaction.Triggers>
-                            </Image>
-                            <Canvas>
-                                <Canvas.LayoutTransform>
-                                    <ScaleTransform ScaleX="{Binding ImageDisplay.CurrentZoomScale}" 
-                                                  ScaleY="{Binding ImageDisplay.CurrentZoomScale}"/>
-                                </Canvas.LayoutTransform>
-                                <Rectangle Stroke="Cyan" StrokeThickness="2" StrokeDashArray="4 2"
-                                           Visibility="{Binding InteractionService.IsInCropMode, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                           Canvas.Left="{Binding InteractionService.CropRectangle.X}"
-                                           Canvas.Top="{Binding InteractionService.CropRectangle.Y}"
-                                           Width="{Binding InteractionService.CropRectangle.Width}"
-                                           Height="{Binding InteractionService.CropRectangle.Height}"/>
-                            </Canvas>
-                        </Grid>
+                        <Border x:Name="ImageContainer"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center">
+                            <Border.LayoutTransform>
+                                <ScaleTransform ScaleX="{Binding ImageDisplay.CurrentZoomScale}" 
+                                              ScaleY="{Binding ImageDisplay.CurrentZoomScale}"/>
+                            </Border.LayoutTransform>
+                            <Grid>
+                                <Image Source="{Binding BeforeImage}" Stretch="None" x:Name="BeforeImage">
+                                    <b:Interaction.Triggers>
+                                        <b:EventTrigger EventName="MouseWheel">
+                                            <b:InvokeCommandAction Command="{Binding ZoomCommand}" PassEventArgsToCommand="True" />
+                                        </b:EventTrigger>
+                                        <b:EventTrigger EventName="MouseDown">
+                                            <b:InvokeCommandAction Command="{Binding PanMouseDownCommand}" PassEventArgsToCommand="True" />
+                                        </b:EventTrigger>
+                                        <b:EventTrigger EventName="MouseMove">
+                                            <b:InvokeCommandAction Command="{Binding PanMouseMoveCommand}" PassEventArgsToCommand="True" />
+                                        </b:EventTrigger>
+                                        <b:EventTrigger EventName="MouseUp">
+                                            <b:InvokeCommandAction Command="{Binding PanMouseUpCommand}" PassEventArgsToCommand="True" />
+                                        </b:EventTrigger>
+                                        <b:EventTrigger EventName="MouseLeave">
+                                            <b:InvokeCommandAction Command="{Binding ClearMouseCoordinatesCommand}" />
+                                        </b:EventTrigger>
+                                    </b:Interaction.Triggers>
+                                </Image>
+                                <Canvas>
+                                    <Rectangle Stroke="Cyan" StrokeThickness="2" StrokeDashArray="4 2"
+                                               Fill="#80ADD8E6"
+                                               Visibility="{Binding InteractionService.IsInCropMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                               Canvas.Left="{Binding InteractionService.CropRectangle.X}"                 
+                                               Canvas.Top="{Binding InteractionService.CropRectangle.Y}"                  
+                                               Width="{Binding InteractionService.CropRectangle.Width}"                   
+                                               Height="{Binding InteractionService.CropRectangle.Height}"/>
+                                </Canvas>
+                            </Grid>
+                        </Border>
                     </ScrollViewer>
                 </Grid>
             </Border>

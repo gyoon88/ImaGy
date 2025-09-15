@@ -58,7 +58,6 @@ namespace ImaGyNative
                 return; // CUDA 성공 시 종료
             }
         }
-        // CUDA 실패 또는 사용 불가 시 CPU 코드 실행
         ApplyBinarization_CPU(pixels, width, height, stride, threshold);
     }
 
@@ -226,7 +225,6 @@ namespace ImaGyNative
         }
         ApplyGaussianBlurColor_CPU(pixels, width, height, stride, sigma, kernelSize, useCircularKernel);
     }
-
 
     /// <summary>
     /// 컬러이미지의 평균 블러를 처리하는 함수
