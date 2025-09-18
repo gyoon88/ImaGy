@@ -30,4 +30,5 @@ namespace ImaGyNative
 	// FFT Filter
 	bool LaunchFftFilterKernel(unsigned char* pixels, int width, int height, int stride, int kernelSize);
 	bool LaunchFftSpectrumKernel(unsigned char* pixels, int width, int height, int stride);
+	bool LaunchKMeansKernel(void* pixels, int width, int height, int stride, int k, int iteration);
 }

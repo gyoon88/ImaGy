@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <cmath>
 #include <cufft.h> // FFT 
+#include <random>
+#include <limits>
 
 namespace ImaGyNative
 {
@@ -229,6 +231,48 @@ namespace ImaGyNative
 		data[idx] = (unsigned char)fmaxf(0.f, fminf(255.f, (float)newVal));
 	}
 
+	struct Point5D {
+		float r, g, b, x, y;
+	};
+
+	// 할당 단계: 각 픽셀을 가장 가까운 대표점에 할당하는 커널
+	__global__ void KMeansAssignmentKernel(const Point5D* normalizedPixels, const Point5D* centroids, int* assignments, int numPixels, int k) {
+		int i = blockIdx.x * blockDim.x + threadIdx.x;
+		if (i >= numPixels) return;
+
+		float minDistSq = 1e10f; // 충분히 큰 값으로 초기화
+		int bestCluster = 0;
+
+		for (int c = 0; c < k; ++c) {
+			float dr = normalizedPixels[i].r - centroids[c].r;
+			float dg = normalizedPixels[i].g - centroids[c].g;
+			float db = normalizedPixels[i].b - centroids[c].b;
+			float dx = normalizedPixels[i].x - centroids[c].x;
+			float dy = normalizedPixels[i].y - centroids[c].y;
+			float distSq = dr * dr + dg * dg + db * db + dx * dx + dy * dy;
+
+			if (distSq < minDistSq) {
+				minDistSq = distSq;
+				bestCluster = c;
+			}
+		}
+		assignments[i] = bestCluster;
+	}
+
+	// 최종 렌더링: 각 픽셀을 최종 대표 색상으로 칠하는 커널
+	__global__ void KMeansRenderKernel(unsigned char* pixels, const int* assignments, const Point5D* centroids, int width, int height, int stride) {
+		int x = blockIdx.x * blockDim.x + threadIdx.x;
+		int y = blockIdx.y * blockDim.y + threadIdx.y;
+
+		if (x >= width || y >= height) return;
+
+		int clusterId = assignments[y * width + x];
+		unsigned char* p = pixels + y * stride + x * 4;
+
+		p[2] = (unsigned char)(centroids[clusterId].r * 255.0f); // R
+		p[1] = (unsigned char)(centroids[clusterId].g * 255.0f); // G
+		p[0] = (unsigned char)(centroids[clusterId].b * 255.0f); // B
+	}
 
 	/**
 	 * @brief FFT  ޾ Magnitude ϰ, α ϸ  ߾  մϴ.
@@ -818,7 +862,7 @@ namespace ImaGyNative
 		float* d_magnitude_float = nullptr;
 		cufftComplex* d_input_complex = nullptr;
 
-		// --- 1.
+		//
 		CUFFT_CHECK(cufftPlan2d(&planR2C, height, width, CUFFT_R2C));
 		CUDA_CHECK(cudaMalloc(&d_input_float, N * sizeof(float)));
 		CUDA_CHECK(cudaMalloc(&d_magnitude_float, N * sizeof(float)));
@@ -832,13 +876,13 @@ namespace ImaGyNative
 		dim3 block1D(256);
 		UcharToFloatKernel << <grid1D, block1D >> > (pixels, d_input_float, N);
 
-		// --- 3. FFT 
+		// FFT 
 		CUFFT_CHECK(cufftExecR2C(planR2C, d_input_float, d_input_complex));
 
-		// --- 4. FFT  Magnitude Ʈ ȯ ---
+		// FFT  Magnitude 
 		FftShiftAndLogMagnitudeKernel << <grid, block >> > (d_input_complex, d_magnitude_float, width, height);
 
-		// --- 5. ȭ  CPU Min/Max 
+		//CPU Min/Max 
 		std::vector<float> h_magnitude(N);
 		CUDA_CHECK(cudaMemcpy(h_magnitude.data(), d_magnitude_float, N * sizeof(float), cudaMemcpyDeviceToHost));
 
@@ -859,6 +903,121 @@ namespace ImaGyNative
 		cudaFree(d_input_float);
 		cudaFree(d_magnitude_float);
 		cudaFree(d_input_complex);
+
+		return true;
+	}
+
+
+
+
+	// --- K-Means CUDA Launcher 함수 ---
+
+	bool LaunchKMeansKernel(void* pixels, int width, int height, int stride, int k, int iteration) {
+		unsigned char* h_pixels = static_cast<unsigned char*>(pixels);
+		int numPixels = width * height;
+
+		// GPU 메모리 할당
+		unsigned char* d_pixels;
+		Point5D* d_normalizedPixels;
+		Point5D* d_centroids;
+		int* d_assignments;
+		Point5D* d_newCentroids;
+		int* d_counts;
+
+		CUDA_CHECK(cudaMalloc(&d_pixels, (size_t)height * stride));
+		CUDA_CHECK(cudaMalloc(&d_normalizedPixels, (size_t)numPixels * sizeof(Point5D)));
+		CUDA_CHECK(cudaMalloc(&d_centroids, (size_t)k * sizeof(Point5D)));
+		CUDA_CHECK(cudaMalloc(&d_assignments, (size_t)numPixels * sizeof(int)));
+		// 업데이트 단계용 메모리도 추가
+		CUDA_CHECK(cudaMalloc(&d_newCentroids, (size_t)k * sizeof(Point5D)));
+		CUDA_CHECK(cudaMalloc(&d_counts, (size_t)k * sizeof(int)));
+
+
+		// 데이터 준비: CPU에서 정규화 후 GPU로 복사
+		std::vector<Point5D> h_normalizedPixels(numPixels);
+		double w_minus_1 = width > 1 ? (double)(width - 1) : 1.0;
+		double h_minus_1 = height > 1 ? (double)(height - 1) : 1.0;
+
+#pragma omp parallel for
+		for (int y = 0; y < height; ++y) {
+			for (int x = 0; x < width; ++x) {
+				unsigned char* p = h_pixels + y * stride + x * 4;
+				h_normalizedPixels[y * width + x] = {
+					(float)(p[2] / 255.0), (float)(p[1] / 255.0), (float)(p[0] / 255.0),
+					(float)(x / w_minus_1), (float)(y / h_minus_1)
+				};
+			}
+		}
+		CUDA_CHECK(cudaMemcpy(d_normalizedPixels, h_normalizedPixels.data(), (size_t)numPixels * sizeof(Point5D), cudaMemcpyHostToDevice));
+
+		// 초기 대표점 선택 후 GPU로 복사
+		std::vector<Point5D> h_centroids(k);
+		std::mt19937 rng(std::random_device{}());
+		std::uniform_int_distribution<int> dist(0, numPixels - 1);
+		for (int i = 0; i < k; ++i) {
+			h_centroids[i] = h_normalizedPixels[dist(rng)];
+		}
+		CUDA_CHECK(cudaMemcpy(d_centroids, h_centroids.data(), (size_t)k * sizeof(Point5D), cudaMemcpyHostToDevice));
+
+		// 그리드 및 블록 설정
+		dim3 block1D(256);
+		dim3 grid1D((numPixels + block1D.x - 1) / block1D.x);
+
+		// K-Means 반복
+		for (int i = 0; i < iteration; ++i) {
+			// 할당 단계 커널 실행
+			KMeansAssignmentKernel << <grid1D, block1D >> > (d_normalizedPixels, d_centroids, d_assignments, numPixels, k);
+			CUDA_CHECK(cudaGetLastError());
+			CUDA_CHECK(cudaMemset(d_newCentroids, 0, (size_t)k * sizeof(Point5D)));
+			CUDA_CHECK(cudaMemset(d_counts, 0, (size_t)k * sizeof(int)));
+
+			// GPU에서 할당 결과(d_assignments)를 CPU로 가져와서 평균 계산
+			std::vector<int> h_assignments(numPixels);
+			CUDA_CHECK(cudaMemcpy(h_assignments.data(), d_assignments, (size_t)numPixels * sizeof(int), cudaMemcpyDeviceToHost));
+
+			std::vector<Point5D> h_newCentroids(k, { 0,0,0,0,0 });
+			std::vector<int> h_counts(k, 0);
+			for (int px = 0; px < numPixels; ++px) {
+				int clusterId = h_assignments[px];
+				h_newCentroids[clusterId].r += h_normalizedPixels[px].r;
+				h_newCentroids[clusterId].g += h_normalizedPixels[px].g;
+				h_newCentroids[clusterId].b += h_normalizedPixels[px].b;
+				h_newCentroids[clusterId].x += h_normalizedPixels[px].x;
+				h_newCentroids[clusterId].y += h_normalizedPixels[px].y;
+				h_counts[clusterId]++;
+			}
+
+			for (int c = 0; c < k; ++c) {
+				if (h_counts[c] > 0) {
+					h_centroids[c].r = h_newCentroids[c].r / h_counts[c];
+					h_centroids[c].g = h_newCentroids[c].g / h_counts[c];
+					h_centroids[c].b = h_newCentroids[c].b / h_counts[c];
+					h_centroids[c].x = h_newCentroids[c].x / h_counts[c];
+					h_centroids[c].y = h_newCentroids[c].y / h_counts[c];
+				}
+			}
+			// 업데이트된 대표점을 다시 GPU 복사
+			CUDA_CHECK(cudaMemcpy(d_centroids, h_centroids.data(), (size_t)k * sizeof(Point5D), cudaMemcpyHostToDevice));
+		}
+
+		// 최종 렌더링
+		CUDA_CHECK(cudaMemcpy(d_pixels, h_pixels, (size_t)height * stride, cudaMemcpyHostToDevice)); // 원본 이미지 데이터 복사
+		dim3 grid2D((width + 15) / 16, (height + 15) / 16);
+		dim3 block2D(16, 16);
+		KMeansRenderKernel << <grid2D, block2D >> > (d_pixels, d_assignments, d_centroids, width, height, stride);
+		CUDA_CHECK(cudaGetLastError());
+		CUDA_CHECK(cudaDeviceSynchronize());
+
+		// 최종 결과를 호스트 메모리로 복사
+		CUDA_CHECK(cudaMemcpy(pixels, d_pixels, (size_t)height * stride, cudaMemcpyDeviceToHost));
+
+		// GPU 메모리 해제
+		cudaFree(d_pixels);
+		cudaFree(d_normalizedPixels);
+		cudaFree(d_centroids);
+		cudaFree(d_assignments);
+		cudaFree(d_newCentroids);
+		cudaFree(d_counts);
 
 		return true;
 	}

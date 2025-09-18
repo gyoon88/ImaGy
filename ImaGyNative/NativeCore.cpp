@@ -304,8 +304,16 @@ void NativeCore::ApplyFFT(void* pixels, int width, int height, int stride, int k
 
     void NativeCore::ApplyKMeansClustering(void* pixels, int width, int height, int stride, int k, int iteration)
     {
+        // 먼저 CUDA 커널 실행을 시도합니다.
+        //if (IsCudaAvailable()) {
+        //    // LaunchKMeansKernel이 성공적으로 실행되면 true를 반환하고 함수를 종료합니다.
+        //    if (LaunchKMeansKernel(pixels, width, height, stride, k, iteration)) {
+        //        return;
+        //    }
+        //}
 
-        ApplyKMeansClusteringXY_Normalized_CPU(pixels,  width, height, stride, k, iteration);
+        // CUDA 실행이 실패했거나, CUDA를 사용할 수 없는 경우 CPU 코드로 폴백합니다.
+        ApplyKMeansClusteringXY_Normalized_CPU(pixels, width, height, stride, k, iteration);
     }
 
 }
