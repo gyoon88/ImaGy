@@ -27,6 +27,8 @@ namespace ImaGy.ViewModels
         private readonly ImageProcessingService imageProcessingService;
         private readonly HistogramService histogramService;
         
+       
+
         private readonly CropService cropService;
 
 

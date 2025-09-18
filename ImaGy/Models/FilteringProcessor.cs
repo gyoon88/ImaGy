@@ -50,24 +50,13 @@ namespace ImaGy.Models
                 NativeProcessor.ApplyLaplacian(pixelPtr, width, height, stride, kernelSize);
             });
         }
-        public BitmapSource ApplyFFT(BitmapSource source, int kernelSize, bool isColor)
+        public BitmapSource ApplyFFT(BitmapSource source, int kernelSize, bool isColor, bool isInverse, bool isCPU, bool isPhase)
         {
-            if (isColor)
+            return BitmapProcessorHelper.ApplyFFTEffect(source, (pixelPtr, width, height, stride) =>
             {
-                //MessageBox.Show("Calling ApplyFFTColor (for color images)");
-                return BitmapProcessorHelper.ApplyKernelEffect(source, kernelSize, (pixelPtr, width, height, stride) =>
-                {
-                    NativeProcessor.ApplyFFTColor(pixelPtr, width, height, stride, kernelSize);
-                });
-            }
-            else
-            {
-                //MessageBox.Show("Calling ApplyFFT (for grayscale images)");
-                return BitmapProcessorHelper.ApplyKernelEffect(source, kernelSize, (pixelPtr, width, height, stride) =>
-                {
-                    NativeProcessor.ApplyFFT(pixelPtr, width, height, stride, kernelSize);
-                });
-            }
+                NativeProcessor.ApplyFFT(pixelPtr, width, height, stride, kernelSize, isInverse, isCPU, isPhase);
+            });
+            
 
         }
 

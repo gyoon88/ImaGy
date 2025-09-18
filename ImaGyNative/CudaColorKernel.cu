@@ -259,17 +259,17 @@ namespace ImaGyNative
         CUDA_CHECK(cudaMalloc(&d_r, channelSize));
         CUDA_CHECK(cudaMemcpy(d_input, pixels, imageSize, cudaMemcpyHostToDevice));
 
-        // 1. BGRA -> B, G, R 세 채널로 분리
+        // BGRA -> B, G, R 세 채널로 분리
         dim3 grid1D((N + 255) / 256);
         dim3 block1D(256);
         SplitBGRAKernel << <grid1D, block1D >> > ((uchar4*)d_input, d_b, d_g, d_r, N);
 
-        // 2. 각 채널에 흑백용 평활화 함수 재사용
+        // 각 채널에 흑백용 평활화 함수 재사용
         LaunchEqualizationKernel(d_b, width, height, width);
         LaunchEqualizationKernel(d_g, width, height, width);
         LaunchEqualizationKernel(d_r, width, height, width);
 
-        // 3. 처리된 B, G, R 채널을 다시 BGRA로 병합
+        // 처리된 B, G, R 채널을 다시 BGRA로 병합
         MergeToBGRAKernel << <grid1D, block1D >> > ((unsigned char*)d_input, d_b, d_g, d_r, N);
 
         CUDA_CHECK(cudaDeviceSynchronize());
@@ -297,17 +297,17 @@ namespace ImaGyNative
         CUDA_CHECK(cudaMalloc(&d_r, channelSize));
         CUDA_CHECK(cudaMemcpy(d_input, pixels, imageSize, cudaMemcpyHostToDevice));
 
-        // 1. BGRA -> B, G, R 세 채널로 분리
+        // 1. BGRA -> B, G, R 채널 분리
         dim3 grid1D((N + 255) / 256);
         dim3 block1D(256);
         SplitBGRAKernel << <grid1D, block1D >> > ((uchar4*)d_input, d_b, d_g, d_r, N);
 
-        // 2. 각 채널에 흑백용 FFT 스펙트럼 함수 재사용
+        // 각 채널에 흑백용 FFT 스펙트럼 함수 재사용
         LaunchFftSpectrumKernel(d_b, width, height, width);
         LaunchFftSpectrumKernel(d_g, width, height, width);
         LaunchFftSpectrumKernel(d_r, width, height, width);
 
-        // 3. 처리된 B, G, R 채널을 다시 BGRA로 병합
+        // 처리된 B, G, R 채널을 다시 BGRA로 병합
         MergeToBGRAKernel << <grid1D, block1D >> > ((unsigned char*)d_input, d_b, d_g, d_r, N);
 
         CUDA_CHECK(cudaDeviceSynchronize());

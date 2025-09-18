@@ -213,7 +213,7 @@
                 </Grid.RowDefinitions>
                 <!-- Button Groups -->
                 <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
-                    <GroupBox Header="Image Edittor" Foreground="White">
+                    <GroupBox Header="Image Editor" Foreground="White">
                         <StackPanel>
                             <Expander Header="Colour | Contrast" Foreground="White" Margin="0,4,0,4">
                                 <StackPanel>
@@ -236,9 +236,33 @@
                                     </GroupBox>
                                     <GroupBox Header="Color-Contrast">
                                         <StackPanel>
-                                            <Button Content="Gray Scale" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Grey"/>
+                                            <Button Content="Gray Scale" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Gray"/>
                                             <Button Content="Equalization" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Equal" />
                                             <Button Content="Color Equalization" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Equal_color"  IsEnabled="{Binding IsColor}"/>
+                                            <Separator Margin="5" Foreground="Gray"/>
+
+                                            <Button Content="KMeansClustering" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Clustering"/>
+                                            <Grid Margin="5">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="50"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="K-Groups:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                                <TextBox Grid.Column="1" Text="{Binding Parameters.KGroup, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
+                                                <Slider Grid.Column="2" Value="{Binding Parameters.KGroup, Mode=TwoWay}" Minimum="2" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
+                                            </Grid>
+                                            <Grid Margin="5">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="50"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="Iteration:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                                <TextBox Grid.Column="1" Text="{Binding Parameters.Iteration, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
+                                                <Slider Grid.Column="2" Value="{Binding Parameters.Iteration, Mode=TwoWay}" Minimum="20" Maximum="500" TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
+                                            </Grid>
+                                            
                                         </StackPanel>                 
                                     </GroupBox>
                                 </StackPanel>
@@ -253,6 +277,9 @@
                                             <Button Content="Laplacian" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Laplace"/>
                                             <Button Content="FFT" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="FFT"/>
                                             <Separator Margin="5" Foreground="Gray"/>
+                                            <ToggleButton Content="CPU" IsChecked="{Binding Parameters.IsCPU, Mode=TwoWay}" Margin="60,5,60,5" />
+                                            <ToggleButton Content="IsInverse" IsChecked="{Binding Parameters.IsInverse, Mode=TwoWay}" Margin="60,5,60,5" />
+                                            <ToggleButton Content="IsPhase" IsChecked="{Binding Parameters.IsPhase, Mode=TwoWay}" Margin="60,5,60,5" />
                                             <Grid Margin="5">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
@@ -295,7 +322,6 @@
                                     </GroupBox>
                                 </StackPanel>
                             </Expander>
-
                             <Expander Header="Morphorogy" Foreground="White"  Margin="0,4,0,4">
                                 <StackPanel>
                                     <GroupBox Header = "Default" Foreground="White">
@@ -333,7 +359,6 @@
                             </Expander>
                         </StackPanel>
                     </GroupBox>
-
                 </ScrollViewer>
                 <GridSplitter Grid.Row="1" 
                   Height="5" 

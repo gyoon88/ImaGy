@@ -3,7 +3,7 @@
 #include "NativeCore.h"
 #include "ImageProcessingUtils.h"
 #include "CPUImageProcessor.h"
-#include "CudaKernel.cuh" // Include our new CUDA header
+#include "CudaKernel.cuh" 
 #include "CudaColorKernel.cuh"
 #include <cmath>
 #include <iostream>
@@ -11,7 +11,7 @@
 #include <iomanip> 
 #include <numeric>
 #include <algorithm>
-#include <stdexcept> // 예외 처리를 위해 추가
+#include <stdexcept> // 예외 처리
 #include <cuda_runtime.h>
 
 
@@ -35,115 +35,129 @@ namespace ImaGyNative
     // // Color Contrast
 
     // Histogram - Complete
-    void NativeCore::ApplyHistogram(void* pixels, int width, int height, int stride, int* hist) {
-        unsigned char* pixelData = static_cast<unsigned char*>(pixels);
-        std::fill(hist, hist + 256, 0);
+void NativeCore::ApplyHistogram(void* pixels, int width, int height, int stride, int* hist) {
+    unsigned char* pixelData = static_cast<unsigned char*>(pixels);
+    std::fill(hist, hist + 256, 0);
 
-        for (int y = 0; y < height; ++y) {
-            for (int x = 0; x < width; ++x) {
-                int idx = pixelData[y * stride + x];
-                hist[idx]++;
-            }
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            int idx = pixelData[y * stride + x];
+            hist[idx]++;
         }
     }
+}
 
-    void NativeCore::ApplyBinarization(void* pixels, int width, int height, int stride, int threshold)
+void NativeCore::ApplyBinarization(void* pixels, int width, int height, int stride, int threshold)
+{
+    if (threshold == -1)
     {
-        if (threshold == -1)
-        {
-            threshold = OtsuThreshold(static_cast<unsigned char*>(pixels), width, height, stride);
-        }
-        if (IsCudaAvailable()) {
-            if (LaunchBinarizationKernel(static_cast<unsigned char*>(pixels), width, height, stride, threshold)) {
-                return; // CUDA 성공 시 종료
-            }
-        }
-        ApplyBinarization_CPU(pixels, width, height, stride, threshold);
+        threshold = OtsuThreshold(static_cast<unsigned char*>(pixels), width, height, stride);
     }
-
-    // Equalization
-    void NativeCore::ApplyEqualization(void* pixels, int width, int height, int stride, unsigned char threshold)
-    {
-        if (IsCudaAvailable()) {
-            if (LaunchEqualizationKernel(static_cast<unsigned char*>(pixels), width, height, stride)) {
-                return;
-            }
-        }
-        ApplyEqualization_CPU(pixels, width, height, stride, threshold);
-    }
-    void NativeCore::ApplyEqualizationColor(void* pixels, int width, int height, int stride, unsigned char threshold)
-    {
-        if (IsCudaAvailable()) {
-            if (LaunchEqualizationColorKernel(static_cast<unsigned char*>(pixels), width, height, stride)) {
-                return;
-            }
+    if (IsCudaAvailable()) {
+        if (LaunchBinarizationKernel(static_cast<unsigned char*>(pixels), width, height, stride, threshold)) {
+            return; // CUDA 성공 시 종료
         }
     }
+    ApplyBinarization_CPU(pixels, width, height, stride, threshold);
+}
 
-    // Gaussian Blur
-    void NativeCore::ApplyGaussianBlur(void* pixels, int width, int height, int stride, double sigma, int kernelSize, bool useCircularKernel)
-    {
-        if (IsCudaAvailable()) {
-            if (LaunchGaussianBlurKernel(static_cast<unsigned char*>(pixels), width, height, stride, sigma, kernelSize, useCircularKernel)) {
-                return;
-            }
+// Equalization
+void NativeCore::ApplyEqualization(void* pixels, int width, int height, int stride, unsigned char threshold)
+{
+    if (IsCudaAvailable()) {
+        if (LaunchEqualizationKernel(static_cast<unsigned char*>(pixels), width, height, stride)) {
+            return;
         }
-        ApplyGaussianBlur_CPU(pixels, width, height, stride, sigma, kernelSize, useCircularKernel);
     }
-
-    // Average Blur
-    void NativeCore::ApplyAverageBlur(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
-    {
-        if (IsCudaAvailable()) {
-            if (LaunchAverageBlurKernel(static_cast<unsigned char*>(pixels), width, height, stride, kernelSize, useCircularKernel)) {
-                return;
-            }
+    ApplyEqualization_CPU(pixels, width, height, stride, threshold);
+}
+void NativeCore::ApplyEqualizationColor(void* pixels, int width, int height, int stride, unsigned char threshold)
+{
+    if (IsCudaAvailable()) {
+        if (LaunchEqualizationColorKernel(static_cast<unsigned char*>(pixels), width, height, stride)) {
+            return;
         }
-        ApplyAverageBlur_CPU(pixels, width, height, stride, kernelSize, useCircularKernel);
     }
+}
+
+// Gaussian Blur
+void NativeCore::ApplyGaussianBlur(void* pixels, int width, int height, int stride, double sigma, int kernelSize, bool useCircularKernel)
+{
+    if (IsCudaAvailable()) {
+        if (LaunchGaussianBlurKernel(static_cast<unsigned char*>(pixels), width, height, stride, sigma, kernelSize, useCircularKernel)) {
+            return;
+        }
+    }
+    ApplyGaussianBlur_CPU(pixels, width, height, stride, sigma, kernelSize, useCircularKernel);
+}
+
+// Average Blur
+void NativeCore::ApplyAverageBlur(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
+{
+    if (IsCudaAvailable()) {
+        if (LaunchAverageBlurKernel(static_cast<unsigned char*>(pixels), width, height, stride, kernelSize, useCircularKernel)) {
+            return;
+        }
+    }
+    ApplyAverageBlur_CPU(pixels, width, height, stride, kernelSize, useCircularKernel);
+}
 
 
-    // // EdgeDetect
+// // EdgeDetect
 // Differnetial - Complete
-    void NativeCore::ApplyDifferential(void* pixels, int width, int height, int stride, unsigned char threshold)
-    {
-        ApplyDifferential_CPU( pixels,  width,  height,  stride,   threshold);
-    }
+void NativeCore::ApplyDifferential(void* pixels, int width, int height, int stride, unsigned char threshold)
+{
+    ApplyDifferential_CPU(pixels, width, height, stride, threshold);
+}
 
-    // Sobel
-    void NativeCore::ApplySobel(void* pixels, int width, int height, int stride, int kernelSize)
-    {
-        if (IsCudaAvailable()) {
-            if (LaunchSobelKernel(static_cast<unsigned char*>(pixels), width, height, stride, kernelSize)) {
-                return;
-            }
+// Sobel
+void NativeCore::ApplySobel(void* pixels, int width, int height, int stride, int kernelSize)
+{
+    if (IsCudaAvailable()) {
+        if (LaunchSobelKernel(static_cast<unsigned char*>(pixels), width, height, stride, kernelSize)) {
+            return;
         }
-        ApplySobel_CPU(pixels, width, height, stride, kernelSize);
     }
+    ApplySobel_CPU(pixels, width, height, stride, kernelSize);
+}
 
-    // Laplacian
-    void NativeCore::ApplyLaplacian(void* pixels, int width, int height, int stride, int kernelSize)
-    {
-        if (IsCudaAvailable()) {
-            if (LaunchLaplacianKernel(static_cast<unsigned char*>(pixels), width, height, stride, kernelSize)) {
-                return;
-            }
+// Laplacian
+void NativeCore::ApplyLaplacian(void* pixels, int width, int height, int stride, int kernelSize)
+{
+    if (IsCudaAvailable()) {
+        if (LaunchLaplacianKernel(static_cast<unsigned char*>(pixels), width, height, stride, kernelSize)) {
+            return;
         }
-        ApplyLaplacian_CPU(pixels, width, height, stride, kernelSize);
     }
+    ApplyLaplacian_CPU(pixels, width, height, stride, kernelSize);
+}
 
-    void NativeCore::ApplyFFT(void* pixels, int width, int height, int stride, int kernelSize)
-    {
+void NativeCore::ApplyFFT(void* pixels, int width, int height, int stride, int kernelSize, bool isInverse, bool isCPU, bool isPhase)
+{
+    if (isCPU) {
+        // FFT 연산을 위한 임시 복소수 배열 할당 
+        Complex* tempSpectrum = new Complex[width * height];
+        if (isPhase) {
+            ApplyFFT2DPhase_CPU(pixels, tempSpectrum, width, height, stride, isInverse);
+        }
+        else {
+            ApplyFFT2DSpectrum_CPU(pixels, tempSpectrum, width, height, stride, isInverse);
+        }
+        delete[] tempSpectrum;
+    }
+    else {
         if (IsCudaAvailable()) {
-            // 새로 만든 스펙트럼 생성 함수를 호출
             if (LaunchFftSpectrumKernel(static_cast<unsigned char*>(pixels), width, height, stride)) {
                 return;
             }
+            Complex* tempSpectrum = new Complex[width * height];
+            ApplyFFT2DSpectrum_CPU(pixels, tempSpectrum, width, height, stride, isInverse);
         }
     }
+}
 
 
-    void NativeCore::ApplyFFTColor(void* pixels, int width, int height, int stride, int kernelSize)
+    void NativeCore::ApplyFFTColor(void* pixels, int width, int height, int stride, int kernelSize, bool isInverse, bool isCPU, bool isPhase )
     {
         if (IsCudaAvailable()) {
             if (LaunchFftSpectrumColorKernel(static_cast<unsigned char*>(pixels), width, height, stride)) {
@@ -231,7 +245,7 @@ namespace ImaGyNative
     /// GPU 호출 실패시 CPU 코드로 FallBack
     /// </summary>
     /// <param name="pixels">이미지가 있는 메모리 주소 </param>
-    /// <param name="width"></param>
+    /// <param name="width">이미지 </param>
     /// <param name="height"></param>
     /// <param name="stride"></param>
     /// <param name="kernelSize"></param>
@@ -281,12 +295,17 @@ namespace ImaGyNative
     void NativeCore::ApplyErosionColor(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
     {
         if (IsCudaAvailable()) {
-            // 새로 만든 컬러 CUDA 함수를 호출
             if (LaunchErosionColorKernel(static_cast<unsigned char*>(pixels), width, height, stride, kernelSize, useCircularKernel)) {
                 return;
             }
         }
         ApplyErosionColor_CPU(pixels, width, height, stride, kernelSize, useCircularKernel);
+    }
+
+    void NativeCore::ApplyKMeansClustering(void* pixels, int width, int height, int stride, int k, int iteration)
+    {
+
+        ApplyKMeansClusteringXY_Normalized_CPU(pixels,  width, height, stride, k, iteration);
     }
 
 }

@@ -8,8 +8,9 @@
 #include <iomanip> 
 #include <numeric>
 #include <algorithm>
-#include <stdexcept> // 예외 처리
-#include <cuda_runtime.h>
+#include <random> // C++11 스타일의 난수 생성
+#include <limits> // double 최댓값 사용
+#include <omp.h>
 
 namespace ImaGyNative
 {
@@ -21,7 +22,7 @@ namespace ImaGyNative
         int center = kernelSize / 2;
         double kernelSum = std::accumulate(kernel.begin(), kernel.end(), 0.0);
         if (kernelSum == 0) kernelSum = 1.0; // 0으로 나누기 방지
-
+        #pragma omp parallel for
         for (int y = center; y < height - center; ++y) {
             for (int x = center; x < width - center; ++x) {
                 double sum = 0.0;
@@ -52,7 +53,7 @@ namespace ImaGyNative
         int center = kernelSize / 2;
         double kernelSum = std::accumulate(kernel.begin(), kernel.end(), 0.0);
         if (kernelSum == 0) kernelSum = 1.0;
-
+        #pragma omp parallel for
         for (int y = center; y < height - center; ++y) {
             for (int x = center; x < width - center; ++x) {
                 double sumB = 0.0, sumG = 0.0, sumR = 0.0;
@@ -95,6 +96,7 @@ namespace ImaGyNative
         if (threshold == -1) {
             threshold = threshold = OtsuThreshold(pixelData, width, height, stride);
         }
+        #pragma omp parallel for
         for (int y = 0; y < height; ++y)
         {
             for (int x = 0; x < width; ++x)
@@ -114,6 +116,7 @@ namespace ImaGyNative
         long long totalPixels = width * height;
 
         // Calculate Histogram
+        #pragma omp parallel for
         for (int y = 0; y < height; ++y)
         {
             for (int x = 0; x < width; ++x)
@@ -124,6 +127,7 @@ namespace ImaGyNative
 
         // Calculate Cumulative Distribution Function (CDF)
         cdf[0] = histogram[0];
+        #pragma omp parallel for
         for (int i = 1; i < 256; ++i)
         {
             cdf[i] = cdf[i - 1] + histogram[i];
@@ -131,6 +135,7 @@ namespace ImaGyNative
 
         // Find the first non-zero CDF value
         long long cdf_min = 0;
+        #pragma omp parallel for
         for (int i = 0; i < 256; ++i)
         {
             if (cdf[i] > 0)
@@ -141,6 +146,7 @@ namespace ImaGyNative
         }
 
         // Apply Mapping
+        #pragma omp parallel for
         for (int y = 0; y < height; ++y)
         {
             for (int x = 0; x < width; ++x)
@@ -215,8 +221,9 @@ namespace ImaGyNative
         double* bufferY = new double[height * stride]();
 
         int center = kernelSize / 2;
-
+    
         // Gx와 Gy를 각각 계산
+        #pragma omp parallel for
         for (int y = center; y < height - center; ++y) {
             for (int x = center; x < width - center; ++x) {
                 double sumX = 0.0;
@@ -234,7 +241,7 @@ namespace ImaGyNative
                 bufferY[destIndex] = sumY;
             }
         }
-
+        #pragma omp parallel for
         // 결과 병합
         for (int i = 0; i < height * stride; ++i) {
             double finalValue = sqrt(bufferX[i] * bufferX[i] + bufferY[i] * bufferY[i]);
@@ -309,6 +316,7 @@ namespace ImaGyNative
         unsigned char* sourceBuffer = new unsigned char[height * stride];
         memcpy(sourceBuffer, pixelData, height * stride);
 
+        #pragma omp parallel for
         for (int y = center; y < height - center; ++y) {
             for (int x = center; x < width - center; ++x) {
                 unsigned char maxValue = 0;
@@ -339,7 +347,7 @@ namespace ImaGyNative
         unsigned char* pixelData = static_cast<unsigned char*>(pixels);
         unsigned char* sourceBuffer = new unsigned char[height * stride];
         memcpy(sourceBuffer, pixelData, height * stride);
-
+        #pragma omp parallel for
         for (int y = center; y < height - center; ++y) {
             for (int x = center; x < width - center; ++x) {
                 unsigned char minValue = 255;
@@ -376,6 +384,7 @@ namespace ImaGyNative
 
         // Calculate the mean of the template
         double templateSum = 0.0;
+        #pragma omp parallel for
         for (int ty = 0; ty < templateHeight; ++ty)
         {
             for (int tx = 0; tx < templateWidth; ++tx)
@@ -384,9 +393,10 @@ namespace ImaGyNative
             }
         }
         double meanT = templateSum / templatePixelCount;
-
+            
         // Calculate sum of squared differences from the mean for the template
         double templateSqDiffSum = 0.0;
+        #pragma omp parallel for
         for (int ty = 0; ty < templateHeight; ++ty)
         {
             for (int tx = 0; tx < templateWidth; ++tx)
@@ -396,6 +406,7 @@ namespace ImaGyNative
             }
         }
 
+        #pragma omp parallel for
         // Iterate over the source image
         for (int y = 0; y <= height - templateHeight; ++y)
         {
@@ -448,8 +459,6 @@ namespace ImaGyNative
         outCoords[1] = bestY;
     }
 
-
-
     void ApplySAD_CPU(void* pixels, int width, int height, int stride, void* templatePixels, int templateWidth, int templateHeight, int templateStride, int* outCoords)
     {
         unsigned char* sourceData = static_cast<unsigned char*>(pixels);
@@ -458,7 +467,7 @@ namespace ImaGyNative
         double minSadValue = -1.0;
         int bestX = 0;
         int bestY = 0;
-
+        #pragma omp parallel for
         for (int y = 0; y <= height - templateHeight; ++y)
         {
             for (int x = 0; x <= width - templateWidth; ++x)
@@ -495,7 +504,7 @@ namespace ImaGyNative
         double minSsdValue = -1.0;
         int bestX = 0;
         int bestY = 0;
-
+        #pragma omp parallel for
         for (int y = 0; y <= height - templateHeight; ++y)
         {
             for (int x = 0; x <= width - templateWidth; ++x)
@@ -524,9 +533,6 @@ namespace ImaGyNative
         outCoords[1] = bestY;
     }
 
-
-    ////
-    // // // 
     // Color ONly!!! ##############
     void ApplyGaussianBlurColor_CPU(void* pixels, int width, int height, int stride, double sigma, int kernelSize, bool useCircularKernel)
     {
@@ -563,7 +569,7 @@ namespace ImaGyNative
         unsigned char* pixelData = static_cast<unsigned char*>(pixels);
         unsigned char* sourceBuffer = new unsigned char[height * stride];
         memcpy(sourceBuffer, pixelData, height * stride);
-
+        #pragma omp parallel for
         for (int y = center; y < height - center; ++y) {
             for (int x = center; x < width - center; ++x) {
                 unsigned char maxB = 0, maxG = 0, maxR = 0;
@@ -597,7 +603,7 @@ namespace ImaGyNative
         unsigned char* pixelData = static_cast<unsigned char*>(pixels);
         unsigned char* sourceBuffer = new unsigned char[height * stride];
         memcpy(sourceBuffer, pixelData, height * stride);
-
+        #pragma omp parallel for
         for (int y = center; y < height - center; ++y) {
             for (int x = center; x < width - center; ++x) {
                 unsigned char minB = 255, minG = 255, minR = 255;
@@ -620,5 +626,295 @@ namespace ImaGyNative
             }
         }
         delete[] sourceBuffer;
+    }
+
+    const double PI = acos(-1);
+    /// <summary>
+    /// 입력 이미지의 주파수 스펙트럼(크기)을 계산하여 그레이스케일 이미지 생성
+    /// </summary>
+    void ApplyFFT2DSpectrum_CPU(void* pixels, Complex* outputSpectrum, int width, int height, int stride, bool isInverse) {
+        // FFT 수행 
+        ApplyFFT2D_CPU(pixels, outputSpectrum, width, height, stride, isInverse);
+
+        // DC 성분 shifting
+        FFT_Shift2D(outputSpectrum, width, height);
+
+        const void* readOnlyPixels = static_cast<const void*>(pixels);
+
+        // FFT 수행 (isInverse는 false로 전달됨)
+        ApplyFFT2D_CPU(readOnlyPixels, outputSpectrum, width, height, stride, isInverse);
+
+        // DC 성분 shifting
+        FFT_Shift2D(outputSpectrum, width, height);
+
+        // 각 주파수의 크기(Magnitude)를 계산
+        double* magnitudes = new double[width * height];
+        double maxMagnitude = 0.0;
+        #pragma omp parallel for
+        for (int i = 0; i < width * height; ++i) {
+            double mag = std::sqrt(outputSpectrum[i].real * outputSpectrum[i].real + outputSpectrum[i].imag * outputSpectrum[i].imag);
+            magnitudes[i] = std::log(1.0 + mag);
+            if (magnitudes[i] > maxMagnitude) {
+                maxMagnitude = magnitudes[i];
+            }
+        }
+
+        unsigned char* resultBuffer = new unsigned char[height * stride];
+        // 0-255 범위로 정규화하여 새 버퍼에 그레이스케일 이미지 생성
+        if (maxMagnitude > 0) {
+            #pragma omp parallel for
+            for (int y = 0; y < height; ++y) {
+                for (int x = 0; x < width; ++x) {
+                    int index = y * width + x;
+                    resultBuffer[y * stride + x] = static_cast<unsigned char>((magnitudes[index] / maxMagnitude) * 255.0);
+                }
+            }
+        }
+        else {
+            memset(resultBuffer, 0, height * stride);
+        }
+
+        // 최종 결과를 원래 pixels 버퍼로 복사
+        memcpy(pixels, resultBuffer, height * stride);
+
+        // 사용이 끝난 버퍼 메모리 해제
+        delete[] magnitudes;
+        delete[] resultBuffer;
+    }
+
+    /// <summary>
+    /// 입력 이미지의 주파수 위상(Phase)을 계산하여 그레이스케일 이미지로 생성
+    /// </summary>
+    void ApplyFFT2DPhase_CPU(void* pixels, Complex* outputSpectrum, int width, int height, int stride, bool isInverse) {
+        // 정방향 FFT 수행 (isInverse = false)
+        ApplyFFT2D_CPU(pixels, outputSpectrum, width, height, stride, false);
+
+
+        // 각 주파수의 위상(Phase)을 계산
+        unsigned char* destPixels = static_cast<unsigned char*>(pixels);
+        #pragma omp parallel for
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                int index = y * width + x;
+                double phase = std::atan2(outputSpectrum[index].imag, outputSpectrum[index].real);
+
+                unsigned char phaseValue = static_cast<unsigned char>(((phase + PI) / (2.0 * PI)) * 255.0);
+                destPixels[y * stride + x] = phaseValue;
+            }
+        }
+    }
+
+
+
+
+
+
+    // RGB 색상 데이터 구조체
+    struct ColorPoint {
+        double r, g, b;
+    };
+
+    /// <summary>
+    /// 3채널 컬러 이미지에 대해 K-평균 군집화를 수행하여 이미지를 분할
+    /// </summary>
+    /// <param name="pixels">3채널 (RGB) 이미지 데이터 포인터</param>
+    /// <param name="width">이미지 너비</param>
+    /// <param name="height">이미지 높이</param>
+    /// <param name="stride">한 행의 바이트 수</param>
+    /// <param name="k">군집(클러스터)의 개수</param>
+    /// <param name="iteration">반복횟수</param>
+    void ApplyKMeansClustering_CPU(void* pixels, int width, int height, int stride, int k, int iteration) {
+        if (k <= 0) return;
+
+        unsigned char* pixelData = static_cast<unsigned char*>(pixels);
+        int numPixels = width * height;
+
+        std::vector<ColorPoint> centroids(k);
+        std::mt19937 rng(std::random_device{}());
+        std::uniform_int_distribution<int> dist(0, numPixels - 1);
+
+        for (int i = 0; i < k; ++i) {
+            int randIdx = dist(rng);
+            int y = randIdx / width;
+            int x = randIdx % width;
+
+            // --- [수정 1] 픽셀당 4바이트로 주소 계산 ---
+            unsigned char* p = pixelData + y * stride + x * 4;
+
+            // Bgra32 포맷이므로 B=p[0], G=p[1], R=p[2] 순서
+            // ColorPoint 구조체는 r, g, b 순서를 따르기로 함
+            centroids[i] = { (double)p[2], (double)p[1], (double)p[0] }; // R, G, B 순서로 저장
+        }
+
+        std::vector<int> assignments(numPixels);
+        int maxIterations = iteration;
+
+        for (int iter = 0; iter < maxIterations; ++iter) {
+#pragma omp parallel for
+            for (int y = 0; y < height; ++y) {
+                for (int x = 0; x < width; ++x) {
+                    // --- [수정 2] 픽셀당 4바이트로 주소 계산 ---
+                    unsigned char* p = pixelData + y * stride + x * 4;
+                    double minDistSq = std::numeric_limits<double>::max();
+                    int bestCluster = 0;
+
+                    for (int c = 0; c < k; ++c) {
+                        // p[2]=R, p[1]=G, p[0]=B
+                        double dr = p[2] - centroids[c].r;
+                        double dg = p[1] - centroids[c].g;
+                        double db = p[0] - centroids[c].b;
+                        double distSq = dr * dr + dg * dg + db * db;
+
+                        if (distSq < minDistSq) {
+                            minDistSq = distSq;
+                            bestCluster = c;
+                        }
+                    }
+                    assignments[y * width + x] = bestCluster;
+                }
+            }
+
+            std::vector<ColorPoint> newCentroids(k, { 0.0, 0.0, 0.0 });
+            std::vector<int> counts(k, 0);
+
+            for (int y = 0; y < height; ++y) {
+                for (int x = 0; x < width; ++x) {
+                    int clusterId = assignments[y * width + x];
+                    // --- [수정 3] 픽셀당 4바이트로 주소 계산 ---
+                    unsigned char* p = pixelData + y * stride + x * 4;
+                    newCentroids[clusterId].r += p[2]; // R
+                    newCentroids[clusterId].g += p[1]; // G
+                    newCentroids[clusterId].b += p[0]; // B
+                    counts[clusterId]++;
+                }
+            }
+
+            for (int c = 0; c < k; ++c) {
+                if (counts[c] > 0) {
+                    centroids[c].r = newCentroids[c].r / counts[c];
+                    centroids[c].g = newCentroids[c].g / counts[c];
+                    centroids[c].b = newCentroids[c].b / counts[c];
+                }
+            }
+        }
+
+#pragma omp parallel for
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                int clusterId = assignments[y * width + x];
+                // --- [수정 4] 픽셀당 4바이트로 주소 계산 ---
+                unsigned char* p = pixelData + y * stride + x * 4;
+                p[2] = static_cast<unsigned char>(centroids[clusterId].r); // R
+                p[1] = static_cast<unsigned char>(centroids[clusterId].g); // G
+                p[0] = static_cast<unsigned char>(centroids[clusterId].b); // B
+                // p[3] (알파 채널)은 변경하지 않고 그대로 둡니다.
+            }
+        }
+    }
+
+
+    /// <summary>
+    /// 3채널 컬러 이미지에 대해 색상과 좌표(X, Y)를 모두 고려하여 K-평균 군집화를 수행
+    /// </summary>
+    struct Point5D {
+        double r, g, b, x, y;
+    };
+
+    /// <summary>
+    /// 색상과 좌표를 Min-Max Normalization 하여 K-평균 군집화를 수행
+    /// </summary>
+    void ApplyKMeansClusteringXY_Normalized_CPU(void* pixels, int width, int height, int stride, int k, int iteration) {
+        if (k <= 0) return;
+
+        unsigned char* pixelData = static_cast<unsigned char*>(pixels);
+        int numPixels = width * height;
+
+        // 정규화 Min-Max 
+        std::vector<Point5D> normalizedPixels(numPixels);
+        double w_minus_1 = width > 1 ? (double)(width - 1) : 1.0;
+        double h_minus_1 = height > 1 ? (double)(height - 1) : 1.0;
+
+#pragma omp parallel for
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                unsigned char* p = pixelData + y * stride + x * 4;
+                normalizedPixels[y * width + x] = {
+                    p[2] / 255.0,       // R
+                    p[1] / 255.0,       // G
+                    p[0] / 255.0,       // B
+                    x / w_minus_1,      // X
+                    y / h_minus_1       // Y
+                };
+            }
+        }
+
+        // K-Means 
+        std::vector<Point5D> centroids(k);
+        std::mt19937 rng(std::random_device{}());
+        std::uniform_int_distribution<int> dist(0, numPixels - 1);
+
+        for (int i = 0; i < k; ++i) {
+            centroids[i] = normalizedPixels[dist(rng)];
+        }
+
+        std::vector<int> assignments(numPixels);
+        int maxIterations = iteration;
+
+        for (int iter = 0; iter < maxIterations; ++iter) {
+#pragma omp parallel for
+            for (int i = 0; i < numPixels; ++i) {
+                double minDistSq = std::numeric_limits<double>::max();
+                int bestCluster = 0;
+                for (int c = 0; c < k; ++c) {
+                    double dr = normalizedPixels[i].r - centroids[c].r;
+                    double dg = normalizedPixels[i].g - centroids[c].g;
+                    double db = normalizedPixels[i].b - centroids[c].b;
+                    double dx = normalizedPixels[i].x - centroids[c].x;
+                    double dy = normalizedPixels[i].y - centroids[c].y;
+                    double distSq = dr * dr + dg * dg + db * db + dx * dx + dy * dy; // 가중치 없음
+
+                    if (distSq < minDistSq) {
+                        minDistSq = distSq;
+                        bestCluster = c;
+                    }
+                }
+                assignments[i] = bestCluster;
+            }
+
+            // 업데이트 
+            std::vector<Point5D> newCentroids(k, { 0.0, 0.0, 0.0, 0.0, 0.0 });
+            std::vector<int> counts(k, 0);
+            for (int i = 0; i < numPixels; ++i) {
+                int clusterId = assignments[i];
+                newCentroids[clusterId].r += normalizedPixels[i].r;
+                newCentroids[clusterId].g += normalizedPixels[i].g;
+                newCentroids[clusterId].b += normalizedPixels[i].b;
+                newCentroids[clusterId].x += normalizedPixels[i].x;
+                newCentroids[clusterId].y += normalizedPixels[i].y;
+                counts[clusterId]++;
+            }
+            for (int c = 0; c < k; ++c) {
+                if (counts[c] > 0) {
+                    centroids[c] = {
+                        newCentroids[c].r / counts[c], newCentroids[c].g / counts[c],
+                        newCentroids[c].b / counts[c], newCentroids[c].x / counts[c],
+                        newCentroids[c].y / counts[c]
+                    };
+                }
+            }
+        }
+
+        //  역 정규화 뒤 이미지 생성
+#pragma omp parallel for
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                int clusterId = assignments[y * width + x];
+                unsigned char* p = pixelData + y * stride + x * 4;
+                // 대표 색상을 0~255 범위로 되돌려 픽셀에 적용
+                p[2] = static_cast<unsigned char>(centroids[clusterId].r * 255.0); // R
+                p[1] = static_cast<unsigned char>(centroids[clusterId].g * 255.0); // G
+                p[0] = static_cast<unsigned char>(centroids[clusterId].b * 255.0); // B
+            }
+        }
     }
 }

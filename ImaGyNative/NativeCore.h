@@ -19,6 +19,8 @@ namespace ImaGyNative
         static void ApplyEqualization(void* pixels, int width, int height, int stride, unsigned char threshold);
         static void ApplyEqualizationColor(void* pixels, int width, int height, int stride, unsigned char threshold);
         
+        static void ApplyKMeansClustering(void* pixels, int width, int height, int stride, int k, int iteration);
+
         static void ApplyHistogram(void* pixels, int width, int height, int stride, int* hist);
 
         // Edge Detection
@@ -26,8 +28,8 @@ namespace ImaGyNative
         static void ApplySobel(void* pixels, int width, int height, int stride, int kernelSize);
         static void ApplyLaplacian (void* pixels, int width, int height, int stride, int kernelSize);
 
-        static void ApplyFFT(void* pixels, int width, int height, int stride, int kernelSize);
-        static void ApplyFFTColor(void* pixels, int width, int height, int stride, int kernelSize);
+        static void ApplyFFT(void* pixels, int width, int height, int stride, int kernelSize, bool isInverse, bool isCPU, bool isPhase);
+        static void ApplyFFTColor(void* pixels, int width, int height, int stride, int kernelSize, bool isInverse, bool isCPU, bool isPhase);
 
         // Blurring
         static void ApplyGaussianBlur(void* pixels, int width, int height, int stride, double sigma, int kernelSize, bool useCircularKernel);

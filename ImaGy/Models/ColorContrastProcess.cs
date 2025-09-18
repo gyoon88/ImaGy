@@ -1,4 +1,5 @@
 using ImaGy.Wrapper;
+using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -39,6 +40,17 @@ namespace ImaGy.Models
             return BitmapProcessorHelper.ApplyEffect(graySource, (pixelPtr, width, height, stride) =>
             {
                 NativeProcessor.ApplyBinarization(pixelPtr, width, height, stride, threshold);
+            });
+        }
+        public BitmapSource ApplyKMeansClustering(BitmapSource source, int k, int iteration, bool isColor)
+        {
+            if (!isColor)
+            {
+                return source;
+            }
+            return BitmapProcessorHelper.ApplyEffect(source, (pixelPtr, width, height, stride) =>
+            {
+                NativeProcessor.ApplyKMeansClustering(pixelPtr, width, height, stride, k, iteration);
             });
         }
 

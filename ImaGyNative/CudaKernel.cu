@@ -239,24 +239,38 @@ namespace ImaGyNative
 	 */
 	__global__ void FftShiftAndLogMagnitudeKernel(const cufftComplex* fft_input, float* magnitude_output, int width,int height)
 	{
+		// 각 스레드가 담당할 출력 이미지의 좌표 (x, y)
 		int x = blockIdx.x * blockDim.x + threadIdx.x;
 		int y = blockIdx.y * blockDim.y + threadIdx.y;
 
 		if (x >= width || y >= height) return;
 
-		// 1.  ̹ ߾ ϱ  ǥ  (FFT Shift)
-		int shifted_x = (x + width / 2) % width;
-		int shifted_y = (y + height / 2) % height;
+		// --- 1. FFT Shift 적용 ---
+		// 출력 좌표 (x, y)에 해당하는 주파수 좌표 (freq_x, freq_y)를 계산합니다.
+		int freq_x = (x + width / 2) % width;
+		int freq_y = (y + height / 2) % height;
 
-		// cuFFT R2C  ʺ +1 ũ ǹǷ,  ǥ 
+		// R2C 포맷의 실제 데이터 너비
 		int complex_width = width / 2 + 1;
-		int input_idx = shifted_y * complex_width + (shifted_x % complex_width);
 
-		// 2. Magnitude : sqrt(real^2 + imag^2)
+		// --- 2. 대칭성을 고려한 인덱스 계산 (수정된 핵심 로직) ---
+		int lookup_x = freq_x;
+		int lookup_y = freq_y;
+
+		// 만약 계산하려는 주파수(freq_x)가 저장된 범위를 벗어난다면 (즉, 스펙트럼의 오른쪽 절반이라면),
+		// 켤레 대칭 속성을 이용해 참조할 왼쪽의 좌표를 계산합니다.
+		// |F(u, v)| = |F(-u, -v)|
+		if (freq_x >= complex_width) {
+			lookup_x = width - freq_x;
+			lookup_y = (height - freq_y) % height; // y축도 함께 대칭 이동
+		}
+
+		// 최종적으로 R2C 데이터에서 값을 가져올 1차원 인덱스
+		int input_idx = lookup_y * complex_width + lookup_x;
+
+		// --- 3. Magnitude 계산 및 Log 스케일 적용 ---
 		cufftComplex val = fft_input[input_idx];
 		float magnitude = sqrtf(val.x * val.x + val.y * val.y);
-
-		// 3. α   (ο κ  ̰ )
 		magnitude_output[y * width + x] = log10f(1.0f + magnitude);
 	}
 
@@ -272,9 +286,7 @@ namespace ImaGyNative
 		if (range <= 1e-6f) {
 			uchar_output[i] = 0;
 			return;
-		}
-
-	
+		}			
 		float normalized_val = 255.0f * (float_input[i] - min_val) / range;
 		uchar_output[i] = (unsigned char)fmaxf(0.f, fminf(255.f, normalized_val));
 	}

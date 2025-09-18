@@ -13,6 +13,11 @@ namespace ImaGy
         {
             ImaGyNative::NativeCore::ApplyBinarization(pixels.ToPointer(), width, height, stride, threshold);
         }
+        void NativeProcessor::ApplyKMeansClustering(IntPtr pixels, int width, int height, int stride, int k, int iteration)
+        {
+            ImaGyNative::NativeCore::ApplyKMeansClustering(pixels.ToPointer(), width, height, stride, k, iteration);
+
+        }
         void NativeProcessor::ApplyEqualization(IntPtr pixels, int width, int height, int stride, Byte threshold)
         {
             ImaGyNative::NativeCore::ApplyEqualization(pixels.ToPointer(), width, height, stride, threshold);
@@ -39,13 +44,15 @@ namespace ImaGy
         {
             ImaGyNative::NativeCore::ApplyLaplacian(pixels.ToPointer(), width, height, stride, kernelSize);
         }
-        void NativeProcessor::ApplyFFT(IntPtr pixels, int width, int height, int stride, int kernelSize)
+
+
+        void NativeProcessor::ApplyFFT(IntPtr pixels, int width, int height, int stride, int kernelSize, bool isInverse, bool isCPU, bool isPhase)
         {
-            ImaGyNative::NativeCore::ApplyFFT(pixels.ToPointer(), width, height, stride, kernelSize);
+            ImaGyNative::NativeCore::ApplyFFT(pixels.ToPointer(), width, height, stride, kernelSize, isInverse, isCPU, isPhase);
         }
-        void NativeProcessor::ApplyFFTColor(IntPtr pixels, int width, int height, int stride, int kernelSize)
+        void NativeProcessor::ApplyFFTColor(IntPtr pixels, int width, int height, int stride, int kernelSize, bool isInverse, bool isCPU, bool isPhase)
         {
-            ImaGyNative::NativeCore::ApplyFFTColor(pixels.ToPointer(), width, height, stride, kernelSize);
+            ImaGyNative::NativeCore::ApplyFFTColor(pixels.ToPointer(), width, height, stride, kernelSize, isInverse, isCPU, isPhase);
         }
 
         // Blurring

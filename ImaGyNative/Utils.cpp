@@ -1,24 +1,29 @@
 #include "pch.h"
+
 #include "ImageProcessingUtils.h"
 #include <cmath>
 #include <iostream>
 #include <vector>
-#include <complex> // std::complex ì‚¬ìš© ì‹œ í•„ìš”
-#include <iomanip>
+#include <complex>
+#include <iomanip> 
 #include <numeric>
 #include <algorithm>
-#include <memory>    // std::unique_ptr ì‚¬ìš© ì‹œ í•„ìš”
-#include <omp.h>     // OpenMP ì‚¬ìš© ì‹œ í•„ìš”
-#include <stdexcept> // std::invalid_argument ì‚¬ìš© ì‹œ í•„ìš”
+#include <memory>
+#include <omp.h>
 
 const double PI = acos(-1);
-using Complex = std::complex<double>; // í‘œì¤€ ë¼ì´ë¸ŒëŸ¬ë¦¬ì˜ complex ì‚¬ìš©
-
+using Complex = std::complex<double>;
 namespace ImaGyNative
 {
+    /**
+      * @brief ¼Òº§ XÃà Ä¿³ÎÀ» »ı¼º
+      * @param kernelSize Ä¿³Î Å©±â (È¦¼ö).
+      * @return double Å¸ÀÔÀÇ 1D º¤ÅÍ Ä¿³Î.
+      */
     std::vector<double> createSobelKernelX(int kernelSize) {
         std::vector<double> kernel(kernelSize * kernelSize);
         int center = kernelSize / 2;
+#pragma omp parallel for
         for (int y = 0; y < kernelSize; ++y) {
             for (int x = 0; x < kernelSize; ++x) {
                 if (x == center) {
@@ -32,9 +37,16 @@ namespace ImaGyNative
         return kernel;
     }
 
+    /**
+     * @brief ¼Òº§ YÃà Ä¿³ÎÀ» »ı¼º
+     * @param kernelSize Ä¿³Î Å©±â (È¦¼ö).
+     * @return double Å¸ÀÔÀÇ 1D º¤ÅÍ Ä¿³Î.
+     */
     std::vector<double> createSobelKernelY(int kernelSize) {
         std::vector<double> kernel(kernelSize * kernelSize);
         int center = kernelSize / 2;
+
+#pragma omp parallel for
         for (int y = 0; y < kernelSize; ++y) {
             for (int x = 0; x < kernelSize; ++x) {
                 if (y == center) {
@@ -48,6 +60,11 @@ namespace ImaGyNative
         return kernel;
     }
 
+    /**
+     * @brief ¶óÇÃ¶ó½Ã¾È Ä¿³ÎÀ» »ı¼º
+     * @param kernelSize Ä¿³Î Å©±â (È¦¼ö).
+     * @return double Å¸ÀÔÀÇ 1D º¤ÅÍ Ä¿³Î.
+     */
     std::vector<double> createLaplacianKernel(int kernelSize)
     {
         if (kernelSize % 2 == 0) {
@@ -58,6 +75,7 @@ namespace ImaGyNative
         kernel[centerIndex] = 1.0 - (kernelSize * kernelSize);
         return kernel;
     }
+
 
     std::vector<double> createGaussianKernel(int kernelSize, double sigma, bool isCircular)
     {
@@ -87,15 +105,18 @@ namespace ImaGyNative
             }
         }
 
-        if (sum > 0) {
+        if (sum > 0) { // 0À¸·Î ³ª´©´Â °ÍÀ» ¹æÁö
 #pragma omp parallel for
-            for (int i = 0; i < kernel.size(); ++i) {
-                kernel[i] /= sum;
+            for (double& val : kernel) {
+                val /= sum;
             }
         }
         return kernel;
     }
 
+    /**
+    * Æò±Õ ÇÊÅÍ¸¦ À§ÇÑ (¿øÇü) Ä¿³Î »ı¼º ÇÔ¼ö
+    */
     std::vector<double> createAverageKernel(int kernelSize, bool isCircular)
     {
         if (kernelSize % 2 == 0) kernelSize++;
@@ -103,6 +124,7 @@ namespace ImaGyNative
         int center = kernelSize / 2;
         double radiusSq = center * center;
 
+#pragma omp parallel for
         for (int i = 0; i < kernelSize; ++i) {
             for (int j = 0; j < kernelSize; ++j) {
                 if (isCircular) {
@@ -120,14 +142,19 @@ namespace ImaGyNative
         return kernel;
     }
 
+
+    /**
+     * ¿ÀÃ÷ ¾Ë°í¸®ÁòÀ¸·Î ÀÓ°è°ª »êÁ¤
+     */
     int OtsuThreshold(const unsigned char* sourcePixels, int width, int height, int stride)
     {
+        // È÷½ºÅä±×·¥Àº °¢ ½º·¹µå°¡ µ¶¸³ÀûÀ¸·Î °è»êÇÑ ÈÄ ÇÕ
         std::vector<int> hist(256, 0);
 
 #pragma omp parallel
         {
-            std::vector<int> local_hist(256, 0);
-#pragma omp for nowait
+            std::vector<int> local_hist(256, 0); // °¢ ½º·¹µå¸¸ÀÇ ·ÎÄÃ È÷½ºÅä±×·¥
+#pragma omp for nowait 
             for (int y = 0; y < height; ++y) {
                 for (int x = 0; x < width; ++x) {
                     local_hist[sourcePixels[y * stride + x]]++;
@@ -168,9 +195,11 @@ namespace ImaGyNative
         return threshold;
     }
 
+
     void FFT_1D_Recursive(Complex* data, int N, bool isInverse) {
         if (N <= 1) return;
 
+        // ½º¸¶Æ® Æ÷ÀÎÅÍ¸¦ »ç¿ëÇÏ¿© ÀÚµ¿ ¸Ş¸ğ¸® °ü¸®
         auto even = std::make_unique<Complex[]>(N / 2);
         auto odd = std::make_unique<Complex[]>(N / 2);
 
@@ -179,6 +208,7 @@ namespace ImaGyNative
             odd[i] = data[2 * i + 1];
         }
 
+        // Æ÷ÀÎÅÍ¸¦ Àü´ŞÇÒ ¶§´Â .get() ¸Ş¼­µå »ç¿ë
         FFT_1D_Recursive(even.get(), N / 2, isInverse);
         FFT_1D_Recursive(odd.get(), N / 2, isInverse);
 
@@ -186,71 +216,107 @@ namespace ImaGyNative
 
         for (int k = 0; k < N / 2; ++k) {
             double angle = angleSign * 2.0 * PI * k / N;
-            Complex twiddle = { cos(angle), sin(angle) };
+            // std::complex »ı¼ºÀÚ »ç¿ë
+            Complex twiddle(cos(angle), sin(angle));
             Complex product = twiddle * odd[k];
 
             data[k] = even[k] + product;
             data[k + N / 2] = even[k] - product;
         }
+
     }
 
+
+    /// <summary>
+    /// 2D FFT Process Fuction It calls FFT_1D_Recursive
+    /// </summary>
+    /// <param name="inputPixels">Point: Padded Image data memory Point</param>
+    /// <param name="outputSpectrum">Complex: Processed Image data array</param>
+    /// <param name="width">Int: Width of Image</param>
+    /// <param name="height">Int: Height of Image</param>
+    /// <param name="stride">Int: Byte of each pixels</param>
+    /// <param name="isInverse">FFT or IFFT option boolian Param</param>
+    // isInverse ÇÃ·¡±×¸¦ ÀÎÀÚ·Î Ãß°¡
+
+    // const unsigned char* -> void* ·Î º¯°æÇÏ°í ³»ºÎ¿¡¼­ Ä³½ºÆÃ
     void ApplyFFT2D_CPU(const void* inputPixels, Complex* outputSpectrum, int width, int height, int stride, bool isInverse)
     {
         const unsigned char* pixels = static_cast<const unsigned char*>(inputPixels);
-        auto tempComplexData = std::make_unique<Complex[]>(width * height);
+        Complex* tempComplexData = new Complex[width * height];
 
+        // µ¥ÀÌÅÍ ÁØºñ
 #pragma omp parallel for
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
                 double grayValue = static_cast<double>(pixels[y * stride + x]);
-                tempComplexData.get()[y * width + x] = { grayValue, 0.0 };
+                tempComplexData[y * width + x] = { grayValue, 0.0 };
             }
         }
 
+        // Çà ¹æÇâ 1D FFT
 #pragma omp parallel for
+
         for (int y = 0; y < height; ++y) {
-            FFT_1D_Recursive(&tempComplexData.get()[y * width], width, isInverse);
+            FFT_1D_Recursive(&tempComplexData[y * width], width, isInverse);
         }
 
-        auto all_columns_buffer = std::make_unique<Complex[]>(width * height);
+
+        // --- ¿­ ¹æÇâ 1D FFT °³¼± ---
+            // ¸ğµç ½º·¹µå°¡ »ç¿ëÇÒ ¹öÆÛ¸¦ ÇÑ ¹ø¿¡ ÇÒ´ç
+        Complex* all_columns_buffer = new Complex[width * height];
+
 #pragma omp parallel for
         for (int x = 0; x < width; ++x) {
-            Complex* tempColumn = &all_columns_buffer.get()[x * height];
+            // °¢ ½º·¹µå´Â ÀüÃ¼ ¹öÆÛ¿¡¼­ ÀÚ½ÅÀÇ ÀÛ¾÷ ¿µ¿ª(½½¶óÀÌ½º)¿¡ ´ëÇÑ Æ÷ÀÎÅÍ¸¸ °¡Á®¿È
+            Complex* tempColumn = &all_columns_buffer[x * height];
+
             for (int y = 0; y < height; ++y) {
-                tempColumn[y] = tempComplexData.get()[y * width + x];
+                tempColumn[y] = tempComplexData[y * width + x];
             }
             FFT_1D_Recursive(tempColumn, height, isInverse);
             for (int y = 0; y < height; ++y) {
-                tempComplexData.get()[y * width + x] = tempColumn[y];
+                tempComplexData[y * width + x] = tempColumn[y];
             }
+            // new/delete¸¦ ·çÇÁ¸¶´Ù ÇÏÁö ¾ÊÀ½
         }
+        // ·çÇÁ°¡ ³¡³­ ÈÄ ÇÑ ¹ø¿¡ ¸Ş¸ğ¸® ÇØÁ¦
+        delete[] all_columns_buffer;
 
+        // ¿ªº¯È¯(IFFT)ÀÏ °æ¿ì, °á°ú ½ºÄÉÀÏ¸µ
         if (isInverse) {
             double scale = 1.0 / (width * height);
 #pragma omp parallel for
             for (int i = 0; i < width * height; ++i) {
-                tempComplexData[i] = tempComplexData[i] * scale;
+                tempComplexData[i].real *= scale;
+                tempComplexData[i].imag *= scale;
             }
         }
 
+        // ÃÖÁ¾ °á°ú º¹»ç
 #pragma omp parallel for
+
         for (int i = 0; i < width * height; ++i) {
-            outputSpectrum[i] = tempComplexData.get()[i];
+            outputSpectrum[i] = tempComplexData[i];
         }
+        delete[] tempComplexData;
     }
 
     void FFT_Shift2D(Complex* spectrum, int width, int height) {
         int halfWidth = width / 2;
         int halfHeight = height / 2;
 
+        // µÎ °³ÀÇ ·çÇÁ¸¦ ÇÏ³ª·Î ÇÕÄ§
 #pragma omp parallel for
         for (int y = 0; y < halfHeight; ++y) {
+            // 1»çºĞ¸é <-> 3»çºĞ¸é ±³È¯
             for (int x = 0; x < halfWidth; ++x) {
                 std::swap(spectrum[y * width + x], spectrum[(y + halfHeight) * width + (x + halfWidth)]);
             }
+            // 2»çºĞ¸é <-> 4»çºĞ¸é ±³È¯
             for (int x = halfWidth; x < width; ++x) {
                 std::swap(spectrum[y * width + x], spectrum[(y + halfHeight) * width + (x - halfWidth)]);
             }
         }
     }
+
 }

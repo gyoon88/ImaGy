@@ -13,7 +13,7 @@ namespace ImaGy.Models
         // =================================================================
 
         /// <summary>
-        /// [일반 처리용] 패딩 없이 네이티브 액션을 적용
+        /// 패딩 없이 네이티브 액션을 적용
         /// </summary>
         public static BitmapSource ApplyEffect(BitmapSource source, Action<IntPtr, int, int, int> nativeAction)
         {
@@ -43,7 +43,7 @@ namespace ImaGy.Models
         }
 
         /// <summary>
-        /// [커널 처리용] 패딩/크롭을 포함하여 네이티브 액션을 적용합니다.
+        /// 패딩/크롭을 포함하여 네이티브 액션을 적용
         /// </summary>
         public static BitmapSource ApplyKernelEffect(BitmapSource source, int kernelSize, Action<IntPtr, int, int, int> nativeAction)
         {
@@ -201,15 +201,98 @@ namespace ImaGy.Models
             {
                 drawingContext.DrawImage(drawingSource, new Rect(0, 0, drawingSource.PixelWidth, drawingSource.PixelHeight));
                 Pen redPen = new Pen(Brushes.Red, 2);
-                // 50% 투명도를 가진 빨간색 브러시 (A:128, R:255, G:0, B:0)
+                // 25% 투명도를 가진 빨간색 브러시 (A:128, R:255, G:0, B:0)
                 Brush semiTransparentRedBrush = new SolidColorBrush(Color.FromArgb(64, 255, 0, 0));
-
                 drawingContext.DrawRectangle(semiTransparentRedBrush, redPen, new Rect(box.X, box.Y, box.Width, box.Height));
             }
             var renderTarget = new RenderTargetBitmap(drawingSource.PixelWidth, drawingSource.PixelHeight, drawingSource.DpiX, drawingSource.DpiY, PixelFormats.Pbgra32);
             renderTarget.Render(drawingVisual);
             renderTarget.Freeze();
             return renderTarget;
+        }
+
+
+        // =================================================================
+        // --- FFT 전용 헬퍼 ---
+        // =================================================================
+
+
+        /// <summary>
+        /// [FFT 처리용] 이미지를 2의 거듭제곱 크기로 제로 패딩하고, 네이티브 액션을 적용한 후 원본 크기로 크롭
+        /// </summary>
+        public static BitmapSource ApplyFFTEffect(BitmapSource source, Action<IntPtr, int, int, int> nativeAction)
+        {
+            // 이미지를 그레이스케일로 변환
+            if (source.Format != PixelFormats.Gray8)
+            {
+                source = new FormatConvertedBitmap(source, PixelFormats.Gray8, null, 0);
+            }
+
+            int originalWidth = source.PixelWidth;
+            int originalHeight = source.PixelHeight;
+            int originalStride = (originalWidth * source.Format.BitsPerPixel + 7) / 8;
+            byte[] originalPixels = new byte[originalHeight * originalStride];
+            source.CopyPixels(originalPixels, originalStride, 0);
+
+            int paddedWidth = NextPowerOfTwo(originalWidth);
+            int paddedHeight = NextPowerOfTwo(originalHeight);
+            int paddedStride = (paddedWidth * source.Format.BitsPerPixel + 7) / 8;
+            byte[] paddedPixels = new byte[paddedHeight * paddedStride];
+            int offsetX = (paddedWidth - originalWidth) / 2;
+            int offsetY = (paddedHeight - originalHeight) / 2;
+
+            for (int y = 0; y < originalHeight; y++)
+            {
+                Buffer.BlockCopy(
+                    originalPixels,
+                    y * originalStride,
+                    paddedPixels,
+                    (y + offsetY) * paddedStride + offsetX,
+                    originalStride
+                );
+            }
+            GCHandle pinnedPixels = GCHandle.Alloc(paddedPixels, GCHandleType.Pinned);
+            try
+            {
+                IntPtr pixelPtr = pinnedPixels.AddrOfPinnedObject();
+                nativeAction(pixelPtr, paddedWidth, paddedHeight, paddedStride);
+            }
+            finally
+            {
+                pinnedPixels.Free();
+            }
+
+            byte[] resultPixels = new byte[originalHeight * originalStride];
+
+            int cropStartX = (paddedWidth - originalWidth) / 2;
+            int cropStartY = (paddedHeight - originalHeight) / 2;
+
+            for (int y = 0; y < originalHeight; y++)
+            {
+                int sourceIndex = (y + cropStartY) * paddedStride + cropStartX;
+                int destIndex = y * originalStride;
+                Buffer.BlockCopy(paddedPixels, sourceIndex, resultPixels, destIndex, originalStride);
+            }
+            var result = BitmapSource.Create(originalWidth, originalHeight, source.DpiX, source.DpiY, source.Format, null, resultPixels, originalStride);
+            result.Freeze();
+            return result;
+        }
+        /// <summary>
+        /// 주어진 숫자보다 크거나 같은 가장 가까운 2의 거듭제곱 수를 반환
+        /// </summary>
+        private static int NextPowerOfTwo(int n)
+        {
+            if (n < 0) return 0;
+            if (n == 0) return 1;
+
+            if ((n & (n - 1)) == 0) return n;
+
+            int p = 1;
+            while (p < n)
+            {
+                p <<= 1;
+            }
+            return p;
         }
     }
 }
