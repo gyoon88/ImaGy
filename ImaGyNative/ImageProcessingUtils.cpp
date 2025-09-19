@@ -193,6 +193,52 @@ namespace ImaGyNative
             data[k + N / 2] = even[k] - product;
         }
     }
+    void FFT_1D_Iterative(Complex* data, int N, bool isInverse) {
+        // 비트 반전(bit-reversal) 순서로 재배열
+        int j = 0;
+        for (int i = 1; i < N; i++) {
+            int bit = N >> 1;
+            for (; j & bit; bit >>= 1) {
+                j ^= bit;
+            }
+            j ^= bit;
+            if (i < j) {
+                Complex temp = data[i];
+                data[i] = data[j];
+                data[j] = temp;
+            }
+        }
+
+        // iterative 단계 수행
+        double angleSign = isInverse ? 1.0 : -1.0;
+        for (int len = 2; len <= N; len <<= 1) {
+            double angle = angleSign * 2 * PI / len;
+            Complex wlen = { cos(angle), sin(angle) };
+
+            #pragma omp parallel for
+            for (int i = 0; i < N; i += len) {
+                Complex w = { 1.0, 0.0 };
+                for (int j = 0; j < len / 2; j++) {
+                    Complex u = data[i + j];
+                    Complex v = w * data[i + j + len / 2];
+
+                    data[i + j] = u + v;
+                    data[i + j + len / 2] = u - v;
+
+                    w = w * wlen;
+                }
+            }
+        }
+
+        // 역변환일 경우 1/N 스케일링
+        if (isInverse) {
+#pragma omp parallel for
+            for (int i = 0; i < N; i++) {
+                data[i] /= N;
+            }
+        }
+    }
+
 
     void ApplyFFT2D_CPU(const void* inputPixels, Complex* outputSpectrum, int width, int height, int stride, bool isInverse)
     {
@@ -209,17 +255,17 @@ namespace ImaGyNative
 
 #pragma omp parallel for
         for (int y = 0; y < height; ++y) {
-            FFT_1D_Recursive(&tempComplexData.get()[y * width], width, isInverse);
+            FFT_1D_Iterative(&tempComplexData.get()[y * width], width, isInverse);
         }
-
         auto all_columns_buffer = std::make_unique<Complex[]>(width * height);
+
 #pragma omp parallel for
         for (int x = 0; x < width; ++x) {
             Complex* tempColumn = &all_columns_buffer.get()[x * height];
             for (int y = 0; y < height; ++y) {
                 tempColumn[y] = tempComplexData.get()[y * width + x];
             }
-            FFT_1D_Recursive(tempColumn, height, isInverse);
+            FFT_1D_Iterative(tempColumn, height, isInverse);
             for (int y = 0; y < height; ++y) {
                 tempComplexData.get()[y * width + x] = tempColumn[y];
             }

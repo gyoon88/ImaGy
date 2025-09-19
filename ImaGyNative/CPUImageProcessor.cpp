@@ -633,15 +633,9 @@ namespace ImaGyNative
     /// 입력 이미지의 주파수 스펙트럼(크기)을 계산하여 그레이스케일 이미지 생성
     /// </summary>
     void ApplyFFT2DSpectrum_CPU(void* pixels, Complex* outputSpectrum, int width, int height, int stride, bool isInverse) {
-        // FFT 수행 
-        ApplyFFT2D_CPU(pixels, outputSpectrum, width, height, stride, isInverse);
-
-        // DC 성분 shifting
-        FFT_Shift2D(outputSpectrum, width, height);
-
         const void* readOnlyPixels = static_cast<const void*>(pixels);
 
-        // FFT 수행 (isInverse는 false로 전달됨)
+        // FFT 수행 
         ApplyFFT2D_CPU(readOnlyPixels, outputSpectrum, width, height, stride, isInverse);
 
         // DC 성분 shifting
@@ -653,7 +647,7 @@ namespace ImaGyNative
         #pragma omp parallel for
         for (int i = 0; i < width * height; ++i) {
             double mag = std::sqrt(outputSpectrum[i].real * outputSpectrum[i].real + outputSpectrum[i].imag * outputSpectrum[i].imag);
-            magnitudes[i] = std::log(1.0 + mag);
+            magnitudes[i] = std::log10(1.0 + mag);
             if (magnitudes[i] > maxMagnitude) {
                 maxMagnitude = magnitudes[i];
             }

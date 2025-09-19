@@ -39,10 +39,27 @@ void NativeCore::ApplyHistogram(void* pixels, int width, int height, int stride,
     unsigned char* pixelData = static_cast<unsigned char*>(pixels);
     std::fill(hist, hist + 256, 0);
 
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            int idx = pixelData[y * stride + x];
-            hist[idx]++;
+    // #pragma omp parallel 블록으로 병렬 영역을 생성
+#pragma omp parallel
+    {
+        // 각 스레드가 사용할 자신만의 로컬 히스토그램을 생성
+
+        int local_hist[256] = { 0 };
+
+        // #pragma omp for로 루프를 스레드에 분배
+        //    각 스레드는 자신만의 local_hist에만 값을 더함.
+#pragma omp for nowait
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                local_hist[pixelData[y * stride + x]]++;
+            }
+        }
+
+        // 모든 스레드의 계산이 끝나면, #pragma omp critical을 사용해
+        //    한 번에 하나의 스레드만 접근하도록 하여 결과를 안전하게 합침.
+#pragma omp critical
+        for (int i = 0; i < 256; ++i) {
+            hist[i] += local_hist[i];
         }
     }
 }
@@ -207,7 +224,6 @@ void NativeCore::ApplyFFT(void* pixels, int width, int height, int stride, int k
         }
         ApplySAD_CPU(pixels, width, height, stride, templatePixels, templateWidth, templateHeight, templateStride, outCoords);
     }
-
     void NativeCore::ApplySSD(void* pixels, int width, int height, int stride, void* templatePixels, int templateWidth, int templateHeight, int templateStride, int* outCoords)
     {
         if (IsCudaAvailable()) {
@@ -217,8 +233,6 @@ void NativeCore::ApplyFFT(void* pixels, int width, int height, int stride, int k
         }
         ApplySSD_CPU(pixels, width, height, stride, templatePixels, templateWidth, templateHeight, templateStride, outCoords);
     }
-
-
 
     /// <summary>
     /// Color 이미지의 가우스 블러를 처리하는 함수 
@@ -245,15 +259,14 @@ void NativeCore::ApplyFFT(void* pixels, int width, int height, int stride, int k
     /// GPU 호출 실패시 CPU 코드로 FallBack
     /// </summary>
     /// <param name="pixels">이미지가 있는 메모리 주소 </param>
-    /// <param name="width">이미지 </param>
-    /// <param name="height"></param>
-    /// <param name="stride"></param>
-    /// <param name="kernelSize"></param>
-    /// <param name="useCircularKernel"></param>
+    /// <param name="width">이미지 넓이</param>
+    /// <param name="height">이미지 높이</param>
+    /// <param name="stride">픽셀당 바이트</param>
+    /// <param name="kernelSize">커널 생성 지름 또는 한변의 길이</param>
+    /// <param name="useCircularKernel">원형 커널 생성 여부</param>
     void NativeCore::ApplyAverageBlurColor(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
     {
         if (IsCudaAvailable()) {
-            // 새로 만든 컬러 CUDA 함수를 호출
             if (LaunchAverageBlurColorKernel(static_cast<unsigned char*>(pixels), width, height, stride, kernelSize, useCircularKernel) ){
                 return;
             }
@@ -304,15 +317,15 @@ void NativeCore::ApplyFFT(void* pixels, int width, int height, int stride, int k
 
     void NativeCore::ApplyKMeansClustering(void* pixels, int width, int height, int stride, int k, int iteration)
     {
-        // 먼저 CUDA 커널 실행을 시도합니다.
+        // 먼저 CUDA 커널 실행을 시도
         //if (IsCudaAvailable()) {
-        //    // LaunchKMeansKernel이 성공적으로 실행되면 true를 반환하고 함수를 종료합니다.
+        //    // LaunchKMeansKernel이 성공적으로 실행되면 true를 반환하고 함수를 종료
         //    if (LaunchKMeansKernel(pixels, width, height, stride, k, iteration)) {
         //        return;
         //    }
         //}
 
-        // CUDA 실행이 실패했거나, CUDA를 사용할 수 없는 경우 CPU 코드로 폴백합니다.
+        // CUDA 실행이 실패했거나, CUDA를 사용할 수 없는 경우 CPU 코드로 폴백
         ApplyKMeansClusteringXY_Normalized_CPU(pixels, width, height, stride, k, iteration);
     }
 

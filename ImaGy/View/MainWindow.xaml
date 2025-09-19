@@ -217,7 +217,7 @@
                         <StackPanel>
                             <Expander Header="Colour | Contrast" Foreground="White" Margin="0,4,0,4">
                                 <StackPanel>
-                                    <GroupBox Header="Binarization">
+                                    <GroupBox Header="Seperation">
                                         <StackPanel>
                                             <Button Content="Otsu's Binarization" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Bin_Otsu"/>
                                             <Button Content="Binarization" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Bin"/>
@@ -232,15 +232,7 @@
                                                 <TextBox Grid.Column="1" Text="{Binding Parameters.Threshold, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
                                                 <Slider Grid.Column="2" Value="{Binding Parameters.Threshold, Mode=TwoWay}" Minimum="0" Maximum="255" TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
                                             </Grid>
-                                        </StackPanel>
-                                    </GroupBox>
-                                    <GroupBox Header="Color-Contrast">
-                                        <StackPanel>
-                                            <Button Content="Gray Scale" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Gray"/>
-                                            <Button Content="Equalization" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Equal" />
-                                            <Button Content="Color Equalization" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Equal_color"  IsEnabled="{Binding IsColor}"/>
                                             <Separator Margin="5" Foreground="Gray"/>
-
                                             <Button Content="KMeansClustering" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Clustering"/>
                                             <Grid Margin="5">
                                                 <Grid.ColumnDefinitions>
@@ -262,6 +254,16 @@
                                                 <TextBox Grid.Column="1" Text="{Binding Parameters.Iteration, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
                                                 <Slider Grid.Column="2" Value="{Binding Parameters.Iteration, Mode=TwoWay}" Minimum="20" Maximum="500" TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
                                             </Grid>
+                                        </StackPanel>
+                                    </GroupBox>
+                                    <GroupBox Header="Color-Contrast">
+                                        <StackPanel>
+                                            <Button Content="Gray Scale" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Gray"/>
+                                            <Button Content="Equalization" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Equal" />
+                                            <Button Content="Color Equalization" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Equal_color"  IsEnabled="{Binding IsColor}"/>
+                                            <Separator Margin="5" Foreground="Gray"/>
+
+
                                             
                                         </StackPanel>                 
                                     </GroupBox>
