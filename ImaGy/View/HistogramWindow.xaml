@@ -13,17 +13,65 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Grid.Column="0" Name="YAxisLabelsPanel" VerticalAlignment="Stretch" Margin="5,10,5,10"/>
+        <!-- Y Axis Labels -->
+        <Grid Grid.Row="0" Grid.Column="0" Name="YAxisLabelsPanel" VerticalAlignment="Stretch" Margin="15,10,5,0"/>
 
-        <Canvas Grid.Row="0" Grid.Column="1" Name="HistogramCanvas" Background="{StaticResource PrimaryGrayBrush}" Margin="10" SizeChanged="HistogramCanvas_SizeChanged"/>
+        <!-- Histogram Canvas -->
+        <Canvas Grid.Row="0" Grid.Column="1" Name="HistogramCanvas" Background="{StaticResource PrimaryGrayBrush}" Margin="0,10,0,0" SizeChanged="HistogramCanvas_SizeChanged"/>
 
-        <StackPanel Grid.Row="1" Grid.Column="1" Name="XAxisLabelsPanel" Orientation="Horizontal" HorizontalAlignment="Stretch" Margin="10,5,10,0"/>
+        <!-- X Axis Labels -->
+        <StackPanel Grid.Row="1" Grid.Column="1" Name="XAxisLabelsPanel" Orientation="Horizontal" HorizontalAlignment="Stretch" Margin="0,0,10,10"/>
+
+        <!-- Statistics Panel -->
+        <Border Grid.Row="0" Grid.RowSpan="2" Grid.Column="2" BorderBrush="{StaticResource PrimaryGrayBrush}" BorderThickness="1" Margin="10" Padding="10" MinWidth="160">
+            <StackPanel>
+                <TextBlock Text="Summary Statistics" FontWeight="Bold" Margin="0,0,0,10"  Foreground="White" TextAlignment="Center"/>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Mean:" Margin="0,2,5,2" Foreground="White"/>
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Mean, StringFormat={}{0:F2}, FallbackValue='N/A'}" HorizontalAlignment="Right" Margin="0,2" Foreground="White"/>
+
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Std Dev:" Margin="0,2,5,2" Foreground="White"/>
+                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Std, StringFormat={}{0:F2}, FallbackValue='N/A'}" HorizontalAlignment="Right" Margin="0,2"  Foreground="White"/>
+
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Median:" Margin="0,2,5,2"  Foreground="White"/>
+                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Median, FallbackValue='N/A'}" HorizontalAlignment="Right" Margin="0,2" Foreground="White"/>
+
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Mode:" Margin="0,2,5,2"  Foreground="White"/>
+                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Mode, FallbackValue='N/A'}" HorizontalAlignment="Right" Margin="0,2"  Foreground="White"/>
+
+                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Min:" Margin="0,2,5,2" Foreground="White"/>
+                    <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding Min, FallbackValue='N/A'}" HorizontalAlignment="Right" Margin="0,2"  Foreground="White"/>
+
+                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Max:" Margin="0,2,5,2"  Foreground="White"/>
+                    <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding Max, FallbackValue='N/A'}" HorizontalAlignment="Right" Margin="0,2"  Foreground="White"/>
+
+                    <TextBlock Grid.Row="6" Grid.Column="0" Text="Range:" Margin="0,2,5,2"  Foreground="White"/>
+                    <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding Range, FallbackValue='N/A'}" HorizontalAlignment="Right" Margin="0,2" Foreground="White"/>
+                </Grid>
+            </StackPanel>
+        </Border>
 
     </Grid>
 </Window>

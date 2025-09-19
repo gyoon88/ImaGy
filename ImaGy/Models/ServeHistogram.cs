@@ -8,13 +8,14 @@ namespace ImaGy.Models
 {
     public class ServeHistogram
     {
+        /// <summary>
+        /// Gray Scale 이미지 대한 히스토그램을 계산
+        /// </summary>
+        /// <returns>int[]</returns>
         public static int[] CalculateGrayscaleHistogram(BitmapSource source)
         {
             if (source == null) return new int[256];
-
-            BitmapSource bitmapToUse;
-
-            // 1. 흑백이면 그대로, 아니면 Gray8로 변환
+            BitmapSource bitmapToUse;            
             if (source.Format == PixelFormats.Gray8)
             {
                 bitmapToUse = source;
@@ -35,25 +36,25 @@ namespace ImaGy.Models
             byte[] pixels = new byte[height * stride];
             bitmapToUse.CopyPixels(pixels, stride, 0);
 
-            int[] histogram = new int[256];
 
-            // 2. C++ 네이티브 함수 호출
-            unsafe
-            {
-                fixed (byte* pPixels = pixels)
-                fixed (int* pHist = histogram)
-                {
-                    // The GCHandle is no longer needed.
-                    // Pass the pointers directly to the native function.
-                    IntPtr ptr = (IntPtr)pPixels;
-                    NativeProcessor.ApplyHistogram(ptr, width, height, stride, pHist);
-                }
-            }
+            int[] histogram = new int[256];
+            histogram = CalculateHistogramForChannel(pixels, width, height);
+
+            //// C++ 네이티브 호출
+            //unsafe
+            //{
+            //    fixed (byte* pPixels = pixels)
+            //    fixed (int* pHist = histogram)
+            //    {
+            //        IntPtr ptr = (IntPtr)pPixels;
+            //        NativeProcessor.ApplyHistogram(ptr, width, height, stride, pHist);
+            //    }
+            //}
             return histogram;
         }
 
         /// <summary>
-        /// 컬러 이미지의 R, G, B, A 각 채널에 대한 히스토그램을 계산
+        /// Color Scale 이미지의 R, G, B, A 각 채널에 대한 히스토그램을 계산
         /// </summary>
         /// <returns>"R", "G", "B", "A"를 키로 갖는 히스토그램 Dictionary</returns>
         public static Dictionary<string, int[]> CalculateColorHistograms(BitmapSource source)
@@ -68,7 +69,6 @@ namespace ImaGy.Models
             int width = bitmapToUse.PixelWidth;
             int height = bitmapToUse.PixelHeight;
 
-            // Bgra32는 픽셀당 4바이트(32비트)를 사용
             int stride = width * 4;
             byte[] allPixels = new byte[height * stride];
             bitmapToUse.CopyPixels(allPixels, stride, 0);
@@ -90,7 +90,7 @@ namespace ImaGy.Models
 
             var histograms = new Dictionary<string, int[]>();
 
-            // 각 채널에 대해 기존 C++ 함수를 호출하여 히스토그램을 계산
+            // 각 채널별 기존 C++ 함수를 호출하여 히스토그램을 계산
             histograms["B"] = CalculateHistogramForChannel(blueChannel, width, height);
             histograms["G"] = CalculateHistogramForChannel(greenChannel, width, height);
             histograms["R"] = CalculateHistogramForChannel(redChannel, width, height);
@@ -99,11 +99,10 @@ namespace ImaGy.Models
             return histograms;
         }
 
-        // 네이티브 함수 호출 로직을 별도 메서드로 분리하여 코드 중복을 줄입니다.
+        // 네이티브 함수 호출 로직을 별도 메서드로 분리하여 코드 중복 지양
         private static int[] CalculateHistogramForChannel(byte[] pixels, int width, int height)
         {
             int[] histogram = new int[256];
-            // 단일 채널이므로 stride는 이미지의 width와 같습니다.
             int stride = width;
 
             unsafe

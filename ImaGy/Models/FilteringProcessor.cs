@@ -94,7 +94,6 @@ namespace ImaGy.Models
                     NativeProcessor.ApplyGaussianBlur(pixelPtr, width, height, stride, sigma, kernelSize, useCircularKernel);
                 });
             }
-
         }
     }
 }

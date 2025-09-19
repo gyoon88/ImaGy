@@ -261,10 +261,6 @@
                                             <Button Content="Gray Scale" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Gray"/>
                                             <Button Content="Equalization" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Equal" />
                                             <Button Content="Color Equalization" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Equal_color"  IsEnabled="{Binding IsColor}"/>
-                                            <Separator Margin="5" Foreground="Gray"/>
-
-
-                                            
                                         </StackPanel>                 
                                     </GroupBox>
                                 </StackPanel>
@@ -277,11 +273,7 @@
                                             <Button Content="Differential" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Diff" />
                                             <Button Content="Sobel" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Sobel"/>
                                             <Button Content="Laplacian" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Laplace"/>
-                                            <Button Content="FFT" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="FFT"/>
                                             <Separator Margin="5" Foreground="Gray"/>
-                                            <ToggleButton Content="CPU" IsChecked="{Binding Parameters.IsCPU, Mode=TwoWay}" Margin="60,5,60,5" />
-                                            <ToggleButton Content="IsInverse" IsChecked="{Binding Parameters.IsInverse, Mode=TwoWay}" Margin="60,5,60,5" />
-                                            <ToggleButton Content="IsPhase" IsChecked="{Binding Parameters.IsPhase, Mode=TwoWay}" Margin="60,5,60,5" />
                                             <Grid Margin="5">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
@@ -291,10 +283,11 @@
                                                 <TextBlock Grid.Column="0" Text="Kernel:" VerticalAlignment="Center" Margin="0,0,5,0"/>
                                                 <TextBox Grid.Column="1" Text="{Binding Parameters.KernelSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
                                                 <Slider Grid.Column="2" Value="{Binding Parameters.KernelSize, Mode=TwoWay}" Minimum="1" Maximum="25" TickFrequency="2" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
-                                            </Grid>
+                                            </Grid> 
                                         </StackPanel>
                                     </GroupBox>
-                                    <GroupBox Header="Blur Parameter">
+                                    
+                                    <GroupBox Header="Blur">
                                         <StackPanel>
                                             <Button Content="Average" Margin="2"  Command="{Binding FilterringCommand}" CommandParameter="Average"/>
                                             <Button Content="Gaussian" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Gaussian"/>
@@ -320,6 +313,15 @@
                                                 <TextBox Grid.Column="1" Text="{Binding Parameters.KernelSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
                                                 <Slider Grid.Column="2" Value="{Binding Parameters.KernelSize, Mode=TwoWay}" Minimum="1" Maximum="15" TickFrequency="2" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
                                             </Grid>
+                                        </StackPanel>
+                                    </GroupBox>
+                                    <GroupBox Header="FFT">
+                                        <StackPanel>
+                                            <Button Content="FFT" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="FFT"/>
+                                            <Separator Margin="5" Foreground="Gray"/>
+                                            <ToggleButton Content="CPU" IsChecked="{Binding Parameters.IsCPU, Mode=TwoWay}" Margin="60,5,60,5" />
+                                            <!--<ToggleButton Content="IsInverse" IsChecked="{Binding Parameters.IsInverse, Mode=TwoWay}" Margin="60,5,60,5" />-->
+                                            <ToggleButton Content="IsPhase" IsChecked="{Binding Parameters.IsPhase, Mode=TwoWay}" Margin="60,5,60,5" />
                                         </StackPanel>
                                     </GroupBox>
                                 </StackPanel>
