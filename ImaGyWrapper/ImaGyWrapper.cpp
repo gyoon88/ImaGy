@@ -50,6 +50,11 @@ namespace ImaGy
         {
             ImaGyNative::NativeCore::ApplyFFT(pixels.ToPointer(), width, height, stride, kernelSize, isInverse, isCPU, isPhase);
         }
+        void NativeProcessor::ApplyFrequencyFilter(IntPtr pixels, int width, int height, int stride, int filterType, double radius)
+        {
+            ImaGyNative::NativeCore::ApplyFrequencyFilter(pixels.ToPointer(), width, height, stride, filterType, radius);
+
+        }
         void NativeProcessor::ApplyFFTColor(IntPtr pixels, int width, int height, int stride, int kernelSize, bool isInverse, bool isCPU, bool isPhase)
         {
             ImaGyNative::NativeCore::ApplyFFTColor(pixels.ToPointer(), width, height, stride, kernelSize, isInverse, isCPU, isPhase);

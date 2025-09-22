@@ -23,7 +23,6 @@ namespace ImaGy.Models
         }
 
         public BitmapSource ApplySobel(BitmapSource source, int kernelSize, bool isColor)
-
         {
             BitmapSource gray;
             if (isColor)
@@ -42,22 +41,27 @@ namespace ImaGy.Models
             if (isColor)
             {
                 source = new FormatConvertedBitmap(source, PixelFormats.Gray8, null, 0);
-            }
-            
+            }            
 
             return BitmapProcessorHelper.ApplyKernelEffect(source, kernelSize, (pixelPtr, width, height, stride) =>
             {
                 NativeProcessor.ApplyLaplacian(pixelPtr, width, height, stride, kernelSize);
             });
         }
+
         public BitmapSource ApplyFFT(BitmapSource source, int kernelSize, bool isColor, bool isInverse, bool isCPU, bool isPhase)
         {
             return BitmapProcessorHelper.ApplyFFTEffect(source, (pixelPtr, width, height, stride) =>
             {
                 NativeProcessor.ApplyFFT(pixelPtr, width, height, stride, kernelSize, isInverse, isCPU, isPhase);
             });
-            
-
+        }
+        public BitmapSource ApplyFrequencyFilter(BitmapSource source, int filterType, double radius)
+        {
+            return BitmapProcessorHelper.ApplyFFTEffect(source, (pixelPtr, width, height, stride) =>
+            {
+                NativeProcessor.ApplyFrequencyFilter(pixelPtr, width, height, stride, filterType, radius);
+            });
         }
 
         // Blur process

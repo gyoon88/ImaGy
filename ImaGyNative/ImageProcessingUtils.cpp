@@ -229,7 +229,6 @@ namespace ImaGyNative
                 }
             }
         }
-
         // 역변환일 경우 1/N 스케일링
         if (isInverse) {
 #pragma omp parallel for
@@ -270,14 +269,14 @@ namespace ImaGyNative
                 tempComplexData.get()[y * width + x] = tempColumn[y];
             }
         }
-
-        if (isInverse) {
-            double scale = 1.0 / (width * height);
-#pragma omp parallel for
-            for (int i = 0; i < width * height; ++i) {
-                tempComplexData[i] = tempComplexData[i] * scale;
-            }
-        }
+//
+//        if (isInverse) {
+//            double scale = 1.0 / (width * height);
+//#pragma omp parallel for
+//            for (int i = 0; i < width * height; ++i) {
+//                tempComplexData[i] = tempComplexData[i] * scale;
+//            }
+//        }
 
 #pragma omp parallel for
         for (int i = 0; i < width * height; ++i) {

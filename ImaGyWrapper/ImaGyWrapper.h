@@ -34,6 +34,8 @@ namespace ImaGy
             static void ApplySobel(IntPtr pixels, int width, int height, int stride, int kernelSize);
             static void ApplyLaplacian(IntPtr pixels, int width, int height, int stride, int kernelSize);
             static void ApplyFFT(IntPtr pixels, int width, int height, int stride, int kernelSize, bool isInverse, bool isCPU, bool isPhase);
+            static void ApplyFrequencyFilter(IntPtr pixels, int width, int height, int stride, int filterType, double radius);
+            
             static void ApplyFFTColor(IntPtr pixels, int width, int height, int stride, int kernelSize, bool isInverse, bool isCPU, bool isPhase);
 
             // Blurring

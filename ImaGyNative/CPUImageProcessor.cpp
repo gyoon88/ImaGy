@@ -8,8 +8,8 @@
 #include <iomanip> 
 #include <numeric>
 #include <algorithm>
-#include <random> // C++11 ½ºÅ¸ÀÏÀÇ ³­¼ö »ý¼º
-#include <limits> // double ÃÖ´ñ°ª »ç¿ë
+#include <random> // C++11 
+#include <limits> // double 
 #include <omp.h>
 
 namespace ImaGyNative
@@ -21,7 +21,7 @@ namespace ImaGyNative
     {
         int center = kernelSize / 2;
         double kernelSum = std::accumulate(kernel.begin(), kernel.end(), 0.0);
-        if (kernelSum == 0) kernelSum = 1.0; // 0À¸·Î ³ª´©±â ¹æÁö
+        if (kernelSum == 0) kernelSum = 1.0;
         #pragma omp parallel for
         for (int y = center; y < height - center; ++y) {
             for (int x = center; x < width - center; ++x) {
@@ -29,14 +29,13 @@ namespace ImaGyNative
                 for (int ky = -center; ky <= center; ++ky) {
                     for (int kx = -center; kx <= center; ++kx) {
                         int kernelIndex = (ky + center) * kernelSize + (kx + center);
-                        if (kernel[kernelIndex] == 0) continue; // ¿øÇü Ä¿³Î ÃÖÀûÈ­
+                        if (kernel[kernelIndex] == 0) continue; 
 
                         int sourceIndex = (y + ky) * stride + (x + kx);
                         sum += kernel[kernelIndex] * sourcePixels[sourceIndex];
                     }
                 }
 
-                // Á¤±ÔÈ­µÈ °¡¿ì½Ã¾È Ä¿³ÎÀÇ ÇÕÀº 1¿¡ °¡±î¿ì¹Ç·Î ³ª´­ ÇÊ¿ä°¡ ¾øÁö¸¸, Æò±Õ ÇÊÅÍ¸¦ À§ÇØ ÇÊ¿ä.
                 double finalValue = (kernelSum == 1.0) ? sum : sum / kernelSum;
 
                 if (finalValue > 255) finalValue = 255;
@@ -46,7 +45,7 @@ namespace ImaGyNative
         }
     }
 
-    // 32ºñÆ® BGRA ÄÃ·¯ ÄÁº¼·ç¼Ç
+
     void ApplyConvolutionColor(const unsigned char* sourcePixels, unsigned char* destPixels,
         int width, int height, int stride, const std::vector<double>& kernel, int kernelSize)
     {
@@ -81,7 +80,6 @@ namespace ImaGyNative
                 destP[0] = static_cast<unsigned char>(std::max(0.0, std::min(255.0, finalB)));
                 destP[1] = static_cast<unsigned char>(std::max(0.0, std::min(255.0, finalG)));
                 destP[2] = static_cast<unsigned char>(std::max(0.0, std::min(255.0, finalR)));
-                // Alpha Ã¤³ÎÀº ¿øº» °ª ±×´ë·Î º¹»ç
                 const unsigned char* srcP = sourcePixels + y * stride + x * 4;
                 destP[3] = srcP[3];
             }
@@ -206,7 +204,7 @@ namespace ImaGyNative
     // Sobel - Complete
     void ApplySobel_CPU(void* pixels, int width, int height, int stride, int kernelSize)
     {
-        // Ä¿³Î Å©±â´Â È¦¼ö
+        // 
         if (kernelSize % 2 == 0) kernelSize++;
 
         std::vector<double> kernelX = createSobelKernelX(kernelSize);
@@ -216,13 +214,13 @@ namespace ImaGyNative
         unsigned char* sourceBuffer = new unsigned char[height * stride];
         memcpy(sourceBuffer, pixelData, height * stride);
 
-        // Gx¿Í Gy °á°ú¸¦ ÀúÀåÇÒ ÀÓ½Ã ¹öÆÛ
+        // Gx Gy 
         double* bufferX = new double[height * stride]();
         double* bufferY = new double[height * stride]();
 
         int center = kernelSize / 2;
     
-        // Gx¿Í Gy¸¦ °¢°¢ °è»ê
+        // Gx Gy
         #pragma omp parallel for
         for (int y = center; y < height - center; ++y) {
             for (int x = center; x < width - center; ++x) {
@@ -242,7 +240,7 @@ namespace ImaGyNative
             }
         }
         #pragma omp parallel for
-        // °á°ú º´ÇÕ
+
         for (int i = 0; i < height * stride; ++i) {
             double finalValue = sqrt(bufferX[i] * bufferX[i] + bufferY[i] * bufferY[i]);
             if (finalValue > 255) finalValue = 255;
@@ -257,7 +255,7 @@ namespace ImaGyNative
     // Laplacian - Complete
     void ApplyLaplacian_CPU(void* pixels, int width, int height, int stride, int kernelSize)
     {
-        // Ä¿³Î Å©±â °ËÁõ 
+  
         if (kernelSize % 2 == 0) kernelSize++;
 
         std::vector<double> kernel = createLaplacianKernel(kernelSize);
@@ -266,7 +264,7 @@ namespace ImaGyNative
         unsigned char* resultBuffer = new unsigned char[height * stride];
         memcpy(resultBuffer, pixelData, height * stride);
 
-        // ÀÏ¹ÝÈ­µÈ ÄÁº¼·ç¼Ç ÇÔ¼ö È£Ãâ (kernelSum = 0À¸·Î ÇÏ¿© ¿§Áö °­Á¶)
+        // ï¿½Ï¹ï¿½È­ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½ È£ï¿½ï¿½ (kernelSum = 0ï¿½ï¿½ï¿½ï¿½ ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
         ApplyConvolution(pixelData, resultBuffer, width, height, stride, kernel, kernelSize);
 
         memcpy(pixelData, resultBuffer, height * stride);
@@ -289,7 +287,7 @@ namespace ImaGyNative
     }
 
 
-    // Æò±Õ ºí·¯
+    // ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     void ApplyAverageBlur_CPU(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
     {
         std::vector<double> kernel = createAverageKernel(kernelSize, useCircularKernel);
@@ -305,7 +303,7 @@ namespace ImaGyNative
 
 
     // Morphorogy
-    // ÆØÃ¢ 
+    // ï¿½ï¿½Ã¢ 
     void ApplyDilation_CPU(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
     {
         if (kernelSize % 2 == 0) kernelSize++;
@@ -337,7 +335,7 @@ namespace ImaGyNative
         delete[] sourceBuffer;
     }
 
-    // Ä§½Ä
+    // Ä§ï¿½ï¿½
     void ApplyErosion_CPU(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
     {
         if (kernelSize % 2 == 0) kernelSize++;
@@ -533,7 +531,7 @@ namespace ImaGyNative
         outCoords[1] = bestY;
     }
 
-    // Color ONly!!! ##############
+    // Color ONly!!! 
     void ApplyGaussianBlurColor_CPU(void* pixels, int width, int height, int stride, double sigma, int kernelSize, bool useCircularKernel)
     {
         std::vector<double> kernel = createGaussianKernel(kernelSize, sigma, useCircularKernel);
@@ -630,21 +628,21 @@ namespace ImaGyNative
 
     const double PI = acos(-1);
     /// <summary>
-    /// ÀÔ·Â ÀÌ¹ÌÁöÀÇ ÁÖÆÄ¼ö ½ºÆåÆ®·³(Å©±â)À» °è»êÇÏ¿© ±×·¹ÀÌ½ºÄÉÀÏ ÀÌ¹ÌÁö »ý¼º
+    ///
     /// </summary>
     void ApplyFFT2DSpectrum_CPU(void* pixels, Complex* outputSpectrum, int width, int height, int stride, bool isInverse) {
         const void* readOnlyPixels = static_cast<const void*>(pixels);
 
-        // FFT ¼öÇà 
+        // FFT 
         ApplyFFT2D_CPU(readOnlyPixels, outputSpectrum, width, height, stride, isInverse);
 
-        // DC ¼ººÐ shifting
+        // DC 
         FFT_Shift2D(outputSpectrum, width, height);
 
-        // °¢ ÁÖÆÄ¼öÀÇ Å©±â(Magnitude)¸¦ °è»ê
+        // 
         double* magnitudes = new double[width * height];
         double maxMagnitude = 0.0;
-        #pragma omp parallel for
+        //#pragma omp parallel for 
         for (int i = 0; i < width * height; ++i) {
             double mag = std::sqrt(outputSpectrum[i].real * outputSpectrum[i].real + outputSpectrum[i].imag * outputSpectrum[i].imag);
             magnitudes[i] = std::log10(1.0 + mag);
@@ -654,7 +652,7 @@ namespace ImaGyNative
         }
 
         unsigned char* resultBuffer = new unsigned char[height * stride];
-        // 0-255 ¹üÀ§·Î Á¤±ÔÈ­ÇÏ¿© »õ ¹öÆÛ¿¡ ±×·¹ÀÌ½ºÄÉÀÏ ÀÌ¹ÌÁö »ý¼º
+  
         if (maxMagnitude > 0) {
             #pragma omp parallel for
             for (int y = 0; y < height; ++y) {
@@ -668,23 +666,20 @@ namespace ImaGyNative
             memset(resultBuffer, 0, height * stride);
         }
 
-        // ÃÖÁ¾ °á°ú¸¦ ¿ø·¡ pixels ¹öÆÛ·Î º¹»ç
         memcpy(pixels, resultBuffer, height * stride);
 
-        // »ç¿ëÀÌ ³¡³­ ¹öÆÛ ¸Þ¸ð¸® ÇØÁ¦
         delete[] magnitudes;
         delete[] resultBuffer;
     }
 
     /// <summary>
-    /// ÀÔ·Â ÀÌ¹ÌÁöÀÇ ÁÖÆÄ¼ö À§»ó(Phase)À» °è»êÇÏ¿© ±×·¹ÀÌ½ºÄÉÀÏ ÀÌ¹ÌÁö·Î »ý¼º
+    /// 
     /// </summary>
     void ApplyFFT2DPhase_CPU(void* pixels, Complex* outputSpectrum, int width, int height, int stride, bool isInverse) {
-        // Á¤¹æÇâ FFT ¼öÇà (isInverse = false)
         ApplyFFT2D_CPU(pixels, outputSpectrum, width, height, stride, false);
 
 
-        // °¢ ÁÖÆÄ¼öÀÇ À§»ó(Phase)À» °è»ê
+        // 
         unsigned char* destPixels = static_cast<unsigned char*>(pixels);
         #pragma omp parallel for
         for (int y = 0; y < height; ++y) {
@@ -698,25 +693,104 @@ namespace ImaGyNative
         }
     }
 
+    void ApplyFrequencyFilter_CPU(void* pixels, int width, int height, int stride, FilterType filterType, double radiusRatio) {
 
+        auto spectrum = std::make_unique<Complex[]>(width * height);
+        const unsigned char* inputPixels = static_cast<const unsigned char*>(pixels);
+        double maxRadius = std::sqrt(static_cast<double>(width)*width +static_cast<double>(height)*height) /2.0;
+        double radius = maxRadius * radiusRatio;
+#pragma omp parallel for
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                spectrum[y * width + x] = { static_cast<double>(inputPixels[y * stride + x]), 0.0 };
+            }
+        }
 
+#pragma omp parallel for
+        for (int y = 0; y < height; ++y) {
+            FFT_1D_Iterative(&spectrum[y * width], width, false);
+        }
 
+        
+#pragma omp parallel
+        {
+            auto column_buffer = std::make_unique<Complex[]>(height);
+            #pragma omp for
+            for (int x = 0; x < width; ++x) {
+                for (int y = 0; y < height; ++y) {
+                    column_buffer[y] = spectrum[y * width + x];
+                }
+                FFT_1D_Iterative(column_buffer.get(), height, false);
+                for (int y = 0; y < height; ++y) {
+                    spectrum[y * width + x] = column_buffer[y];
+                }
+            }
+        }
 
+        FFT_Shift2D(spectrum.get(), width, height);
 
-    // RGB »ö»ó µ¥ÀÌÅÍ ±¸Á¶Ã¼
+        double centerX = width / 2.0;
+        double centerY = height / 2.0;
+#pragma omp parallel for
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                int index = y * width + x;
+                double distance = std::sqrt(std::pow(x - centerX, 2) + std::pow(y - centerY, 2));
+                double mask = (filterType == FilterType::LowPass)
+                    ? ((distance <= radius) ? 1.0 : 0.0)
+                    : ((distance > radius) ? 1.0 : 0.0);
+                spectrum[index] = spectrum[index] * mask;
+            }
+        }
+
+        FFT_Shift2D(spectrum.get(), width, height);
+
+#pragma omp parallel for
+        for (int y = 0; y < height; ++y) {
+            FFT_1D_Iterative(&spectrum[y * width], width, true);
+        }
+
+#pragma omp parallel
+        {
+            auto column_buffer = std::make_unique<Complex[]>(height);
+            #pragma omp for
+            for (int x = 0; x < width; ++x) {
+                for (int y = 0; y < height; ++y) {
+                    column_buffer[y] = spectrum[y * width + x];
+                }
+                FFT_1D_Iterative(column_buffer.get(), height, true);
+                for (int y = 0; y < height; ++y) {
+                    spectrum[y * width + x] = column_buffer[y];
+                }
+            }
+        }
+
+        unsigned char* outputPixels = static_cast<unsigned char*>(pixels);
+#pragma omp parallel for
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                double val = spectrum[y * width + x].real;
+                if (val < 0) val = 0;
+                if (val > 255) val = 255;
+                outputPixels[y * stride + x] = static_cast<unsigned char>(val);
+            }
+        }
+    }
+
+    // RGB 
     struct ColorPoint {
         double r, g, b;
     };
 
     /// <summary>
-    /// 3Ã¤³Î ÄÃ·¯ ÀÌ¹ÌÁö¿¡ ´ëÇØ K-Æò±Õ ±ºÁýÈ­¸¦ ¼öÇàÇÏ¿© ÀÌ¹ÌÁö¸¦ ºÐÇÒ
+    ///
     /// </summary>
-    /// <param name="pixels">3Ã¤³Î (RGB) ÀÌ¹ÌÁö µ¥ÀÌÅÍ Æ÷ÀÎÅÍ</param>
-    /// <param name="width">ÀÌ¹ÌÁö ³Êºñ</param>
-    /// <param name="height">ÀÌ¹ÌÁö ³ôÀÌ</param>
-    /// <param name="stride">ÇÑ ÇàÀÇ ¹ÙÀÌÆ® ¼ö</param>
-    /// <param name="k">±ºÁý(Å¬·¯½ºÅÍ)ÀÇ °³¼ö</param>
-    /// <param name="iteration">¹Ýº¹È½¼ö</param>
+    /// <param name="pixels">3Ã¤ï¿½ï¿½ (RGB) ï¿½Ì¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½</param>
+    /// <param name="width">ï¿½Ì¹ï¿½ï¿½ï¿½ ï¿½Êºï¿½</param>
+    /// <param name="height">ï¿½Ì¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½</param>
+    /// <param name="stride">ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½</param>
+    /// <param name="k">ï¿½ï¿½ï¿½ï¿½(Å¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½</param>
+    /// <param name="iteration">ï¿½Ýºï¿½È½ï¿½ï¿½</param>
     void ApplyKMeansClustering_CPU(void* pixels, int width, int height, int stride, int k, int iteration) {
         if (k <= 0) return;
 
@@ -732,12 +806,12 @@ namespace ImaGyNative
             int y = randIdx / width;
             int x = randIdx % width;
 
-            // --- [¼öÁ¤ 1] ÇÈ¼¿´ç 4¹ÙÀÌÆ®·Î ÁÖ¼Ò °è»ê ---
+            // --- [ï¿½ï¿½ï¿½ï¿½ 1] ï¿½È¼ï¿½ï¿½ï¿½ 4ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½Ö¼ï¿½ ï¿½ï¿½ï¿½ ---
             unsigned char* p = pixelData + y * stride + x * 4;
 
-            // Bgra32 Æ÷¸ËÀÌ¹Ç·Î B=p[0], G=p[1], R=p[2] ¼ø¼­
-            // ColorPoint ±¸Á¶Ã¼´Â r, g, b ¼ø¼­¸¦ µû¸£±â·Î ÇÔ
-            centroids[i] = { (double)p[2], (double)p[1], (double)p[0] }; // R, G, B ¼ø¼­·Î ÀúÀå
+            // Bgra32 ï¿½ï¿½ï¿½ï¿½ï¿½Ì¹Ç·ï¿½ B=p[0], G=p[1], R=p[2] ï¿½ï¿½ï¿½ï¿½
+            // ColorPoint ï¿½ï¿½ï¿½ï¿½Ã¼ï¿½ï¿½ r, g, b ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
+            centroids[i] = { (double)p[2], (double)p[1], (double)p[0] }; // R, G, B ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         }
 
         std::vector<int> assignments(numPixels);
@@ -747,7 +821,7 @@ namespace ImaGyNative
 #pragma omp parallel for
             for (int y = 0; y < height; ++y) {
                 for (int x = 0; x < width; ++x) {
-                    // --- [¼öÁ¤ 2] ÇÈ¼¿´ç 4¹ÙÀÌÆ®·Î ÁÖ¼Ò °è»ê ---
+                    // --- [ï¿½ï¿½ï¿½ï¿½ 2] ï¿½È¼ï¿½ï¿½ï¿½ 4ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½Ö¼ï¿½ ï¿½ï¿½ï¿½ ---
                     unsigned char* p = pixelData + y * stride + x * 4;
                     double minDistSq = std::numeric_limits<double>::max();
                     int bestCluster = 0;
@@ -774,7 +848,7 @@ namespace ImaGyNative
             for (int y = 0; y < height; ++y) {
                 for (int x = 0; x < width; ++x) {
                     int clusterId = assignments[y * width + x];
-                    // --- [¼öÁ¤ 3] ÇÈ¼¿´ç 4¹ÙÀÌÆ®·Î ÁÖ¼Ò °è»ê ---
+                    // --- [ï¿½ï¿½ï¿½ï¿½ 3] ï¿½È¼ï¿½ï¿½ï¿½ 4ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½Ö¼ï¿½ ï¿½ï¿½ï¿½ ---
                     unsigned char* p = pixelData + y * stride + x * 4;
                     newCentroids[clusterId].r += p[2]; // R
                     newCentroids[clusterId].g += p[1]; // G
@@ -796,26 +870,26 @@ namespace ImaGyNative
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
                 int clusterId = assignments[y * width + x];
-                // --- [¼öÁ¤ 4] ÇÈ¼¿´ç 4¹ÙÀÌÆ®·Î ÁÖ¼Ò °è»ê ---
+                // --- [ï¿½ï¿½ï¿½ï¿½ 4] ï¿½È¼ï¿½ï¿½ï¿½ 4ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½Ö¼ï¿½ ï¿½ï¿½ï¿½ ---
                 unsigned char* p = pixelData + y * stride + x * 4;
                 p[2] = static_cast<unsigned char>(centroids[clusterId].r); // R
                 p[1] = static_cast<unsigned char>(centroids[clusterId].g); // G
                 p[0] = static_cast<unsigned char>(centroids[clusterId].b); // B
-                // p[3] (¾ËÆÄ Ã¤³Î)Àº º¯°æÇÏÁö ¾Ê°í ±×´ë·Î µÓ´Ï´Ù.
+                // p[3] (ï¿½ï¿½ï¿½ï¿½ Ã¤ï¿½ï¿½)ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê°ï¿½ ï¿½×´ï¿½ï¿½ ï¿½Ó´Ï´ï¿½.
             }
         }
     }
 
 
     /// <summary>
-    /// 3Ã¤³Î ÄÃ·¯ ÀÌ¹ÌÁö¿¡ ´ëÇØ »ö»ó°ú ÁÂÇ¥(X, Y)¸¦ ¸ðµÎ °í·ÁÇÏ¿© K-Æò±Õ ±ºÁýÈ­¸¦ ¼öÇà
+    /// 
     /// </summary>
     struct Point5D {
         double r, g, b, x, y;
     };
 
     /// <summary>
-    /// »ö»ó°ú ÁÂÇ¥¸¦ Min-Max Normalization ÇÏ¿© K-Æò±Õ ±ºÁýÈ­¸¦ ¼öÇà
+    /// ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ç¥ï¿½ï¿½ Min-Max Normalization ï¿½Ï¿ï¿½ K-ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½È­ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     /// </summary>
     void ApplyKMeansClusteringXY_Normalized_CPU(void* pixels, int width, int height, int stride, int k, int iteration) {
         if (k <= 0) return;
@@ -823,7 +897,7 @@ namespace ImaGyNative
         unsigned char* pixelData = static_cast<unsigned char*>(pixels);
         int numPixels = width * height;
 
-        // Á¤±ÔÈ­ Min-Max 
+        // ï¿½ï¿½ï¿½ï¿½È­ Min-Max 
         std::vector<Point5D> normalizedPixels(numPixels);
         double w_minus_1 = width > 1 ? (double)(width - 1) : 1.0;
         double h_minus_1 = height > 1 ? (double)(height - 1) : 1.0;
@@ -865,7 +939,7 @@ namespace ImaGyNative
                     double db = normalizedPixels[i].b - centroids[c].b;
                     double dx = normalizedPixels[i].x - centroids[c].x;
                     double dy = normalizedPixels[i].y - centroids[c].y;
-                    double distSq = dr * dr + dg * dg + db * db + dx * dx + dy * dy; // °¡ÁßÄ¡ ¾øÀ½
+                    double distSq = dr * dr + dg * dg + db * db + dx * dx + dy * dy; // ï¿½ï¿½ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½
 
                     if (distSq < minDistSq) {
                         minDistSq = distSq;
@@ -875,7 +949,7 @@ namespace ImaGyNative
                 assignments[i] = bestCluster;
             }
 
-            // ¾÷µ¥ÀÌÆ® 
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® 
             std::vector<Point5D> newCentroids(k, { 0.0, 0.0, 0.0, 0.0, 0.0 });
             std::vector<int> counts(k, 0);
             for (int i = 0; i < numPixels; ++i) {
@@ -898,13 +972,13 @@ namespace ImaGyNative
             }
         }
 
-        //  ¿ª Á¤±ÔÈ­ µÚ ÀÌ¹ÌÁö »ý¼º
+        //  ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½È­ ï¿½ï¿½ ï¿½Ì¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 #pragma omp parallel for
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
                 int clusterId = assignments[y * width + x];
                 unsigned char* p = pixelData + y * stride + x * 4;
-                // ´ëÇ¥ »ö»óÀ» 0~255 ¹üÀ§·Î µÇµ¹·Á ÇÈ¼¿¿¡ Àû¿ë
+                // ï¿½ï¿½Ç¥ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 0~255 ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Çµï¿½ï¿½ï¿½ ï¿½È¼ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
                 p[2] = static_cast<unsigned char>(centroids[clusterId].r * 255.0); // R
                 p[1] = static_cast<unsigned char>(centroids[clusterId].g * 255.0); // G
                 p[0] = static_cast<unsigned char>(centroids[clusterId].b * 255.0); // B

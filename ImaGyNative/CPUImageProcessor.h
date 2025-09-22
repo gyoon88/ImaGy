@@ -5,6 +5,12 @@
 
 namespace ImaGyNative
 {
+
+	// 필터 종류를 선택하기 위한 열거형(enum)
+	enum class FilterType {
+		LowPass,
+		HighPass
+	};
 	void ApplyConvolution(const unsigned char* sourcePixels, unsigned char* destPixels,
 		int width, int height, int stride, const std::vector<double>& kernel, int kernelSize);
 
@@ -45,6 +51,8 @@ namespace ImaGyNative
 	// Gray sclae 로 
 	void ApplyFFT2DSpectrum_CPU(void* inputPixels, Complex* outputSpectrum, int width, int height, int stride, bool isInverse);
 	void ApplyFFT2DPhase_CPU(void* pixels, Complex* outputSpectrum, int width, int height, int stride, bool isInverse);
+
+	void ApplyFrequencyFilter_CPU(void* pixels, int width, int height, int stride, FilterType filterType, double radius);
 
 	void ApplyKMeansClustering_CPU(void* pixels, int width, int height, int stride, int k, int iteration);
 	void ApplyKMeansClusteringXY_Normalized_CPU(void* pixels, int width, int height, int stride, int k, int iteration);

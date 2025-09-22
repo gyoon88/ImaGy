@@ -13,11 +13,9 @@
 #include <stdexcept> // 예외 처리
 #include <cuda_runtime.h>
 
-
-
 namespace ImaGyNative
 {
-
+    // Check the GPU
     bool IsCudaAvailable() {
         static bool initialized = false;
         static bool is_available = false;
@@ -31,12 +29,11 @@ namespace ImaGyNative
         return is_available;
     }
 
-    // // Color Contrast
-
-        // Histogram - Complete
+    /// Color Contrast
+    // Histogram - Complete
     void NativeCore::ApplyHistogram(void* pixels, int width, int height, int stride, int* hist) {
         unsigned char* pixelData = static_cast<unsigned char*>(pixels);
-        std::fill(hist, hist + 256, 0);
+        std::fill(hist, hist + 256, 0); // 히스토그램 0으로 초기화
 
         // #pragma omp parallel 블록으로 병렬 영역을 생성
     #pragma omp parallel
@@ -63,6 +60,7 @@ namespace ImaGyNative
         }
     }
 
+    // Video Seperation
     void NativeCore::ApplyBinarization(void* pixels, int width, int height, int stride, int threshold)
     {
         if (threshold == -1)
@@ -71,10 +69,14 @@ namespace ImaGyNative
         }
         if (IsCudaAvailable()) {
             if (LaunchBinarizationKernel(static_cast<unsigned char*>(pixels), width, height, stride, threshold)) {
-                return; // CUDA 성공 시 종료
+                return; 
             }
         }
         ApplyBinarization_CPU(pixels, width, height, stride, threshold);
+    }
+    void NativeCore::ApplyKMeansClustering(void* pixels, int width, int height, int stride, int k, int iteration)
+    {
+        ApplyKMeansClusteringXY_Normalized_CPU(pixels, width, height, stride, k, iteration);
     }
 
     // Equalization
@@ -96,37 +98,12 @@ namespace ImaGyNative
         }
     }
 
-    // Gaussian Blur
-    void NativeCore::ApplyGaussianBlur(void* pixels, int width, int height, int stride, double sigma, int kernelSize, bool useCircularKernel)
-    {
-        if (IsCudaAvailable()) {
-            if (LaunchGaussianBlurKernel(static_cast<unsigned char*>(pixels), width, height, stride, sigma, kernelSize, useCircularKernel)) {
-                return;
-            }
-        }
-        ApplyGaussianBlur_CPU(pixels, width, height, stride, sigma, kernelSize, useCircularKernel);
-    }
-
-    // Average Blur
-    void NativeCore::ApplyAverageBlur(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
-    {
-        if (IsCudaAvailable()) {
-            if (LaunchAverageBlurKernel(static_cast<unsigned char*>(pixels), width, height, stride, kernelSize, useCircularKernel)) {
-                return;
-            }
-        }
-        ApplyAverageBlur_CPU(pixels, width, height, stride, kernelSize, useCircularKernel);
-    }
-
-
-    // // EdgeDetect
-    // Differnetial - Complete
+    /// Filtering
+    // EdgeDetect    
     void NativeCore::ApplyDifferential(void* pixels, int width, int height, int stride, unsigned char threshold)
     {
         ApplyDifferential_CPU(pixels, width, height, stride, threshold);
     }
-
-    // Sobel
     void NativeCore::ApplySobel(void* pixels, int width, int height, int stride, int kernelSize)
     {
         if (IsCudaAvailable()) {
@@ -136,8 +113,6 @@ namespace ImaGyNative
         }
         ApplySobel_CPU(pixels, width, height, stride, kernelSize);
     }
-
-    // Laplacian
     void NativeCore::ApplyLaplacian(void* pixels, int width, int height, int stride, int kernelSize)
     {
         if (IsCudaAvailable()) {
@@ -148,6 +123,65 @@ namespace ImaGyNative
         ApplyLaplacian_CPU(pixels, width, height, stride, kernelSize);
     }
 
+    // Blur
+    void NativeCore::ApplyGaussianBlur(void* pixels, int width, int height, int stride, double sigma, int kernelSize, bool useCircularKernel)
+    {
+        if (IsCudaAvailable()) {
+            if (LaunchGaussianBlurKernel(static_cast<unsigned char*>(pixels), width, height, stride, sigma, kernelSize, useCircularKernel)) {
+                return;
+            }
+        }
+        ApplyGaussianBlur_CPU(pixels, width, height, stride, sigma, kernelSize, useCircularKernel);
+    }
+    void NativeCore::ApplyAverageBlur(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
+    {
+        if (IsCudaAvailable()) {
+            if (LaunchAverageBlurKernel(static_cast<unsigned char*>(pixels), width, height, stride, kernelSize, useCircularKernel)) {
+                return;
+            }
+        }
+        ApplyAverageBlur_CPU(pixels, width, height, stride, kernelSize, useCircularKernel);
+    }
+    /// <summary>
+    /// Color 이미지의 가우스 블러를 처리하는 함수 
+    /// </summary>
+    /// <param name="pixels"></param>
+    /// <param name="width"></param>
+    /// <param name="height"></param>
+    /// <param name="stride"></param>
+    /// <param name="sigma"></param>
+    /// <param name="kernelSize"></param>
+    /// <param name="useCircularKernel"></param>
+    void NativeCore::ApplyGaussianBlurColor(void* pixels, int width, int height, int stride, double sigma, int kernelSize, bool useCircularKernel)
+    {
+        if (IsCudaAvailable()) {
+            if (LaunchGaussianBlurColorKernel(static_cast<unsigned char*>(pixels), width, height, stride, sigma, kernelSize, useCircularKernel)) {
+                return;
+            }
+        }
+        ApplyGaussianBlurColor_CPU(pixels, width, height, stride, sigma, kernelSize, useCircularKernel);
+    }
+    /// <summary>
+    /// 컬러이미지의 평균 블러를 처리하는 함수
+    /// GPU 호출 실패시 CPU 코드로 FallBack
+    /// </summary>
+    /// <param name="pixels">이미지가 있는 메모리 주소 </param>
+    /// <param name="width">이미지 넓이</param>
+    /// <param name="height">이미지 높이</param>
+    /// <param name="stride">픽셀당 바이트</param>
+    /// <param name="kernelSize">커널 생성 지름 또는 한변의 길이</param>
+    /// <param name="useCircularKernel">원형 커널 생성 여부</param>
+    void NativeCore::ApplyAverageBlurColor(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
+    {
+        if (IsCudaAvailable()) {
+            if (LaunchAverageBlurColorKernel(static_cast<unsigned char*>(pixels), width, height, stride, kernelSize, useCircularKernel)) {
+                return;
+            }
+        }
+        ApplyAverageBlurColor_CPU(pixels, width, height, stride, kernelSize, useCircularKernel);
+    }
+
+    // FFT 
     void NativeCore::ApplyFFT(void* pixels, int width, int height, int stride, int kernelSize, bool isInverse, bool isCPU, bool isPhase)
     {
         if (isCPU) {
@@ -167,12 +201,22 @@ namespace ImaGyNative
                     return;
                 }
                 Complex* tempSpectrum = new Complex[width * height];
-                ApplyFFT2DSpectrum_CPU(pixels, tempSpectrum, width, height, stride, isInverse);
+                if (isPhase) {
+                    ApplyFFT2DPhase_CPU(pixels, tempSpectrum, width, height, stride, isInverse);
+                }
+                else {
+                    ApplyFFT2DSpectrum_CPU(pixels, tempSpectrum, width, height, stride, isInverse);
+                }
             }
         }
     }
-
-    void NativeCore::ApplyFFTColor(void* pixels, int width, int height, int stride, int kernelSize, bool isInverse, bool isCPU, bool isPhase )
+    // frequency blocking
+    void NativeCore::ApplyFrequencyFilter(void* pixels, int width, int height, int stride, int filterType,  double radius) {
+        
+        FilterType ft = static_cast<FilterType>(filterType);
+        ApplyFrequencyFilter_CPU(pixels, width, height, stride, ft, radius);
+    }
+    void NativeCore::ApplyFFTColor(void* pixels, int width, int height, int stride, int kernelSize, bool isInverse, bool isCPU, bool isPhase)
     {
         if (IsCudaAvailable()) {
             if (LaunchFftSpectrumColorKernel(static_cast<unsigned char*>(pixels), width, height, stride)) {
@@ -180,7 +224,7 @@ namespace ImaGyNative
             }
         }
     }
-    // Dilation
+    // Morphology
     void NativeCore::ApplyDilation(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
     {
         if (IsCudaAvailable()) {
@@ -190,7 +234,6 @@ namespace ImaGyNative
         }
         ApplyDilation_CPU(pixels, width, height, stride, kernelSize, useCircularKernel);
     }
-    // Erosion
     void NativeCore::ApplyErosion(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
     {
         if (IsCudaAvailable()) {
@@ -200,8 +243,47 @@ namespace ImaGyNative
         }
         ApplyErosion_CPU(pixels, width, height, stride, kernelSize, useCircularKernel);
     }
+    /// <summary>
+    /// 컬러 이미지 팽창을 처리하는 함수 
+    /// GPU 호출 실패시 CPU 코드로 FallBack
+    /// </summary>
+    /// <param name="pixels"></param>
+    /// <param name="width"></param>
+    /// <param name="height"></param>
+    /// <param name="stride"></param>
+    /// <param name="kernelSize"></param>
+    /// <param name="useCircularKernel"></param>
+    void NativeCore::ApplyDilationColor(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
+    {
+        if (IsCudaAvailable()) {
+            // 새로 만든 컬러 CUDA 함수를 호출
+            if (LaunchDilationColorKernel(static_cast<unsigned char*>(pixels), width, height, stride, kernelSize, useCircularKernel)) {
+                return;
+            }
+        }
+        ApplyDilationColor_CPU(pixels, width, height, stride, kernelSize, useCircularKernel);
+    }
+    /// <summary>
+    /// 컬러 이미지 팽창을 처리하는 함수 
+    /// GPU 호출 실패시 CPU 코드로 FallBack
+    /// </summary>
+    /// <param name="pixels"></param>
+    /// <param name="width"></param>
+    /// <param name="height"></param>
+    /// <param name="stride"></param>
+    /// <param name="kernelSize"></param>
+    /// <param name="useCircularKernel"></param>
+    void NativeCore::ApplyErosionColor(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
+    {
+        if (IsCudaAvailable()) {
+            if (LaunchErosionColorKernel(static_cast<unsigned char*>(pixels), width, height, stride, kernelSize, useCircularKernel)) {
+                return;
+            }
+        }
+        ApplyErosionColor_CPU(pixels, width, height, stride, kernelSize, useCircularKernel);
+    }
 
-    // NCC
+    /// NCC
     void NativeCore::ApplyNCC(void* pixels, int width, int height, int stride, void* templatePixels, int templateWidth, int templateHeight, int templateStride, int* outCoords)
     {
         if (IsCudaAvailable()) {
@@ -230,99 +312,6 @@ namespace ImaGyNative
         ApplySSD_CPU(pixels, width, height, stride, templatePixels, templateWidth, templateHeight, templateStride, outCoords);
     }
 
-    /// <summary>
-    /// Color 이미지의 가우스 블러를 처리하는 함수 
-    /// </summary>
-    /// <param name="pixels"></param>
-    /// <param name="width"></param>
-    /// <param name="height"></param>
-    /// <param name="stride"></param>
-    /// <param name="sigma"></param>
-    /// <param name="kernelSize"></param>
-    /// <param name="useCircularKernel"></param>
-    void NativeCore::ApplyGaussianBlurColor(void* pixels, int width, int height, int stride, double sigma, int kernelSize, bool useCircularKernel)
-    {
-        if (IsCudaAvailable()) {
-            if (LaunchGaussianBlurColorKernel(static_cast<unsigned char*>(pixels), width, height, stride, sigma, kernelSize, useCircularKernel)) {
-                return;
-            }
-        }
-        ApplyGaussianBlurColor_CPU(pixels, width, height, stride, sigma, kernelSize, useCircularKernel);
-    }
 
-    /// <summary>
-    /// 컬러이미지의 평균 블러를 처리하는 함수
-    /// GPU 호출 실패시 CPU 코드로 FallBack
-    /// </summary>
-    /// <param name="pixels">이미지가 있는 메모리 주소 </param>
-    /// <param name="width">이미지 넓이</param>
-    /// <param name="height">이미지 높이</param>
-    /// <param name="stride">픽셀당 바이트</param>
-    /// <param name="kernelSize">커널 생성 지름 또는 한변의 길이</param>
-    /// <param name="useCircularKernel">원형 커널 생성 여부</param>
-    void NativeCore::ApplyAverageBlurColor(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
-    {
-        if (IsCudaAvailable()) {
-            if (LaunchAverageBlurColorKernel(static_cast<unsigned char*>(pixels), width, height, stride, kernelSize, useCircularKernel) ){
-                return;
-            }
-        }
-        ApplyAverageBlurColor_CPU( pixels, width, height, stride, kernelSize, useCircularKernel);
-    }
-
-    /// <summary>
-    /// 컬러 이미지 팽창을 처리하는 함수 
-    /// GPU 호출 실패시 CPU 코드로 FallBack
-    /// </summary>
-    /// <param name="pixels"></param>
-    /// <param name="width"></param>
-    /// <param name="height"></param>
-    /// <param name="stride"></param>
-    /// <param name="kernelSize"></param>
-    /// <param name="useCircularKernel"></param>
-    void NativeCore::ApplyDilationColor(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
-    {
-        if (IsCudaAvailable()) {
-            // 새로 만든 컬러 CUDA 함수를 호출
-            if (LaunchDilationColorKernel(static_cast<unsigned char*>(pixels), width, height, stride,  kernelSize, useCircularKernel)) {
-                return;
-            }
-        }
-        ApplyDilationColor_CPU( pixels, width, height, stride, kernelSize, useCircularKernel);
-    }
-
-    /// <summary>
-    /// 컬러 이미지 팽창을 처리하는 함수 
-    /// GPU 호출 실패시 CPU 코드로 FallBack
-    /// </summary>
-    /// <param name="pixels"></param>
-    /// <param name="width"></param>
-    /// <param name="height"></param>
-    /// <param name="stride"></param>
-    /// <param name="kernelSize"></param>
-    /// <param name="useCircularKernel"></param>
-    void NativeCore::ApplyErosionColor(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
-    {
-        if (IsCudaAvailable()) {
-            if (LaunchErosionColorKernel(static_cast<unsigned char*>(pixels), width, height, stride, kernelSize, useCircularKernel)) {
-                return;
-            }
-        }
-        ApplyErosionColor_CPU(pixels, width, height, stride, kernelSize, useCircularKernel);
-    }
-
-    void NativeCore::ApplyKMeansClustering(void* pixels, int width, int height, int stride, int k, int iteration)
-    {
-        // 먼저 CUDA 커널 실행을 시도
-        //if (IsCudaAvailable()) {
-        //    // LaunchKMeansKernel이 성공적으로 실행되면 true를 반환하고 함수를 종료
-        //    if (LaunchKMeansKernel(pixels, width, height, stride, k, iteration)) {
-        //        return;
-        //    }
-        //}
-
-        // CUDA 실행이 실패했거나, CUDA를 사용할 수 없는 경우 CPU 코드로 폴백
-        ApplyKMeansClusteringXY_Normalized_CPU(pixels, width, height, stride, k, iteration);
-    }
 
 }

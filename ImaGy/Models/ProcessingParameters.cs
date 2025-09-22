@@ -15,6 +15,10 @@ namespace ImaGy.Models
         private int kGroup = 2;
         private int iteration = 20;
 
+        // FFT row-high pass Filter
+        private double radiusRatio = 0.5;
+
+
         public int Threshold
         {
             get => threshold;
@@ -60,5 +64,10 @@ namespace ImaGy.Models
             get => iteration;
             set => SetProperty(ref iteration, value);
         }        
+        public double RadiusRatio
+        {
+            get => radiusRatio;
+            set => SetProperty(ref radiusRatio, value);
+        }
     }
 }

@@ -74,7 +74,7 @@ namespace ImaGy.Services
                 "Bin_Otsu" => (image) => _colorContrastProcessor.ApplyOtsuBinarization(image),
                 "Clustering" => (image) => _colorContrastProcessor.ApplyKMeansClustering(image, vm.Parameters.KGroup, vm.Parameters.Iteration, vm.IsColor),
 
-                "Gray" => (image) => _colorContrastProcessor.ToGrayscale(image), 
+                "Gray" => (image) => _colorContrastProcessor.ToGrayscale(image),
 
                 "Equal" => (image) => _colorContrastProcessor.ApplyEqualization(image),
                 "Equal_color" => (image) => _colorContrastProcessor.ApplyColorEqualization(image), //
@@ -86,6 +86,8 @@ namespace ImaGy.Services
                 "Laplace" => (image) => _filterProcessor.ApplyLaplacian(image, vm.Parameters.KernelSize, vm.IsColor),
 
                 "FFT" => (image) => _filterProcessor.ApplyFFT(image, vm.Parameters.KernelSize, vm.IsColor, vm.Parameters.IsInverse, vm.Parameters.IsCPU, vm.Parameters.IsPhase),
+                "FFT_Row" => (image) => _filterProcessor.ApplyFrequencyFilter(image, 0, vm.Parameters.RadiusRatio),
+                "FFT_High" => (image) => _filterProcessor.ApplyFrequencyFilter(image, 1, vm.Parameters.RadiusRatio),
 
                 "Average" => (image) => _filterProcessor.ApplyAverageBlur(image, vm.Parameters.KernelSize, vm.Parameters.UseCircularKernel, vm.IsColor),
 
@@ -102,7 +104,7 @@ namespace ImaGy.Services
                 "SAD" => (image) => _matchingProcessor.ApplySAD(image, vm.TemplateImage),
                 "SSD" => (image) => _matchingProcessor.ApplySSD(image, vm.TemplateImage),
 
-                _ => null, 
+                _ => null,
             };
         }
     }
