@@ -6,7 +6,7 @@
 namespace ImaGyNative
 {
 
-	// 필터 종류를 선택하기 위한 열거형(enum)
+	// 필터 종류를 선택 enum
 	enum class FilterType {
 		LowPass,
 		HighPass

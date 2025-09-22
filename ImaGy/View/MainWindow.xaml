@@ -317,11 +317,10 @@
                                     </GroupBox>
                                     <GroupBox Header="FFT">
                                         <StackPanel>
-                                            <Button Content="FFT" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="FFT"/>
-                                            <Separator Margin="5" Foreground="Gray"/>
-                                            <ToggleButton Content="CPU" IsChecked="{Binding Parameters.IsCPU, Mode=TwoWay}" Margin="60,5,60,5" />
-                                            <!--<ToggleButton Content="IsInverse" IsChecked="{Binding Parameters.IsInverse, Mode=TwoWay}" Margin="60,5,60,5" />-->
-                                            <ToggleButton Content="IsPhase" IsChecked="{Binding Parameters.IsPhase, Mode=TwoWay}" Margin="60,5,60,5" />
+                                            <Button Content="FFT Spectrum Visualization" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="FFT"/>
+                                            <!--<ToggleButton Content="CPU" IsChecked="{Binding Parameters.IsCPU, Mode=TwoWay}" Margin="60,5,60,5" />
+                                            --><!--<ToggleButton Content="IsInverse" IsChecked="{Binding Parameters.IsInverse, Mode=TwoWay}" Margin="60,5,60,5" />--><!--
+                                            <ToggleButton Content="IsPhase" IsChecked="{Binding Parameters.IsPhase, Mode=TwoWay}" Margin="60,5,60,5" />-->
 
                                             <Button Content="FFT Rowfilter" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="FFT_Row"/>
                                             <Button Content="FFT Highfilter" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="FFT_High"/>
@@ -335,7 +334,7 @@
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock Grid.Column="0" Text="Radius Ratio:" VerticalAlignment="Center" Margin="0,0,5,0"/>
                                                 <TextBox Grid.Column="1" Text="{Binding Parameters.RadiusRatio, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
-                                                <Slider Grid.Column="2" Value="{Binding Parameters.RadiusRatio, Mode=TwoWay}" Minimum="0.1" Maximum="1" TickFrequency="0.01" VerticalAlignment="Center"/>
+                                                <Slider Grid.Column="2" Value="{Binding Parameters.RadiusRatio, Mode=TwoWay}" Minimum="0.01" Maximum="1" TickFrequency="0.01" VerticalAlignment="Center"/>
                                             </Grid>
                                         </StackPanel>
                                     </GroupBox>
