@@ -19,7 +19,7 @@ namespace ImaGyNative
         static void ApplyEqualization(void* pixels, int width, int height, int stride, unsigned char threshold);
         static void ApplyEqualizationColor(void* pixels, int width, int height, int stride, unsigned char threshold);
         
-        static void ApplyKMeansClustering(void* pixels, int width, int height, int stride, int k, int iteration);
+        static void ApplyKMeansClustering(void* pixels, int width, int height, int stride, int k, int iteration, bool location);
 
         static void ApplyHistogram(void* pixels, int width, int height, int stride, int* hist);
 

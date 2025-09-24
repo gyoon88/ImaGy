@@ -54,7 +54,10 @@ namespace ImaGyNative
 
 	void ApplyFrequencyFilter_CPU(void* pixels, int width, int height, int stride, FilterType filterType, double radius);
 
+
+	// Clustering 
 	void ApplyKMeansClustering_CPU(void* pixels, int width, int height, int stride, int k, int iteration);
 	void ApplyKMeansClusteringXY_Normalized_CPU(void* pixels, int width, int height, int stride, int k, int iteration);
+	void ApplyGmmSegmentation_CPU(void* pixels, int width, int height, int stride, int numClusters);
 
 }

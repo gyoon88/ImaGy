@@ -72,7 +72,8 @@ namespace ImaGy.Services
                 // Color & Contrast
                 "Bin" => (image) => _colorContrastProcessor.ApplyBinarization(image, vm.Parameters.Threshold),
                 "Bin_Otsu" => (image) => _colorContrastProcessor.ApplyOtsuBinarization(image),
-                "Clustering" => (image) => _colorContrastProcessor.ApplyKMeansClustering(image, vm.Parameters.KGroup, vm.Parameters.Iteration, vm.IsColor),
+                "Clustering" => (image) => _colorContrastProcessor.ApplyKMeansClustering(image, vm.Parameters.KGroup, vm.Parameters.Iteration, false, vm.IsColor),
+                "ClusteringLoc" => (image) => _colorContrastProcessor.ApplyKMeansClustering(image, vm.Parameters.KGroup, vm.Parameters.Iteration, true, vm.IsColor),
 
                 "Gray" => (image) => _colorContrastProcessor.ToGrayscale(image),
 
@@ -86,7 +87,7 @@ namespace ImaGy.Services
                 "Laplace" => (image) => _filterProcessor.ApplyLaplacian(image, vm.Parameters.KernelSize, vm.IsColor),
 
                 "FFT" => (image) => _filterProcessor.ApplyFFT(image, vm.Parameters.KernelSize, vm.IsColor, vm.Parameters.IsInverse, vm.Parameters.IsCPU, vm.Parameters.IsPhase),
-                "FFT_Row" => (image) => _filterProcessor.ApplyFrequencyFilter(image, 0, vm.Parameters.RadiusRatio),
+                "FFT_Low" => (image) => _filterProcessor.ApplyFrequencyFilter(image, 0, vm.Parameters.RadiusRatio),
                 "FFT_High" => (image) => _filterProcessor.ApplyFrequencyFilter(image, 1, vm.Parameters.RadiusRatio),
 
                 "Average" => (image) => _filterProcessor.ApplyAverageBlur(image, vm.Parameters.KernelSize, vm.Parameters.UseCircularKernel, vm.IsColor),
@@ -100,9 +101,9 @@ namespace ImaGy.Services
                 "Closing" => (image) => _morphologyProcessor.ApplyErosion(_morphologyProcessor.ApplyDilation(image, vm.Parameters.KernelSize, vm.Parameters.UseCircularKernel, vm.IsColor), vm.Parameters.KernelSize, vm.Parameters.UseCircularKernel, vm.IsColor),
 
                 // Matching - Template
-                "NCC" => (image) => _matchingProcessor.ApplyNCC(image, vm.TemplateImage),
-                "SAD" => (image) => _matchingProcessor.ApplySAD(image, vm.TemplateImage),
-                "SSD" => (image) => _matchingProcessor.ApplySSD(image, vm.TemplateImage),
+                "NCC" => (image) => _matchingProcessor.ApplyNCC(image, vm.TemplateImage!),
+                "SAD" => (image) => _matchingProcessor.ApplySAD(image, vm.TemplateImage!),
+                "SSD" => (image) => _matchingProcessor.ApplySSD(image, vm.TemplateImage!),
 
                 _ => null,
             };

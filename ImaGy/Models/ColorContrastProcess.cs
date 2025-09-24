@@ -1,4 +1,5 @@
 using ImaGy.Wrapper;
+using OpenCvSharp;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -42,7 +43,7 @@ namespace ImaGy.Models
                 NativeProcessor.ApplyBinarization(pixelPtr, width, height, stride, threshold);
             });
         }
-        public BitmapSource ApplyKMeansClustering(BitmapSource source, int k, int iteration, bool isColor)
+        public BitmapSource ApplyKMeansClustering(BitmapSource source, int k, int iteration, bool location, bool isColor )
         {
             if (!isColor)
             {
@@ -50,9 +51,102 @@ namespace ImaGy.Models
             }
             return BitmapProcessorHelper.ApplyEffect(source, (pixelPtr, width, height, stride) =>
             {
-                NativeProcessor.ApplyKMeansClustering(pixelPtr, width, height, stride, k, iteration);
+                NativeProcessor.ApplyKMeansClustering(pixelPtr, width, height, stride, k, iteration, location);
             });
         }
+
+
+
+        ///// <summary>
+        ///// GMM(Gaussian Mixture Model) 클러스터링을 순수 C# 코드로 이미지에 적용합니다.
+        ///// 색상(BGR)과 공간(x, y) 정보를 함께 사용하여 영역을 분할합니다.
+        ///// </summary>
+        ///// <param name="source">처리할 원본 BitmapSource.</param>
+        ///// <param name="numClusters">분할할 클러스터의 개수 (k).</param>
+        ///// <param name="spatialWeight">공간 정보의 가중치 (0.0 ~ 1.0).</param>
+        ///// <returns>GMM 분할 결과가 적용된 새로운 BitmapSource.</returns>
+        //public BitmapSource ApplyGmmSegmentation(BitmapSource source, int numClusters, float spatialWeight)
+        //{
+        //    // GMM은 컬러 이미지를 대상으로 하므로 흑백 이미지는 처리하지 않음.
+        //    if (source.Format == PixelFormats.Gray8)
+        //    {
+        //        return source;
+        //    }
+
+        //    // OpenCvSharp의 Mat 객체들은 C++ 메모리를 사용하므로, using 또는 Dispose()로 관리해야 합니다.
+        //    Mat sourceMat = null;
+        //    Mat samples = null;
+        //    Mat labels = null;
+        //    Mat segmentedLabels = null;
+        //    Mat normalizedLabels = null;
+        //    Mat coloredResult = null;
+
+        //    try
+        //    {
+        //        // 1. 입력 BitmapSource를 OpenCvSharp의 Mat 객체로 변환
+        //        sourceMat = BitmapSourceConverter.ToMat(source);
+        //        // GMM이 BGR을 기준으로 하므로, BGRA 포맷인 경우 BGR로 변환
+        //        if (sourceMat.Channels() == 4)
+        //        {
+        //            Cv2.CvtColor(sourceMat, sourceMat, ColorConversionCodes.BGRA2BGR);
+        //        }
+
+        //        int height = sourceMat.Rows;
+        //        int width = sourceMat.Cols;
+        //        int numPixels = height * width;
+
+        //        // 2. 특징 벡터 생성 (B, G, R, x*w, y*w)
+        //        samples = new Mat(numPixels, 5, MatType.CV_32FC1);
+        //        for (int y = 0; y < height; y++)
+        //        {
+        //            for (int x = 0; x < width; x++)
+        //            {
+        //                Vec3b pixel = sourceMat.At<Vec3b>(y, x);
+        //                int pixelIndex = y * width + x;
+
+        //                // samples Mat에 값 설정
+        //                samples.Set(pixelIndex, 0, (float)pixel.Item0); // B
+        //                samples.Set(pixelIndex, 1, (float)pixel.Item1); // G
+        //                samples.Set(pixelIndex, 2, (float)pixel.Item2); // R
+        //                samples.Set(pixelIndex, 3, (float)x * spatialWeight);
+        //                samples.Set(pixelIndex, 4, (float)y * spatialWeight);
+        //            }
+        //        }
+
+        //        // 3. GMM 모델 생성 및 학습
+        //        using (var gmm = EM.Create())
+        //        {
+        //            gmm.ClustersNumber = numClusters;
+        //            gmm.TermCriteria = new TermCriteria(CriteriaTypes.Eps | CriteriaTypes.Count, 100, 0.1);
+
+        //            labels = new Mat();
+        //            gmm.TrainEM(samples, null, labels, null);
+        //        }
+
+        //        // 4. 결과를 시각화 가능한 이미지로 변환
+        //        segmentedLabels = labels.Reshape(1, height);
+        //        normalizedLabels = new Mat();
+        //        segmentedLabels.ConvertTo(normalizedLabels, MatType.CV_8UC1, 255.0 / (numClusters - 1));
+
+        //        coloredResult = new Mat();
+        //        Cv2.ApplyColorMap(normalizedLabels, coloredResult, ColormapTypes.Jet);
+
+        //        // 5. 최종 결과 Mat을 BitmapSource로 변환하여 반환
+        //        return BitmapSourceConverter.ToBitmapSource(coloredResult);
+        //    }
+        //    finally
+        //    {
+        //        // C# 가비지 컬렉터가 관리하지 않는 C++ 메모리를 명시적으로 해제합니다.
+        //        sourceMat?.Dispose();
+        //        samples?.Dispose();
+        //        labels?.Dispose();
+        //        segmentedLabels?.Dispose();
+        //        normalizedLabels?.Dispose();
+        //        coloredResult?.Dispose();
+        //    }
+        //}
+    
+
 
         /// <summary>
         /// 오츠 알고리즘을 사용한 이진화를 적용
@@ -87,7 +181,7 @@ namespace ImaGy.Models
         /// </summary>
         public BitmapSource ApplyColorEqualization(BitmapSource source)
         {
-            // 만약 이미 흑백 이미지가 들어오면, 흑백 평활화 메서드를 대신 호출합니다.
+            // 흑백 이미지 입력 시 흑백 평활화로 예외처리
             if (source.Format == PixelFormats.Gray8)
             {
                 return ApplyEqualization(source);

@@ -287,7 +287,7 @@ namespace ImaGyNative
     }
 
 
-    // ��� ����
+    // Average Blur
     void ApplyAverageBlur_CPU(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
     {
         std::vector<double> kernel = createAverageKernel(kernelSize, useCircularKernel);
@@ -303,7 +303,7 @@ namespace ImaGyNative
 
 
     // Morphorogy
-    // ��â 
+    // Dilation
     void ApplyDilation_CPU(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
     {
         if (kernelSize % 2 == 0) kernelSize++;
@@ -335,7 +335,7 @@ namespace ImaGyNative
         delete[] sourceBuffer;
     }
 
-    // ħ��
+    // Erosion
     void ApplyErosion_CPU(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel)
     {
         if (kernelSize % 2 == 0) kernelSize++;
@@ -628,7 +628,7 @@ namespace ImaGyNative
 
     const double PI = acos(-1);
     /// <summary>
-    ///
+    /// FFT Spectrum
     /// </summary>
     void ApplyFFT2DSpectrum_CPU(void* pixels, Complex* outputSpectrum, int width, int height, int stride, bool isInverse) {
         const void* readOnlyPixels = static_cast<const void*>(pixels);
@@ -673,7 +673,7 @@ namespace ImaGyNative
     }
 
     /// <summary>
-    /// 
+    /// FFT Phase 
     /// </summary>
     void ApplyFFT2DPhase_CPU(void* pixels, Complex* outputSpectrum, int width, int height, int stride, bool isInverse) {
         ApplyFFT2D_CPU(pixels, outputSpectrum, width, height, stride, false);
@@ -782,46 +782,72 @@ namespace ImaGyNative
         double r, g, b;
     };
 
-    /// <summary>
-    ///
-    /// </summary>
-    /// <param name="pixels">3ä�� (RGB) �̹��� ������ ������</param>
-    /// <param name="width">�̹��� �ʺ�</param>
-    /// <param name="height">�̹��� ����</param>
-    /// <param name="stride">�� ���� ����Ʈ ��</param>
-    /// <param name="k">����(Ŭ������)�� ����</param>
-    /// <param name="iteration">�ݺ�Ƚ��</param>
     void ApplyKMeansClustering_CPU(void* pixels, int width, int height, int stride, int k, int iteration) {
         if (k <= 0) return;
 
         unsigned char* pixelData = static_cast<unsigned char*>(pixels);
         int numPixels = width * height;
 
+        std::vector<ColorPoint> allPixels(numPixels); // 3차원 벡터 생성
+#pragma omp parallel for
+        for (int i = 0; i < numPixels; ++i) {
+            int y = i / width;
+            int x = i % width;
+            unsigned char* p = pixelData + y * stride + x * 4;
+            allPixels[i] = { (double)p[2], (double)p[1], (double)p[0] }; // R, G, B
+        }
+        // k-means++ 초기화 
         std::vector<ColorPoint> centroids(k);
         std::mt19937 rng(std::random_device{}());
+
+        // 첫 번째 중심점은 무작위로 선택
         std::uniform_int_distribution<int> dist(0, numPixels - 1);
+        centroids[0] = allPixels[dist(rng)];
 
-        for (int i = 0; i < k; ++i) {
-            int randIdx = dist(rng);
-            int y = randIdx / width;
-            int x = randIdx % width;
+        std::vector<double> minDistSq(numPixels);
 
-            // --- [���� 1] �ȼ��� 4����Ʈ�� �ּ� ��� ---
-            unsigned char* p = pixelData + y * stride + x * 4;
+        // 나머지 k-1개의 중심점을 선택
+        for (int i = 1; i < k; ++i) {
+            double totalDistSq = 0.0;
 
-            // Bgra32 �����̹Ƿ� B=p[0], G=p[1], R=p[2] ����
-            // ColorPoint ����ü�� r, g, b ������ ������� ��
-            centroids[i] = { (double)p[2], (double)p[1], (double)p[0] }; // R, G, B ������ ����
+            // 각 픽셀에 대해, 이미 선택된 중심점들과의 가장 짧은 거리(의 제곱)를 계산
+#pragma omp parallel for reduction(+:totalDistSq)
+            for (int p_idx = 0; p_idx < numPixels; ++p_idx) {
+                double currentMinDistSq = std::numeric_limits<double>::max();
+                for (int c_idx = 0; c_idx < i; ++c_idx) {
+                    double dr = allPixels[p_idx].r - centroids[c_idx].r;
+                    double dg = allPixels[p_idx].g - centroids[c_idx].g;
+                    double db = allPixels[p_idx].b - centroids[c_idx].b;
+                    double distSq = dr * dr + dg * dg + db * db;
+                    if (distSq < currentMinDistSq) {
+                        currentMinDistSq = distSq;
+                    }
+                }
+                minDistSq[p_idx] = currentMinDistSq;
+                totalDistSq += currentMinDistSq;
+            }
+
+            // 거리 제곱에 비례하는 확률로 다음 중심점을 선택 (룰렛 휠 선택 방식)
+            std::uniform_real_distribution<double> dist_real(0.0, totalDistSq);
+            double randVal = dist_real(rng);
+            double cumulativeDist = 0.0;
+            for (int p_idx = 0; p_idx < numPixels; ++p_idx) {
+                cumulativeDist += minDistSq[p_idx];
+                if (cumulativeDist >= randVal) {
+                    centroids[i] = allPixels[p_idx];
+                    break;
+                }
+            }
         }
+        // k-means++ 
 
         std::vector<int> assignments(numPixels);
         int maxIterations = iteration;
 
-        for (int iter = 0; iter < maxIterations; ++iter) {
+        for (int iter = 0; iter < maxIterations; ++iter) { // repeat til max iteration 
 #pragma omp parallel for
             for (int y = 0; y < height; ++y) {
-                for (int x = 0; x < width; ++x) {
-                    // --- [���� 2] �ȼ��� 4����Ʈ�� �ּ� ��� ---
+                for (int x = 0; x < width; ++x) {                    
                     unsigned char* p = pixelData + y * stride + x * 4;
                     double minDistSq = std::numeric_limits<double>::max();
                     int bestCluster = 0;
@@ -841,14 +867,12 @@ namespace ImaGyNative
                     assignments[y * width + x] = bestCluster;
                 }
             }
-
             std::vector<ColorPoint> newCentroids(k, { 0.0, 0.0, 0.0 });
             std::vector<int> counts(k, 0);
 
             for (int y = 0; y < height; ++y) {
                 for (int x = 0; x < width; ++x) {
-                    int clusterId = assignments[y * width + x];
-                    // --- [���� 3] �ȼ��� 4����Ʈ�� �ּ� ��� ---
+                    int clusterId = assignments[y * width + x];                    
                     unsigned char* p = pixelData + y * stride + x * 4;
                     newCentroids[clusterId].r += p[2]; // R
                     newCentroids[clusterId].g += p[1]; // G
@@ -856,7 +880,6 @@ namespace ImaGyNative
                     counts[clusterId]++;
                 }
             }
-
             for (int c = 0; c < k; ++c) {
                 if (counts[c] > 0) {
                     centroids[c].r = newCentroids[c].r / counts[c];
@@ -865,39 +888,121 @@ namespace ImaGyNative
                 }
             }
         }
-
 #pragma omp parallel for
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
                 int clusterId = assignments[y * width + x];
-                // --- [���� 4] �ȼ��� 4����Ʈ�� �ּ� ��� ---
                 unsigned char* p = pixelData + y * stride + x * 4;
                 p[2] = static_cast<unsigned char>(centroids[clusterId].r); // R
                 p[1] = static_cast<unsigned char>(centroids[clusterId].g); // G
                 p[0] = static_cast<unsigned char>(centroids[clusterId].b); // B
-                // p[3] (���� ä��)�� �������� �ʰ� �״�� �Ӵϴ�.
+                // p[3] is the alpha value so pass it
             }
         }
     }
+    
+//    void ApplyKMeansClustering_CPU(void* pixels, int width, int height, int stride, int k, int iteration) {
+//        if (k <= 0) return;
+//
+//        unsigned char* pixelData = static_cast<unsigned char*>(pixels);
+//        int numPixels = width * height;
+//
+//        std::vector<ColorPoint> centroids(k);
+//        std::mt19937 rng(std::random_device{}());
+//        std::uniform_int_distribution<int> dist(0, numPixels);
+//
+//        for (int i = 0; i < k; ++i) {
+//            int randIdx = dist(rng);
+//            int y = randIdx / width;
+//            int x = randIdx % width;
+//
+//            // --- [���� 1] �ȼ��� 4����Ʈ�� �ּ� ��� ---
+//            unsigned char* p = pixelData + y * stride + x * 4;
+//
+//            // Bgra32 �����̹Ƿ� B=p[0], G=p[1], R=p[2] ����
+//            // ColorPoint ����ü�� r, g, b ������ ������� ��
+//            centroids[i] = { (double)p[2], (double)p[1], (double)p[0] }; // R, G, B 
+//        }
+//
+//        std::vector<int> assignments(numPixels);
+//        int maxIterations = iteration;
+//
+//        for (int iter = 0; iter < maxIterations; ++iter) {
+//#pragma omp parallel for
+//            for (int y = 0; y < height; ++y) {
+//                for (int x = 0; x < width; ++x) {
+//                    // --- [���� 2] �ȼ��� 4����Ʈ�� �ּ� ��� ---
+//                    unsigned char* p = pixelData + y * stride + x * 4;
+//                    double minDistSq = std::numeric_limits<double>::max();
+//                    int bestCluster = 0;
+//
+//                    for (int c = 0; c < k; ++c) {
+//                        // p[2]=R, p[1]=G, p[0]=B
+//                        double dr = p[2] - centroids[c].r;
+//                        double dg = p[1] - centroids[c].g;
+//                        double db = p[0] - centroids[c].b;
+//                        double distSq = dr * dr + dg * dg + db * db;
+//
+//                        if (distSq < minDistSq) {
+//                            minDistSq = distSq;
+//                            bestCluster = c;
+//                        }
+//                    }
+//                    assignments[y * width + x] = bestCluster;
+//                }
+//            }
+//
+//            std::vector<ColorPoint> newCentroids(k, { 0.0, 0.0, 0.0 });
+//            std::vector<int> counts(k, 0);
+//
+//            for (int y = 0; y < height; ++y) {
+//                for (int x = 0; x < width; ++x) {
+//                    int clusterId = assignments[y * width + x];
+//                    // --- [���� 3] �ȼ��� 4����Ʈ�� �ּ� ��� ---
+//                    unsigned char* p = pixelData + y * stride + x * 4;
+//                    newCentroids[clusterId].r += p[2]; // R
+//                    newCentroids[clusterId].g += p[1]; // G
+//                    newCentroids[clusterId].b += p[0]; // B
+//                    counts[clusterId]++;
+//                }
+//            }
+//
+//            for (int c = 0; c < k; ++c) {
+//                if (counts[c] > 0) {
+//                    centroids[c].r = newCentroids[c].r / counts[c];
+//                    centroids[c].g = newCentroids[c].g / counts[c];
+//                    centroids[c].b = newCentroids[c].b / counts[c];
+//                }
+//            }
+//        }
+//
+//#pragma omp parallel for
+//        for (int y = 0; y < height; ++y) {
+//            for (int x = 0; x < width; ++x) {
+//                int clusterId = assignments[y * width + x];
+//                // --- [���� 4] �ȼ��� 4����Ʈ�� �ּ� ��� ---
+//                unsigned char* p = pixelData + y * stride + x * 4;
+//                p[2] = static_cast<unsigned char>(centroids[clusterId].r); // R
+//                p[1] = static_cast<unsigned char>(centroids[clusterId].g); // G
+//                p[0] = static_cast<unsigned char>(centroids[clusterId].b); // B
+//                // p[3] 
+//            }
+//        }
+//    }
+//
 
 
-    /// <summary>
-    /// 
-    /// </summary>
     struct Point5D {
         double r, g, b, x, y;
     };
 
-    /// <summary>
-    /// ����� ��ǥ�� Min-Max Normalization �Ͽ� K-��� ����ȭ�� ����
-    /// </summary>
     void ApplyKMeansClusteringXY_Normalized_CPU(void* pixels, int width, int height, int stride, int k, int iteration) {
         if (k <= 0) return;
 
         unsigned char* pixelData = static_cast<unsigned char*>(pixels);
         int numPixels = width * height;
 
-        // ����ȭ Min-Max 
+        // Scaling by Min-Max 
         std::vector<Point5D> normalizedPixels(numPixels);
         double w_minus_1 = width > 1 ? (double)(width - 1) : 1.0;
         double h_minus_1 = height > 1 ? (double)(height - 1) : 1.0;
@@ -939,7 +1044,7 @@ namespace ImaGyNative
                     double db = normalizedPixels[i].b - centroids[c].b;
                     double dx = normalizedPixels[i].x - centroids[c].x;
                     double dy = normalizedPixels[i].y - centroids[c].y;
-                    double distSq = dr * dr + dg * dg + db * db + dx * dx + dy * dy; // ����ġ ����
+                    double distSq = dr * dr + dg * dg + db * db + dx * dx + dy * dy;
 
                     if (distSq < minDistSq) {
                         minDistSq = distSq;
@@ -949,7 +1054,6 @@ namespace ImaGyNative
                 assignments[i] = bestCluster;
             }
 
-            // ������Ʈ 
             std::vector<Point5D> newCentroids(k, { 0.0, 0.0, 0.0, 0.0, 0.0 });
             std::vector<int> counts(k, 0);
             for (int i = 0; i < numPixels; ++i) {
@@ -972,17 +1076,19 @@ namespace ImaGyNative
             }
         }
 
-        //  �� ����ȭ �� �̹��� ����
 #pragma omp parallel for
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
                 int clusterId = assignments[y * width + x];
                 unsigned char* p = pixelData + y * stride + x * 4;
-                // ��ǥ ������ 0~255 ������ �ǵ��� �ȼ��� ����
                 p[2] = static_cast<unsigned char>(centroids[clusterId].r * 255.0); // R
                 p[1] = static_cast<unsigned char>(centroids[clusterId].g * 255.0); // G
                 p[0] = static_cast<unsigned char>(centroids[clusterId].b * 255.0); // B
             }
         }
     }
+
+
+
+
 }

@@ -25,7 +25,7 @@ namespace ImaGy
             static void ApplyBinarization(IntPtr pixels, int width, int height, int stride, int threshold);
             static void ApplyEqualization(IntPtr pixels, int width, int height, int stride, Byte threshold);
             static void ApplyEqualizationColor(IntPtr pixels, int width, int height, int stride, Byte threshold);
-            static void ApplyKMeansClustering(IntPtr pixels, int width, int height, int stride, int k, int iteration);
+            static void ApplyKMeansClustering(IntPtr pixels, int width, int height, int stride, int k, int iteration, bool location);
 
             static void ApplyHistogram(IntPtr pixels, int width, int height, int stride, int* hist);
 

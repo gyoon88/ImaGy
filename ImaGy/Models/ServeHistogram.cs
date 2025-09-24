@@ -36,20 +36,9 @@ namespace ImaGy.Models
             byte[] pixels = new byte[height * stride];
             bitmapToUse.CopyPixels(pixels, stride, 0);
 
-
             int[] histogram = new int[256];
             histogram = CalculateHistogramForChannel(pixels, width, height);
 
-            //// C++ 네이티브 호출
-            //unsafe
-            //{
-            //    fixed (byte* pPixels = pixels)
-            //    fixed (int* pHist = histogram)
-            //    {
-            //        IntPtr ptr = (IntPtr)pPixels;
-            //        NativeProcessor.ApplyHistogram(ptr, width, height, stride, pHist);
-            //    }
-            //}
             return histogram;
         }
 
@@ -116,5 +105,7 @@ namespace ImaGy.Models
             }
             return histogram;
         }
+
+
     }
 }

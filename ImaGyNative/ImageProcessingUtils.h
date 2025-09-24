@@ -71,4 +71,8 @@ namespace ImaGyNative
     void FFT_1D_Recursive(Complex* data, int N, bool isInverse);
     void ApplyFFT2D_CPU(const void* inputPixels, Complex* outputSpectrum, int width, int height, int stride, bool isInverse);
     void FFT_Shift2D(Complex* spectrum, int width, int height);
+
+
+    // Clustering
+
 }

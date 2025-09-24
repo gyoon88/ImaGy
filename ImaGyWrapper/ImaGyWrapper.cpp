@@ -13,9 +13,9 @@ namespace ImaGy
         {
             ImaGyNative::NativeCore::ApplyBinarization(pixels.ToPointer(), width, height, stride, threshold);
         }
-        void NativeProcessor::ApplyKMeansClustering(IntPtr pixels, int width, int height, int stride, int k, int iteration)
+        void NativeProcessor::ApplyKMeansClustering(IntPtr pixels, int width, int height, int stride, int k, int iteration, bool location)
         {
-            ImaGyNative::NativeCore::ApplyKMeansClustering(pixels.ToPointer(), width, height, stride, k, iteration);
+            ImaGyNative::NativeCore::ApplyKMeansClustering(pixels.ToPointer(), width, height, stride, k, iteration, location);
 
         }
         void NativeProcessor::ApplyEqualization(IntPtr pixels, int width, int height, int stride, Byte threshold)

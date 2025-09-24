@@ -3,16 +3,16 @@
 #include <cmath>
 #include <iostream>
 #include <vector>
-#include <complex> // std::complex 사용 시 필요
+#include <complex> // std::complex 
 #include <iomanip>
 #include <numeric>
 #include <algorithm>
-#include <memory>    // std::unique_ptr 사용 시 필요
-#include <omp.h>     // OpenMP 사용 시 필요
-#include <stdexcept> // std::invalid_argument 사용 시 필요
+#include <memory>    // std::unique_ptr 
+#include <omp.h>     // OpenMP to CPU Parallel
+#include <stdexcept> // std::invalid_argument exception 
 
-const double PI = acos(-1);
-using Complex = std::complex<double>; // 표준 라이브러리의 complex 사용
+const double PI = acos(-1); // math pi use
+using Complex = std::complex<double>; // standard colplex library use 
 
 namespace ImaGyNative
 {
@@ -96,9 +96,11 @@ namespace ImaGyNative
         return kernel;
     }
 
+    // Average Blur Kernel is not necessary but To reuse convolution function
     std::vector<double> createAverageKernel(int kernelSize, bool isCircular)
     {
         if (kernelSize % 2 == 0) kernelSize++;
+        // kernel initialize 
         std::vector<double> kernel(kernelSize * kernelSize, 0.0);
         int center = kernelSize / 2;
         double radiusSq = center * center;
@@ -229,7 +231,7 @@ namespace ImaGyNative
                 }
             }
         }
-        // 역변환일 경우 1/N 스케일링
+        // 역변환 파라미터 확인 후 1/N 스케일링
         if (isInverse) {
 #pragma omp parallel for
             for (int i = 0; i < N; i++) {
@@ -298,4 +300,8 @@ namespace ImaGyNative
             }
         }
     }
+
+
+
+
 }

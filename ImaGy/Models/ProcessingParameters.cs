@@ -2,18 +2,21 @@ namespace ImaGy.Models
 {
     public class ProcessingParameters : ViewModels.BaseViewModel
     {
+        // image segmentation
         private int threshold = 128;
         private int kernelSize = 3;
         private double sigma = 1.0;
-        
+
+        // K-Means Clustering
+        private int kGroup = 2;
+        private int iteration = 20;
+        //private bool location = false;
+
         // Toggle switch 
         private bool useCircularKernel = false;
         private bool isCPU = false;
         private bool isInverse = false;
         private bool isPhase = false;
-        // K-Means Clustering
-        private int kGroup = 2;
-        private int iteration = 20;
 
         // FFT row-high pass Filter
         private double radiusRatio = 0.5;

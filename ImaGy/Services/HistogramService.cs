@@ -3,6 +3,9 @@ using ImaGy.View;
 
 namespace ImaGy.Services
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public class HistogramService
     {
         public void ShowHistogram(MainViewModel mainViewModel)

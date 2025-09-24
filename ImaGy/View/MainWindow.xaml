@@ -234,6 +234,7 @@
                                             </Grid>
                                             <Separator Margin="5" Foreground="Gray"/>
                                             <Button Content="KMeansClustering" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Clustering"/>
+                                            <Button Content="KMeansClustering with loc" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="ClusteringLoc"/>
                                             <Grid Margin="5">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
@@ -322,8 +323,8 @@
                                             --><!--<ToggleButton Content="IsInverse" IsChecked="{Binding Parameters.IsInverse, Mode=TwoWay}" Margin="60,5,60,5" />--><!--
                                             <ToggleButton Content="IsPhase" IsChecked="{Binding Parameters.IsPhase, Mode=TwoWay}" Margin="60,5,60,5" />-->
 
-                                            <Button Content="FFT Rowfilter" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="FFT_Row"/>
-                                            <Button Content="FFT Highfilter" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="FFT_High"/>
+                                            <Button Content="FFT Low pass filter" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="FFT_Low"/>
+                                            <Button Content="FFT High pass filter" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="FFT_High"/>
 
                                             <Separator Margin="5" Foreground="Gray"/>
                                             <Grid Margin="5">

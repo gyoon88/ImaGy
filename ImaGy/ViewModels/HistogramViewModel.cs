@@ -84,7 +84,7 @@ namespace ImaGy.ViewModels
                     R_HistogramData = G_HistogramData = B_HistogramData = null;
                     MaxHistogramValue = GrayscaleHistogramData.Any() ? GrayscaleHistogramData.Max() : 0;
 
-                    // 흑백 이미지 히스토그램으로 통계 계산
+
                     CalculateAndSetStatistics(GrayscaleHistogramData);
                 }
                 else
@@ -143,7 +143,7 @@ namespace ImaGy.ViewModels
         }
 
         /// <summary>
-        /// 주어진 히스토그램 데이터를 기반으로 요약 통계량을 계산하고 속성을 설정합니다.
+        /// 주어진 히스토그램 데이터를 기반으로 요약 통계량을 계산하고 속성을 설정.
         /// </summary>
         /// <param name="histogram">256개의 bin을 가진 히스토그램 배열</param>
         private void CalculateAndSetStatistics(int[]? histogram)

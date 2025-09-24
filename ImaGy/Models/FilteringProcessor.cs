@@ -11,7 +11,6 @@ namespace ImaGy.Models
         // Edge detect process
         public BitmapSource ApplyDifferential(BitmapSource source, bool isColor)
         {
-            BitmapSource gray;
             if (isColor)
             {
                 source = new FormatConvertedBitmap(source, PixelFormats.Gray8, null, 0);
@@ -24,7 +23,6 @@ namespace ImaGy.Models
 
         public BitmapSource ApplySobel(BitmapSource source, int kernelSize, bool isColor)
         {
-            BitmapSource gray;
             if (isColor)
             {
                 source = new FormatConvertedBitmap(source, PixelFormats.Gray8, null, 0);
@@ -37,7 +35,6 @@ namespace ImaGy.Models
 
         public BitmapSource ApplyLaplacian(BitmapSource source, int kernelSize, bool isColor)
         {
-            BitmapSource gray;
             if (isColor)
             {
                 source = new FormatConvertedBitmap(source, PixelFormats.Gray8, null, 0);

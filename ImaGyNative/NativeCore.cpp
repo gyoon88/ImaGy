@@ -60,7 +60,7 @@ namespace ImaGyNative
         }
     }
 
-    // Video Seperation
+    // Video Segmentation
     void NativeCore::ApplyBinarization(void* pixels, int width, int height, int stride, int threshold)
     {
         if (threshold == -1)
@@ -74,9 +74,16 @@ namespace ImaGyNative
         }
         ApplyBinarization_CPU(pixels, width, height, stride, threshold);
     }
-    void NativeCore::ApplyKMeansClustering(void* pixels, int width, int height, int stride, int k, int iteration)
+    void NativeCore::ApplyKMeansClustering(void* pixels, int width, int height, int stride, int k, int iteration, bool location)
     {
-        ApplyKMeansClusteringXY_Normalized_CPU(pixels, width, height, stride, k, iteration);
+        if (location) {
+            ApplyKMeansClusteringXY_Normalized_CPU(pixels, width, height, stride, k, iteration);
+
+        }
+        else {
+            ApplyKMeansClustering_CPU(pixels, width, height, stride, k, iteration);
+
+        }
     }
 
     // Equalization
