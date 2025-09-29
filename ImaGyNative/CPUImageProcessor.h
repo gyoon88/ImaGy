@@ -6,7 +6,7 @@
 namespace ImaGyNative
 {
 
-	// « ≈Õ ¡æ∑˘∏¶ º±≈√ enum
+	// ÌïÑÌÑ∞ Ï¢ÖÎ•òÎ•º ÏÑ†ÌÉù enum
 	enum class FilterType {
 		LowPass,
 		HighPass
@@ -48,12 +48,12 @@ namespace ImaGyNative
 	void ApplyDilationColor_CPU(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel);
 	void ApplyErosionColor_CPU(void* pixels, int width, int height, int stride, int kernelSize, bool useCircularKernel);
 
-	// Gray sclae ∑Œ 
+	// Gray sclae Î°ú 
 	void ApplyFFT2DSpectrum_CPU(void* inputPixels, Complex* outputSpectrum, int width, int height, int stride, bool isInverse);
 	void ApplyFFT2DPhase_CPU(void* pixels, Complex* outputSpectrum, int width, int height, int stride, bool isInverse);
 
 	void ApplyFrequencyFilter_CPU(void* pixels, int width, int height, int stride, FilterType filterType, double radius);
-
+	void ApplyAxialBandStopFilter_CPU(void* pixels, int width, int height, int stride, double lowFreqRadius, double bandThickness);
 
 	// Clustering 
 	void ApplyKMeansClustering_CPU(void* pixels, int width, int height, int stride, int k, int iteration);

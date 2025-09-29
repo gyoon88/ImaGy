@@ -32,7 +32,7 @@ namespace ImaGyNative
         static void ApplyFFTColor(void* pixels, int width, int height, int stride, int kernelSize, bool isInverse, bool isCPU, bool isPhase);
 
         static void ApplyFrequencyFilter(void* pixels, int width, int height, int stride, int filterType, double radius);
-
+        static void ApplyAxialBandStopFilter(void* pixels, int width, int height, int stride, double lowFreqRadius, double bandThickness);
         // Blurring
         static void ApplyGaussianBlur(void* pixels, int width, int height, int stride, double sigma, int kernelSize, bool useCircularKernel);
         static void ApplyGaussianBlurColor(void* pixels, int width, int height, int stride, double sigma, int kernelSize, bool useCircularKernel);

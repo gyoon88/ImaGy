@@ -60,6 +60,13 @@ namespace ImaGy.Models
                 NativeProcessor.ApplyFrequencyFilter(pixelPtr, width, height, stride, filterType, radius);
             });
         }
+        public BitmapSource ApplyAxialBandStopFilter(BitmapSource source, double lowFreqRadius, double bandThickness)
+        {
+            return BitmapProcessorHelper.ApplyFFTEffect(source, (pixelPtr, width, height, stride) =>
+            {
+                NativeProcessor.ApplyAxialBandStopFilter(pixelPtr, width, height, stride, lowFreqRadius, bandThickness);
+            });
+        }
 
         // Blur process
         public BitmapSource ApplyAverageBlur(BitmapSource source, int kernelSize, bool useCircularKernel, bool isColor)

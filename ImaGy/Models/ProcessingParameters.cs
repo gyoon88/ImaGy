@@ -19,8 +19,10 @@ namespace ImaGy.Models
         private bool isPhase = false;
 
         // FFT row-high pass Filter
-        private double radiusRatio = 0.5;
+        private double radiusRatio = 0.01;
 
+        private double lowFreqRadius = 10;
+        private double magnitudeThreshold = 4;
 
         public int Threshold
         {
@@ -71,6 +73,17 @@ namespace ImaGy.Models
         {
             get => radiusRatio;
             set => SetProperty(ref radiusRatio, value);
+        }
+
+        public double LowFreqRadius
+        {
+            get => lowFreqRadius;
+            set => SetProperty(ref  lowFreqRadius, value);
+        }
+        public double MagnitudeThreshold
+        {
+            get => magnitudeThreshold;
+            set => SetProperty(ref magnitudeThreshold, value);
         }
     }
 }

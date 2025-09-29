@@ -223,6 +223,11 @@ namespace ImaGyNative
         FilterType ft = static_cast<FilterType>(filterType);
         ApplyFrequencyFilter_CPU(pixels, width, height, stride, ft, radius);
     }
+
+    void NativeCore::ApplyAxialBandStopFilter(void* pixels, int width, int height, int stride, double lowFreqRadius, double bandThickness) {
+        ApplyAxialBandStopFilter_CPU(pixels, width, height, stride, lowFreqRadius, bandThickness);
+    }
+
     void NativeCore::ApplyFFTColor(void* pixels, int width, int height, int stride, int kernelSize, bool isInverse, bool isCPU, bool isPhase)
     {
         if (IsCudaAvailable()) {

@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 // Include the native header
 #include "..\ImaGyNative\NativeCore.h"
@@ -35,7 +35,8 @@ namespace ImaGy
             static void ApplyLaplacian(IntPtr pixels, int width, int height, int stride, int kernelSize);
             static void ApplyFFT(IntPtr pixels, int width, int height, int stride, int kernelSize, bool isInverse, bool isCPU, bool isPhase);
             static void ApplyFrequencyFilter(IntPtr pixels, int width, int height, int stride, int filterType, double radius);
-            
+            static void ApplyAxialBandStopFilter(IntPtr pixels, int width, int height, int stride, double lowFreqRadius, double bandThickness);
+
             static void ApplyFFTColor(IntPtr pixels, int width, int height, int stride, int kernelSize, bool isInverse, bool isCPU, bool isPhase);
 
             // Blurring

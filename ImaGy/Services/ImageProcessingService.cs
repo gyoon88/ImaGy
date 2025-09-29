@@ -89,7 +89,7 @@ namespace ImaGy.Services
                 "FFT" => (image) => _filterProcessor.ApplyFFT(image, vm.Parameters.KernelSize, vm.IsColor, vm.Parameters.IsInverse, vm.Parameters.IsCPU, vm.Parameters.IsPhase),
                 "FFT_Low" => (image) => _filterProcessor.ApplyFrequencyFilter(image, 0, vm.Parameters.RadiusRatio),
                 "FFT_High" => (image) => _filterProcessor.ApplyFrequencyFilter(image, 1, vm.Parameters.RadiusRatio),
-
+                "FFT_Band" => (image) => _filterProcessor.ApplyAxialBandStopFilter(image, vm.Parameters.LowFreqRadius, vm.Parameters.MagnitudeThreshold),
                 "Average" => (image) => _filterProcessor.ApplyAverageBlur(image, vm.Parameters.KernelSize, vm.Parameters.UseCircularKernel, vm.IsColor),
 
                 "Gaussian" => (image) => _filterProcessor.ApplyGaussianBlur(image, vm.Parameters.Sigma, vm.Parameters.KernelSize, vm.Parameters.UseCircularKernel, vm.IsColor),

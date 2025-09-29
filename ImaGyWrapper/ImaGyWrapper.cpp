@@ -55,6 +55,13 @@ namespace ImaGy
             ImaGyNative::NativeCore::ApplyFrequencyFilter(pixels.ToPointer(), width, height, stride, filterType, radius);
 
         }
+
+
+        void NativeProcessor::ApplyAxialBandStopFilter(IntPtr pixels, int width, int height, int stride, double lowFreqRadius, double bandThickness)
+        {
+            ImaGyNative::NativeCore::ApplyAxialBandStopFilter(pixels.ToPointer(), width, height, stride, lowFreqRadius, bandThickness);
+        }
+
         void NativeProcessor::ApplyFFTColor(IntPtr pixels, int width, int height, int stride, int kernelSize, bool isInverse, bool isCPU, bool isPhase)
         {
             ImaGyNative::NativeCore::ApplyFFTColor(pixels.ToPointer(), width, height, stride, kernelSize, isInverse, isCPU, isPhase);

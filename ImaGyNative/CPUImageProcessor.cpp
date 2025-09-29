@@ -11,10 +11,11 @@
 #include <random> // C++11 
 #include <limits> // double 
 #include <omp.h>
+#include <immintrin.h> 
+
 
 namespace ImaGyNative
 {
-
     // Convolution Helper Method
     void ApplyConvolution(const unsigned char* sourcePixels, unsigned char* destPixels,
         int width, int height, int stride, const std::vector<double>& kernel, int kernelSize)
@@ -50,7 +51,7 @@ namespace ImaGyNative
         int width, int height, int stride, const std::vector<double>& kernel, int kernelSize)
     {
         int center = kernelSize / 2;
-        double kernelSum = std::accumulate(kernel.begin(), kernel.end(), 0.0);
+        double kernelSum = std::accumulate(kernel.begin(), kernel.end(), 0.0); // normalization for bright
         if (kernelSum == 0) kernelSum = 1.0;
         #pragma omp parallel for
         for (int y = center; y < height - center; ++y) {
@@ -640,11 +641,11 @@ namespace ImaGyNative
         FFT_Shift2D(outputSpectrum, width, height);
 
         // 
-        double* magnitudes = new double[width * height];
-        double maxMagnitude = 0.0;
-        //#pragma omp parallel for 
+        float* magnitudes = new float[width * height];
+        float maxMagnitude = 0.0;
+        #pragma omp parallel for 
         for (int i = 0; i < width * height; ++i) {
-            double mag = std::sqrt(outputSpectrum[i].real * outputSpectrum[i].real + outputSpectrum[i].imag * outputSpectrum[i].imag);
+            float mag = std::sqrt(outputSpectrum[i].real * outputSpectrum[i].real + outputSpectrum[i].imag * outputSpectrum[i].imag);
             magnitudes[i] = std::log10(1.0 + mag);
             if (magnitudes[i] > maxMagnitude) {
                 maxMagnitude = magnitudes[i];
@@ -677,8 +678,6 @@ namespace ImaGyNative
     /// </summary>
     void ApplyFFT2DPhase_CPU(void* pixels, Complex* outputSpectrum, int width, int height, int stride, bool isInverse) {
         ApplyFFT2D_CPU(pixels, outputSpectrum, width, height, stride, false);
-
-
         // 
         unsigned char* destPixels = static_cast<unsigned char*>(pixels);
         #pragma omp parallel for
@@ -697,7 +696,7 @@ namespace ImaGyNative
 
         auto spectrum = std::make_unique<Complex[]>(width * height);
         const unsigned char* inputPixels = static_cast<const unsigned char*>(pixels);
-        double maxRadius = std::sqrt(static_cast<double>(width)*width +static_cast<double>(height)*height) /2.0;
+        double maxRadius = std::min(width, height) / 2.0;
         double radius = maxRadius * radiusRatio;
 #pragma omp parallel for
         for (int y = 0; y < height; ++y) {
@@ -762,6 +761,94 @@ namespace ImaGyNative
                 for (int y = 0; y < height; ++y) {
                     spectrum[y * width + x] = column_buffer[y];
                 }
+            }
+        }
+
+        unsigned char* outputPixels = static_cast<unsigned char*>(pixels);
+#pragma omp parallel for
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                double val = spectrum[y * width + x].real;
+                if (val < 0) val = 0;
+                if (val > 255) val = 255;
+                outputPixels[y * stride + x] = static_cast<unsigned char>(val);
+            }
+        }
+    }
+
+
+    void ApplyAxialBandStopFilter_CPU(void* pixels, int width, int height, int stride,
+        double lowFreqRadius, double magnitudeThreshold)
+    {
+        auto spectrum = std::make_unique<Complex[]>(width * height);
+        const unsigned char* inputPixels = static_cast<const unsigned char*>(pixels);
+#pragma omp parallel for
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                spectrum[y * width + x] = { static_cast<double>(inputPixels[y * stride + x]), 0.0 };
+            }
+        }
+
+#pragma omp parallel for
+        for (int y = 0; y < height; ++y) {
+            FFT_1D_Iterative(&spectrum[y * width], width, false);
+        }
+
+#pragma omp parallel
+        {
+            auto column_buffer = std::make_unique<Complex[]>(height);
+#pragma omp for
+            for (int x = 0; x < width; ++x) {
+                for (int y = 0; y < height; ++y) column_buffer[y] = spectrum[y * width + x];
+                FFT_1D_Iterative(column_buffer.get(), height, false);
+                for (int y = 0; y < height; ++y) spectrum[y * width + x] = column_buffer[y];
+            }
+        }
+
+        // 대칭 이미지 생성
+        FFT_Shift2D(spectrum.get(), width, height);
+
+        // 밴드 스톱 필터 마스크 생성 및 적용
+        double centerX = width / 2.0;
+        double centerY = height / 2.0;
+        //double halfThickness = magnitudeThreshold / 2.0;
+
+#pragma omp parallel for
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                int index = y * width + x;
+                double distFromCenter = std::sqrt(std::pow(x - centerX, 2) + std::pow(y - centerY, 2));
+
+                double mask = 1.0; // 기본적으로 모든 주파수를 통과
+                
+                if (distFromCenter > lowFreqRadius) {
+                    
+                    double magnitude = std::sqrt(spectrum[index].real * spectrum[index].real + spectrum[index].imag * spectrum[index].imag);
+                    if (log(magnitude) > magnitudeThreshold) {
+                        mask = 0.0; 
+                    }
+                }
+
+                spectrum[index] = spectrum[index] * mask;
+            }
+        }
+
+        // 역변환 
+        FFT_Shift2D(spectrum.get(), width, height);
+
+#pragma omp parallel for
+        for (int y = 0; y < height; ++y) {
+            FFT_1D_Iterative(&spectrum[y * width], width, true);
+        }
+
+#pragma omp parallel
+        {
+            auto column_buffer = std::make_unique<Complex[]>(height);
+#pragma omp for
+            for (int x = 0; x < width; ++x) {
+                for (int y = 0; y < height; ++y) column_buffer[y] = spectrum[y * width + x];
+                FFT_1D_Iterative(column_buffer.get(), height, true);
+                for (int y = 0; y < height; ++y) spectrum[y * width + x] = column_buffer[y];
             }
         }
 
