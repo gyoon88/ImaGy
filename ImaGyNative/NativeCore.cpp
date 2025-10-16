@@ -29,6 +29,20 @@ namespace ImaGyNative
         return is_available;
     }
 
+    void NativeCore::ApplyAdjBrightness(void* pixels, int width, int height, int stride, int value){
+        unsigned char* pixelData = static_cast<unsigned char*>(pixels);
+
+#pragma omp parallel for
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+                int index = i * stride + j;
+                // 픽셀 값 + value가 0~255 범위를 벗어나지 않도록 클램핑(clamping)
+                int newValue = static_cast<int>(pixelData[index]) + value;
+                pixelData[index] = static_cast<unsigned char>(std::max(0, std::min(255, newValue)));
+            }
+        }
+    }
+
     /// Color Contrast
     // Histogram - Complete
     void NativeCore::ApplyHistogram(void* pixels, int width, int height, int stride, int* hist) {

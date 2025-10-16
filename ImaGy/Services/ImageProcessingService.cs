@@ -71,6 +71,7 @@ namespace ImaGy.Services
             {
                 // Color & Contrast
                 "Bin" => (image) => _colorContrastProcessor.ApplyBinarization(image, vm.Parameters.Threshold),
+                "Bright" => (image) => _colorContrastProcessor.ApplyBinarization(image, vm.Parameters.Threshold),
                 "Bin_Otsu" => (image) => _colorContrastProcessor.ApplyOtsuBinarization(image),
                 "Clustering" => (image) => _colorContrastProcessor.ApplyKMeansClustering(image, vm.Parameters.KGroup, vm.Parameters.Iteration, false, vm.IsColor),
                 "ClusteringLoc" => (image) => _colorContrastProcessor.ApplyKMeansClustering(image, vm.Parameters.KGroup, vm.Parameters.Iteration, true, vm.IsColor),

@@ -2,6 +2,11 @@ namespace ImaGy.Models
 {
     public class ProcessingParameters : ViewModels.BaseViewModel
     {
+        // Image brightness
+        private int adjBrightness = 0;
+        private double gammaValue = 0;
+        private double contrastCoeficient = 0;
+
         // image segmentation
         private int threshold = 128;
         private int kernelSize = 3;
@@ -23,6 +28,19 @@ namespace ImaGy.Models
 
         private double lowFreqRadius = 10;
         private double magnitudeThreshold = 4;
+
+        // Properties 
+        public int AdjBrightness
+        {
+            get => AdjBrightness;
+            set
+            {
+                if (SetProperty(ref adjBrightness, value))
+                {
+                    // To Do call the command
+                }
+            }
+        }
 
         public int Threshold
         {

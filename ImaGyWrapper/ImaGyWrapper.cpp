@@ -9,10 +9,16 @@ namespace ImaGy
     namespace Wrapper
     {
         // Color Contrast
+        void NativeProcessor::ApplyAdjBrightness(IntPtr pixels, int width, int height, int stride, int value)
+        {
+            ImaGyNative::NativeCore::ApplyAdjBrightness(pixels.ToPointer(), width, height, stride, value);
+        }
+
         void NativeProcessor::ApplyBinarization(IntPtr pixels, int width, int height, int stride, int threshold)
         {
             ImaGyNative::NativeCore::ApplyBinarization(pixels.ToPointer(), width, height, stride, threshold);
         }
+
         void NativeProcessor::ApplyKMeansClustering(IntPtr pixels, int width, int height, int stride, int k, int iteration, bool location)
         {
             ImaGyNative::NativeCore::ApplyKMeansClustering(pixels.ToPointer(), width, height, stride, k, iteration, location);

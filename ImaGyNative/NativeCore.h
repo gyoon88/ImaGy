@@ -13,7 +13,7 @@ namespace ImaGyNative
     {
     public:
         // Applies binarization to grayscale pixel data.
-
+        static void ApplyAdjBrightness(void* pixels, int width, int height, int stride, int value);
         static void ApplyBinarization(void* pixels, int width, int height, int stride, int threshold);
 
         static void ApplyEqualization(void* pixels, int width, int height, int stride, unsigned char threshold);
@@ -33,6 +33,7 @@ namespace ImaGyNative
 
         static void ApplyFrequencyFilter(void* pixels, int width, int height, int stride, int filterType, double radius);
         static void ApplyAxialBandStopFilter(void* pixels, int width, int height, int stride, double lowFreqRadius, double bandThickness);
+
         // Blurring
         static void ApplyGaussianBlur(void* pixels, int width, int height, int stride, double sigma, int kernelSize, bool useCircularKernel);
         static void ApplyGaussianBlurColor(void* pixels, int width, int height, int stride, double sigma, int kernelSize, bool useCircularKernel);

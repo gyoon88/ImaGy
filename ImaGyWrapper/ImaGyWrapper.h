@@ -22,6 +22,8 @@ namespace ImaGy
         {
         public:
             // // Color Contrast
+            static void ApplyAdjBrightness(IntPtr pixels, int width, int height, int stride, int value);
+
             static void ApplyBinarization(IntPtr pixels, int width, int height, int stride, int threshold);
             static void ApplyEqualization(IntPtr pixels, int width, int height, int stride, Byte threshold);
             static void ApplyEqualizationColor(IntPtr pixels, int width, int height, int stride, Byte threshold);
