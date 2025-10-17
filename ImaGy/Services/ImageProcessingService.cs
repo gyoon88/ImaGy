@@ -18,15 +18,16 @@ namespace ImaGy.Services
         private readonly HistoryService _historyService;
         private readonly LoggingService _loggingService;
 
+        // Constructor
         public ImageProcessingService(
             ColorContrastProcess colorContrastProcessor,
             MatchingProcessor matchingProcessor,
             FilterProcessor filterProcessor,
             MorphologyProcessor morphologyProcessor,
-
             UndoRedoService<BitmapSource?> undoRedoService,
             HistoryService historyService,
-            LoggingService loggingService)
+            LoggingService loggingService
+            )
         {
             _colorContrastProcessor = colorContrastProcessor;
             _matchingProcessor = matchingProcessor;

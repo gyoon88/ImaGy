@@ -1,4 +1,4 @@
-﻿using System.Runtime.InteropServices;
+using System.Runtime.InteropServices;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Collections.Generic; // Dictionary를 위해 추가
@@ -9,9 +9,9 @@ namespace ImaGy.Models
     public class ServeHistogram
     {
         /// <summary>
-        /// Gray Scale 이미지 대한 히스토그램을 계산
+        /// Calculate Histogram for Gray Scale Image 
         /// </summary>
-        /// <returns>int[]</returns>
+        /// <returns>int[256] Each index is count of pixel and it means GV</returns>
         public static int[] CalculateGrayscaleHistogram(BitmapSource source)
         {
             if (source == null) return new int[256];

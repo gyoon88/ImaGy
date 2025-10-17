@@ -24,7 +24,7 @@ namespace ImaGy.Services
                 {
                     var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
-                    // »õ·Î¿î Ç¥ÁØÈ­ ¸Ş¼­µå¸¦ ºñµ¿±âÀûÀ¸·Î È£Ãâ
+                    // ìƒˆë¡œìš´ í‘œì¤€í™” ë©”ì„œë“œë¥¼ ë¹„ë™ê¸°ì ìœ¼ë¡œ í˜¸ì¶œ
                     var bitmap = await Task.Run(() => LoadAndStandardizeImage(openDialog.FileName));
 
                     stopwatch.Stop();
@@ -39,8 +39,8 @@ namespace ImaGy.Services
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"ÀÌ¹ÌÁö¸¦ ¿©´Â µ¥ ½ÇÆĞÇß½À´Ï´Ù.\n\n¿À·ù: {ex.Message}",
-                                    "ÆÄÀÏ ¿­±â ¿À·ù", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"ì´ë¯¸ì§€ë¥¼ ì—¬ëŠ” ë° ì‹¤íŒ¨í–ˆìŠµë‹ˆë‹¤.\n\nì˜¤ë¥˜: {ex.Message}",
+                                    "íŒŒì¼ ì—´ê¸° ì˜¤ë¥˜", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             return null;
@@ -62,7 +62,7 @@ namespace ImaGy.Services
         }
 
         /// <summary>
-        /// REFACTOR: ÅÛÇÃ¸´ ÀÌ¹ÌÁö¸¦ ¿­°í Ç¥ÁØ Æ÷¸ËÀ¸·Î º¯È¯
+        /// REFACTOR: í…œí”Œë¦¿ ì´ë¯¸ì§€ë¥¼ ì—´ê³  í‘œì¤€ í¬ë§·ìœ¼ë¡œ ë³€í™˜
         /// </summary>
         public BitmapSource? OpenTemplateImage()
         {
@@ -74,13 +74,13 @@ namespace ImaGy.Services
             {
                 try
                 {
-                    // REFACTOR: »õ·Î¿î Ç¥ÁØÈ­ ¸Ş¼­µå¸¦ Á÷Á¢ È£Ãâ
+                    // REFACTOR: ìƒˆë¡œìš´ í‘œì¤€í™” ë©”ì„œë“œë¥¼ ì§ì ‘ í˜¸ì¶œ
                     return LoadAndStandardizeImage(openDialog.FileName);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"ÅÛÇÃ¸´ ÀÌ¹ÌÁö¸¦ ¿©´Â µ¥ ½ÇÆĞÇß½À´Ï´Ù.\n\n¿À·ù: {ex.Message}",
-                                    "¿À·ù", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"í…œí”Œë¦¿ ì´ë¯¸ì§€ë¥¼ ì—¬ëŠ” ë° ì‹¤íŒ¨í–ˆìŠµë‹ˆë‹¤.\n\nì˜¤ë¥˜: {ex.Message}",
+                                    "ì˜¤ë¥˜", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             return null;
@@ -124,10 +124,10 @@ namespace ImaGy.Services
         }
 
     /// <summary>
-    /// NEW: ÁöÁ¤µÈ °æ·ÎÀÇ ÀÌ¹ÌÁö¸¦ ·ÎµåÇÏ°í Gray8 ¶Ç´Â Bgra32 Æ÷¸ËÀ¸·Î Ç¥ÁØÈ­ÇÏ´Â ÇïÆÛ ¸Ş¼­µå
+    /// NEW: ì§€ì •ëœ ê²½ë¡œì˜ ì´ë¯¸ì§€ë¥¼ ë¡œë“œí•˜ê³  Gray8 ë˜ëŠ” Bgra32 í¬ë§·ìœ¼ë¡œ í‘œì¤€í™”í•˜ëŠ” í—¬í¼ ë©”ì„œë“œ
     /// </summary>
-    /// <param name="filePath">ÀÌ¹ÌÁö ÆÄÀÏ °æ·Î</param>
-    /// <returns>Ç¥ÁØÈ­µÈ BitmapSource</returns>
+    /// <param name="filePath">ì´ë¯¸ì§€ íŒŒì¼ ê²½ë¡œ</param>
+    /// <returns>í‘œì¤€í™”ëœ BitmapSource</returns>
     private BitmapSource LoadAndStandardizeImage(string filePath)
     {
         BitmapImage originalBitmap = new BitmapImage();

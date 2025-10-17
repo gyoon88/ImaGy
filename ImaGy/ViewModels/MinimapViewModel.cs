@@ -118,7 +118,7 @@ namespace ImaGy.ViewModels
 
         public void Cleanup()
         {
-            imageDisplayService.PropertyChanged -= ImageDisplayService_PropertyChanged;
+            imageDisplayService.PropertyChanged -= ImageDisplayService_PropertyChanged;// 구독해제 for memory
         }
     }
 }

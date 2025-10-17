@@ -60,7 +60,7 @@ namespace ImaGy.Models
         public bool UseCircularKernel
         {
             get => useCircularKernel;
-            set => SetProperty(ref useCircularKernel, value);
+            set => SetProperty(ref useCircularKernel, value); // use CircularKernel 값 자체 변환 
         }
         public bool IsCPU
         {

@@ -32,8 +32,8 @@ namespace ImaGy.ViewModels.Commands
             {
                 _mainViewModel.IsProcessing = true;
                 
-                var processAction = _imageProcessingService.GetProcessAction(filterType, _mainViewModel);
-                var (processedImage, elapsedMs) = await _imageProcessingService.ApplyProcessing(filterType, processAction, _mainViewModel.AfterImage);
+                var processAction = _imageProcessingService.GetProcessAction(filterType, _mainViewModel); // get Process
+                var (processedImage, elapsedMs) = await _imageProcessingService.ApplyProcessing(filterType, processAction, _mainViewModel.AfterImage); // 위에서 정해진 프로세스
                 
                 if(processedImage != null)
                 {
