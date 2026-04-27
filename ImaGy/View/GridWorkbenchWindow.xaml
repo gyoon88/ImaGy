@@ -168,17 +168,19 @@
             <!-- 메인 창과 유사: 세로 비율 + GroupBox + GridSplitter -->
             <Grid Grid.Column="2" Margin="0,0,0,0">
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="5*"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="2*"/>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="3*"/>
+                    <RowDefinition Height="2*"/>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="3*"/>
+                    <RowDefinition Height="1*"/>
                 </Grid.RowDefinitions>
 
                 <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto"
                               ToolTip="파이프라인·표시·ROI 옵션을 펼쳐 설정합니다.">
                     <GroupBox Header="워크벤치 설정" Foreground="White"
-                              ToolTip="CSV 격자 정렬, Diff 표시, ROI, 배치 등 모든 옵션입니다.">
+                              ToolTip="파이프라인 파라미터, Diff 표시, ROI 옵션입니다.">
                         <StackPanel>
                             <Expander Header="입력 / 경로" IsExpanded="True" Margin="0,4,0,4" Foreground="White"
                                       ToolTip="현재 열린 파일 경로를 표시합니다.">
@@ -360,23 +362,6 @@
                                 </StackPanel>
                             </Expander>
 
-                            <Expander Header="배치 (Distance1/2 페어)" IsExpanded="False" Margin="0,0,0,0" Foreground="White"
-                                      ToolTip="폴더 내 여러 페어를 일괄 처리">
-                                <StackPanel Margin="0,6,0,0">
-                                    <TextBox Text="{Binding BatchFolder, UpdateSourceTrigger=PropertyChanged}" Margin="0,2"
-                                             ToolTip="배치 처리할 상위 폴더 경로"/>
-                                    <TextBlock Text="ROI 카탈로그 JSON" Margin="0,6,0,0" Foreground="White"/>
-                                    <TextBox Text="{Binding CatalogPath, UpdateSourceTrigger=PropertyChanged}" Margin="0,2"
-                                             ToolTip="배치에 사용할 ROI 정의 JSON"/>
-                                    <TextBlock Text="요약 출력 CSV (선택)" Margin="0,6,0,0" Foreground="White"/>
-                                    <TextBox Text="{Binding SummarizeOutCsv, UpdateSourceTrigger=PropertyChanged}" Margin="0,2"
-                                             ToolTip="요약 통계를 쓸 CSV 경로(선택)"/>
-                                    <Button Content="배치 실행" Command="{Binding RunBatchFolderCommand}" Margin="0,8,0,4"
-                                            ToolTip="폴더 내 페어에 대해 파이프라인 실행"/>
-                                    <Button Content="Diff CSV들에 ROI 요약" Command="{Binding SummarizeDiffsCommand}"
-                                            ToolTip="기존 Diff CSV들에 ROI 통계 요약 적용"/>
-                                </StackPanel>
-                            </Expander>
                         </StackPanel>
                     </GroupBox>
                 </ScrollViewer>
@@ -389,7 +374,52 @@
                               ShowsPreview="True"
                               ToolTip="설정 패널과 ROI 통계 패널 높이 비율을 조절합니다."/>
 
-                <GroupBox Grid.Row="2" Header="선택 ROI 통계" Foreground="White"
+                <GroupBox Grid.Row="2" Header="배치 / 여러 CSV 처리" Foreground="White"
+                          ToolTip="폴더 단위 배치 실행과 기존 Diff CSV ROI 요약을 실행합니다.">
+                    <StackPanel Margin="0,6,0,0">
+                        <TextBlock Text="배치 상위 폴더" Foreground="White" Opacity="0.9" Margin="0,0,0,2"
+                                   ToolTip="Distance1/2 페어가 들어 있는 폴더"/>
+                        <DockPanel LastChildFill="True" Margin="0,0,0,2">
+                            <Button DockPanel.Dock="Right" Content="찾아보기…" MinWidth="96" Margin="6,0,0,0"
+                                    Command="{Binding PickBatchFolderCommand}"
+                                    ToolTip="폴더 선택 대화상자를 엽니다"/>
+                            <TextBox Text="{Binding BatchFolder, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="경로를 직접 입력하거나 찾아보기로 선택"/>
+                        </DockPanel>
+                        <TextBlock Text="ROI 카탈로그 JSON (선택)" Margin="0,6,0,0" Foreground="White"/>
+                        <DockPanel LastChildFill="True" Margin="0,2,0,0">
+                            <Button DockPanel.Dock="Right" Content="찾아보기…" MinWidth="96" Margin="6,0,0,0"
+                                    Command="{Binding PickBatchCatalogJsonCommand}"
+                                    ToolTip="JSON 파일 선택 대화상자를 엽니다"/>
+                            <TextBox Text="{Binding CatalogPath, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="비워두면 현재 워크벤치 ROI 목록을 사용합니다"/>
+                        </DockPanel>
+                        <TextBlock Text="요약 출력 CSV (선택)" Margin="0,6,0,0" Foreground="White"/>
+                        <DockPanel LastChildFill="True" Margin="0,2,0,0">
+                            <Button DockPanel.Dock="Right" Content="다른 이름으로…" MinWidth="96" Margin="6,0,0,0"
+                                    Command="{Binding PickSummarizeOutCsvCommand}"
+                                    ToolTip="저장할 CSV 경로를 파일 대화상자로 지정합니다"/>
+                            <TextBox Text="{Binding SummarizeOutCsv, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="비우면 배치 폴더에 diff_roi_summary.csv 로 저장됩니다"/>
+                        </DockPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <Button Content="배치 실행" Command="{Binding RunBatchFolderCommand}" Margin="0,0,6,0"
+                                    ToolTip="실행할 때 저장 폴더를 선택하고, 폴더명+시간으로 결과 폴더를 만듭니다"/>
+                            <Button Content="Diff CSV들에 ROI 요약" Command="{Binding SummarizeDiffsCommand}"
+                                    ToolTip="기존 Diff CSV들에 ROI 통계 요약 적용"/>
+                        </StackPanel>
+                    </StackPanel>
+                </GroupBox>
+
+                <GridSplitter Grid.Row="3"
+                              Height="5"
+                              HorizontalAlignment="Stretch"
+                              VerticalAlignment="Center"
+                              Background="{StaticResource SecondaryGrayBrush}"
+                              ShowsPreview="True"
+                              ToolTip="배치 영역과 ROI 통계 패널 높이 비율을 조절합니다."/>
+
+                <GroupBox Grid.Row="4" Header="선택 ROI 통계" Foreground="White"
                           ToolTip="목록에서 선택한 ROI 안의 Diff 요약입니다. ROI 미선택 시 전체 마스크 기준일 수 있습니다.">
                     <TextBox Text="{Binding SelectedRoiStatsText, Mode=OneWay}"
                              IsReadOnly="True"
@@ -401,7 +431,7 @@
                              MinHeight="72"/>
                 </GroupBox>
 
-                <GridSplitter Grid.Row="3"
+                <GridSplitter Grid.Row="5"
                               Height="5"
                               HorizontalAlignment="Stretch"
                               VerticalAlignment="Center"
@@ -409,7 +439,7 @@
                               ShowsPreview="True"
                               ToolTip="ROI 통계와 사용 안내 패널 높이 비율을 조절합니다."/>
 
-                <GroupBox Grid.Row="4" Header="사용 안내" Foreground="White"
+                <GroupBox Grid.Row="6" Header="사용 안내" Foreground="White"
                           ToolTip="워크벤치 조작 요약">
                     <TextBox IsReadOnly="True"
                              TextWrapping="Wrap"

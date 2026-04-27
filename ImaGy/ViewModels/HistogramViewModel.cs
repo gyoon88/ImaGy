@@ -45,6 +45,23 @@ namespace ImaGy.ViewModels
             private set => SetProperty(ref isFloatHistogram, value);
         }
 
+        /// <summary>행/열 합 모드: X는 픽셀 인덱스, 막대 높이는 해당 위치의 합(값).</summary>
+        private bool isIndexAxisProfile;
+        public bool IsIndexAxisProfile
+        {
+            get => isIndexAxisProfile;
+            private set => SetProperty(ref isIndexAxisProfile, value);
+        }
+
+        public double[]? ProfileYValues { get; private set; }
+
+        private double profileYMax;
+        public double ProfileYMax
+        {
+            get => profileYMax;
+            private set => SetProperty(ref profileYMax, value);
+        }
+
         private double histogramValueMin;
         public double HistogramValueMin
         {
@@ -63,6 +80,15 @@ namespace ImaGy.ViewModels
 
         private string GetXAxisTitle()
         {
+            if (IsIndexAxisProfile)
+            {
+                return _sampleMode switch
+                {
+                    MainHistogramSampleMode.RowSumAlongX => "행 인덱스 (Y 픽셀)",
+                    MainHistogramSampleMode.ColSumAlongY => "열 인덱스 (X 픽셀)",
+                    _ => "Index",
+                };
+            }
             if (!IsFloatHistogram)
                 return "Pixel level";
             return _sampleMode switch
@@ -158,6 +184,9 @@ namespace ImaGy.ViewModels
             var hist = GridStatisticsService.ComputeHistogram(grid, mask, null, null, DefaultBinCount);
             IsColorImage = false;
             IsFloatHistogram = true;
+            IsIndexAxisProfile = false;
+            ProfileYValues = null;
+            ProfileYMax = 0;
             GrayscaleHistogramData = hist;
             R_HistogramData = G_HistogramData = B_HistogramData = null;
             MaxHistogramValue = hist.Length > 0 ? hist.Max() : 0;
@@ -197,6 +226,9 @@ namespace ImaGy.ViewModels
         {
             OnPropertyChanged(nameof(IsColorImage));
             OnPropertyChanged(nameof(IsFloatHistogram));
+            OnPropertyChanged(nameof(IsIndexAxisProfile));
+            OnPropertyChanged(nameof(ProfileYValues));
+            OnPropertyChanged(nameof(ProfileYMax));
             OnPropertyChanged(nameof(HistogramValueMin));
             OnPropertyChanged(nameof(HistogramValueMax));
             OnPropertyChanged(nameof(XAxisTitle));
@@ -210,6 +242,9 @@ namespace ImaGy.ViewModels
         {
             IsColorImage = false;
             IsFloatHistogram = false;
+            IsIndexAxisProfile = false;
+            ProfileYValues = null;
+            ProfileYMax = 0;
             GrayscaleHistogramData = R_HistogramData = G_HistogramData = B_HistogramData = null;
             MaxHistogramValue = 0;
             HistogramValueMin = 0;
@@ -218,13 +253,17 @@ namespace ImaGy.ViewModels
             PushHistogramPropertyNotifications();
         }
 
+        /// <summary>행/열 합 1차원 배열: X=인덱스, Y=합 값(요약 통계는 합 값들에 대해 동일).</summary>
         private void LoadHistogramFrom1DSamples(double[] samples)
         {
             if (samples == null || samples.Length == 0)
             {
                 IsColorImage = false;
-                IsFloatHistogram = true;
-                GrayscaleHistogramData = new int[DefaultBinCount];
+                IsFloatHistogram = false;
+                IsIndexAxisProfile = false;
+                ProfileYValues = null;
+                ProfileYMax = 0;
+                GrayscaleHistogramData = null;
                 R_HistogramData = G_HistogramData = B_HistogramData = null;
                 MaxHistogramValue = 0;
                 HistogramValueMin = 0;
@@ -238,23 +277,25 @@ namespace ImaGy.ViewModels
             var og = Enumerable.Range(0, data.Length).Select(_ => true).ToArray();
             var fg = new FloatGrid(data.Length, 1, data, og);
             var stats = GridStatisticsService.Compute(fg, null, null, null);
-            var hist = GridStatisticsService.ComputeHistogram(fg, null, null, null, DefaultBinCount);
+            var histForMode = GridStatisticsService.ComputeHistogram(fg, null, null, null, DefaultBinCount);
+
             IsColorImage = false;
-            IsFloatHistogram = true;
-            GrayscaleHistogramData = hist;
+            IsFloatHistogram = false;
+            IsIndexAxisProfile = true;
+            ProfileYValues = data;
+            ProfileYMax = data.Max();
+            if (ProfileYMax <= 0)
+                ProfileYMax = 1;
+            GrayscaleHistogramData = null;
             R_HistogramData = G_HistogramData = B_HistogramData = null;
-            MaxHistogramValue = hist.Length > 0 ? hist.Max() : 0;
-            if (stats.Count > 0)
-            {
-                HistogramValueMin = stats.Min;
-                HistogramValueMax = stats.Max;
-            }
-            else
-            {
-                HistogramValueMin = 0;
-                HistogramValueMax = 1;
-            }
-            SetFloatStatistics(stats, hist);
+
+            int ceilMax = (int)Math.Min(int.MaxValue, Math.Ceiling(ProfileYMax));
+            MaxHistogramValue = Math.Max(ceilMax, 1);
+
+            HistogramValueMin = 0;
+            HistogramValueMax = data.Length > 1 ? data.Length - 1 : 0;
+
+            SetFloatStatistics(stats, histForMode);
             PushHistogramPropertyNotifications();
         }
 
@@ -293,6 +334,9 @@ namespace ImaGy.ViewModels
             {
                 IsColorImage = false;
                 IsFloatHistogram = false;
+                IsIndexAxisProfile = false;
+                ProfileYValues = null;
+                ProfileYMax = 0;
                 GrayscaleHistogramData = ServeHistogram.CalculateGrayscaleHistogram(workPixel);
                 R_HistogramData = G_HistogramData = B_HistogramData = null;
                 MaxHistogramValue = GrayscaleHistogramData.Any() ? GrayscaleHistogramData.Max() : 0;
@@ -304,6 +348,9 @@ namespace ImaGy.ViewModels
             {
                 IsColorImage = true;
                 IsFloatHistogram = false;
+                IsIndexAxisProfile = false;
+                ProfileYValues = null;
+                ProfileYMax = 0;
                 var colorHistograms = ServeHistogram.CalculateColorHistograms(workPixel);
                 colorHistograms.TryGetValue("R", out var rData);
                 colorHistograms.TryGetValue("G", out var gData);

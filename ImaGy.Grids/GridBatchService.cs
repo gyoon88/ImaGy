@@ -75,13 +75,15 @@ public static class GridBatchService
                 opt.Catalog.ValidateAgainstGrid(diff);
                 var roiSummaryPath = Path.Combine(outputDir, baseName + "_roi_summary.csv");
                 if (!File.Exists(roiSummaryPath))
-                    File.WriteAllText(roiSummaryPath, "roi,count,mean,std,min,max,median,p25,p75" + Environment.NewLine);
+                    File.WriteAllText(roiSummaryPath, "roiId,roiName,maskTrueCells,validFiniteCount,mean,std,min,max,median,p25,p75" + Environment.NewLine);
                 foreach (var roi in opt.Catalog.EnumerateDefinitions())
                 {
                     var mask = GridRoiMaskBuilder.BuildMask(diff.Rows, diff.Cols, roi);
+                    int maskTrue = CountMaskTrue(mask);
                     var st = GridStatisticsService.Compute(diff, mask, opt.StatsValueMin, opt.StatsValueMax);
-                    statSb.AppendLine($"roi={roi.Name} count={st.Count} mean={st.Mean} std={st.Std} min={st.Min} max={st.Max} median={st.Median}");
-                    string roiCsvLine = $"{roi.Name},{st.Count},{st.Mean},{st.Std},{st.Min},{st.Max},{st.Median},{st.P25},{st.P75}";
+                    string roiId = string.IsNullOrWhiteSpace(roi.Id) ? roi.Name : roi.Id;
+                    statSb.AppendLine($"roi={roiId}/{roi.Name} maskTrueCells={maskTrue} validFiniteCount={st.Count} mean={st.Mean} std={st.Std} min={st.Min} max={st.Max} median={st.Median}");
+                    string roiCsvLine = $"{Escape(roiId)},{Escape(roi.Name)},{maskTrue},{st.Count},{st.Mean},{st.Std},{st.Min},{st.Max},{st.Median},{st.P25},{st.P75}";
                     File.AppendAllText(roiSummaryPath, roiCsvLine + Environment.NewLine);
                 if (opt.WriteMaskedDiffHeatmap)
                 {
@@ -126,7 +128,7 @@ public static class GridBatchService
     /// <summary>Apply catalog stats to existing diff CSV files in a folder.</summary>
     public static void SummarizeDiffCsvsWithCatalog(string diffCsvFolder, GridRoiCatalog catalog, string outputCsvPath, Action<string>? log = null)
     {
-        var lines = new List<string> { "file,roi,count,mean,std,min,max,median,p25,p75" };
+        var lines = new List<string> { "file,roiId,roiName,maskTrueCells,validFiniteCount,mean,std,min,max,median,p25,p75" };
         if (!Directory.Exists(diffCsvFolder))
             throw new DirectoryNotFoundException(diffCsvFolder);
         foreach (var path in Directory.EnumerateFiles(diffCsvFolder, "*_diff.csv", SearchOption.AllDirectories))
@@ -136,8 +138,10 @@ public static class GridBatchService
             foreach (var roi in catalog.EnumerateDefinitions())
             {
                 var mask = GridRoiMaskBuilder.BuildMask(grid.Rows, grid.Cols, roi);
+                int maskTrue = CountMaskTrue(mask);
                 var st = GridStatisticsService.Compute(grid, mask, null, null);
-                lines.Add($"{Escape(Path.GetFileName(path))},{Escape(roi.Name)},{st.Count},{st.Mean},{st.Std},{st.Min},{st.Max},{st.Median},{st.P25},{st.P75}");
+                string roiId = string.IsNullOrWhiteSpace(roi.Id) ? roi.Name : roi.Id;
+                lines.Add($"{Escape(Path.GetFileName(path))},{Escape(roiId)},{Escape(roi.Name)},{maskTrue},{st.Count},{st.Mean},{st.Std},{st.Min},{st.Max},{st.Median},{st.P25},{st.P75}");
             }
         }
         File.WriteAllLines(outputCsvPath, lines);
@@ -149,5 +153,16 @@ public static class GridBatchService
         if (s.Contains(',') || s.Contains('"'))
             return "\"" + s.Replace("\"", "\"\"", StringComparison.Ordinal) + "\"";
         return s;
+    }
+
+    /// <summary>ROI 마스크에서 true인 격자 셀 개수(도형 면적). 통계의 validFiniteCount와 다를 수 있음(ROI 내 NaN 등).</summary>
+    private static int CountMaskTrue(bool[] mask)
+    {
+        int n = 0;
+        for (int i = 0; i < mask.Length; i++)
+        {
+            if (mask[i]) n++;
+        }
+        return n;
     }
 }

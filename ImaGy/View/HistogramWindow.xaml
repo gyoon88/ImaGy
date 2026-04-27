@@ -39,9 +39,9 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Grid.Column="0" Text="count" 
+        <TextBlock x:Name="YAxisTitleText" Grid.Row="0" Grid.Column="0" Text="count" 
                Foreground="White" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="5,0,0,0"
-               ToolTip="세로축: 빈도(카운트)">
+               ToolTip="세로축: 빈도(카운트) 또는 행/열 합 모드에서 밝기 합">
             <TextBlock.LayoutTransform>
                 <RotateTransform Angle="-90"/>
             </TextBlock.LayoutTransform>
@@ -120,6 +120,7 @@
 
                     <TextBlock Grid.Row="6" Grid.Column="0" Text="Range:" Margin="0,2,5,2"  Foreground="White" ToolTip="Max − Min"/>
                     <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding Range, StringFormat={}{0:F4}, FallbackValue='N/A'}" HorizontalAlignment="Right" Margin="0,2" Foreground="White" ToolTip="범위"/>
+                    
                     <TextBlock Grid.Row="7" Grid.Column="0" Text="Count:" Margin="0,2,5,2"  Foreground="White" ToolTip="Pixel Count"/>
                     <TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding Count, StringFormat={}{0:F4}, FallbackValue='N/A'}" HorizontalAlignment="Right" Margin="0,2" Foreground="White" ToolTip="픽셀 갯수"/>
                     </Grid>

@@ -149,7 +149,8 @@ namespace ImaGy.ViewModels
         public ICommand OpenTemplateImageCommand { get; }
         public ICommand CopyImageCommand { get; }
         public ICommand PasteImageCommand { get; }
-        
+        public ICommand OpenImageEditCommand { get; }
+
         public ICommand MinimapCommand { get; }
         public ICommand ApplyCropCommand { get; }
         public ICommand OpenGridWorkbenchCommand { get; }
@@ -283,6 +284,7 @@ namespace ImaGy.ViewModels
             ExportLogCommand = new ExportLogCommand(this, loggingService, fileService);
             CopyImageCommand = new CopyImageCommand(this, clipboardService);
             PasteImageCommand = new PasteImageCommand(this, clipboardService);
+            OpenImageEditCommand = new OpenImageEditCommand(this, loggingService);
 
             // Processing Command
             FilterringCommand = new ApplyFilterCommand(this, imageProcessingService);

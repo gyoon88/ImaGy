@@ -49,7 +49,7 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
     private string _roiDrawTool = "없음";
     private readonly ObservableCollection<GridRoiDefinition> _drawnRois = new();
     private GridRoiDefinition? _selectedRoi;
-    private string _newRoiName = "roi_1";
+    private string _newRoiName = "roi001_rectangle";
     private string _batchFolder = "";
     private string _catalogPath = "";
     private string _summarizeOutCsv = "";
@@ -73,8 +73,11 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
         PickOutputFolderCommand = new RelayCommand(PickOutputFolder);
         LoadRoiJsonCommand = new RelayCommand(LoadRoiJson);
         RunBatchFolderCommand = new RelayCommand(RunBatchFolder, () => Directory.Exists(BatchFolder));
-        SummarizeDiffsCommand = new RelayCommand(SummarizeDiffs, () => Directory.Exists(BatchFolder) && File.Exists(CatalogPath));
+        SummarizeDiffsCommand = new RelayCommand(SummarizeDiffs, () => Directory.Exists(BatchFolder) && (File.Exists(CatalogPath) || _drawnRois.Count > 0));
         ApplyDiffPreviewCommand = new RelayCommand(RefreshDiffPreview, () => _lastResult != null);
+        PickBatchFolderCommand = new RelayCommand(PickBatchFolder);
+        PickBatchCatalogJsonCommand = new RelayCommand(PickBatchCatalogJson);
+        PickSummarizeOutCsvCommand = new RelayCommand(PickSummarizeOutCsv);
     }
 
     public string PathA { get => _pathA; set => SetProperty(ref _pathA, value); }
@@ -156,9 +159,36 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
                 _drawnRois.Add(value);
         }
     }
-    public string BatchFolder { get => _batchFolder; set => SetProperty(ref _batchFolder, value); }
-    public string CatalogPath { get => _catalogPath; set => SetProperty(ref _catalogPath, value); }
-    public string SummarizeOutCsv { get => _summarizeOutCsv; set => SetProperty(ref _summarizeOutCsv, value); }
+    public string BatchFolder
+    {
+        get => _batchFolder;
+        set
+        {
+            if (!SetProperty(ref _batchFolder, value))
+                return;
+            CommandManager.InvalidateRequerySuggested();
+        }
+    }
+    public string CatalogPath
+    {
+        get => _catalogPath;
+        set
+        {
+            if (!SetProperty(ref _catalogPath, value))
+                return;
+            CommandManager.InvalidateRequerySuggested();
+        }
+    }
+    public string SummarizeOutCsv
+    {
+        get => _summarizeOutCsv;
+        set
+        {
+            if (!SetProperty(ref _summarizeOutCsv, value))
+                return;
+            CommandManager.InvalidateRequerySuggested();
+        }
+    }
     public string DiffCursorInfo { get => _diffCursorInfo; set => SetProperty(ref _diffCursorInfo, value); }
     public string SelectedRoiStatsText { get => _selectedRoiStatsText; private set => SetProperty(ref _selectedRoiStatsText, value); }
 
@@ -176,6 +206,9 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
     public ICommand RunBatchFolderCommand { get; }
     public ICommand SummarizeDiffsCommand { get; }
     public ICommand ApplyDiffPreviewCommand { get; }
+    public ICommand PickBatchFolderCommand { get; }
+    public ICommand PickBatchCatalogJsonCommand { get; }
+    public ICommand PickSummarizeOutCsvCommand { get; }
 
     private void OpenCsvA()
     {
@@ -207,11 +240,19 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
             };
             PreviewA = null;
             PreviewB = null;
-            _drawnRois.Clear();
-            SelectedRoi = null;
 
             RefreshDiffPreview();
-            SelectedRoiStatsText = "ROI 통계 없음";
+            if (_drawnRois.Count == 0)
+            {
+                SelectedRoi = null;
+                SelectedRoiStatsText = "ROI 통계 없음";
+            }
+            else
+            {
+                if (SelectedRoi == null || !_drawnRois.Contains(SelectedRoi))
+                    SelectedRoi = _drawnRois.FirstOrDefault();
+                UpdateSelectedRoiStats();
+            }
             DiffCursorInfo = "x=-, y=-, value=-, norm=-";
             _log.AddLog($"Diff CSV 로드: {PathDiff} ({diff.Rows}x{diff.Cols})");
         }
@@ -227,6 +268,74 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
         using var dlg = new System.Windows.Forms.FolderBrowserDialog();
         if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             OutputFolder = dlg.SelectedPath;
+    }
+
+    private void PickBatchFolder()
+    {
+        using var dlg = new System.Windows.Forms.FolderBrowserDialog
+        {
+            Description = "배치 처리할 상위 폴더 (Distance1/2 페어가 있는 폴더)",
+            UseDescriptionForTitle = true
+        };
+        if (!string.IsNullOrWhiteSpace(BatchFolder) && Directory.Exists(BatchFolder))
+            dlg.SelectedPath = BatchFolder;
+        if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+        {
+            BatchFolder = dlg.SelectedPath;
+            CommandManager.InvalidateRequerySuggested();
+        }
+    }
+
+    private void PickBatchCatalogJson()
+    {
+        var d = new Microsoft.Win32.OpenFileDialog
+        {
+            Filter = "ROI 카탈로그 JSON|*.json|All|*.*",
+            Title = "배치용 ROI 카탈로그 JSON 선택"
+        };
+        if (!string.IsNullOrWhiteSpace(CatalogPath))
+        {
+            try
+            {
+                d.InitialDirectory = Path.GetDirectoryName(CatalogPath);
+                d.FileName = Path.GetFileName(CatalogPath);
+            }
+            catch { /* ignore */ }
+        }
+        if (d.ShowDialog() == true)
+        {
+            CatalogPath = d.FileName;
+            CommandManager.InvalidateRequerySuggested();
+        }
+    }
+
+    private void PickSummarizeOutCsv()
+    {
+        var d = new Microsoft.Win32.SaveFileDialog
+        {
+            Filter = "CSV|*.csv|All|*.*",
+            Title = "요약 통계를 저장할 CSV 경로",
+            FileName = string.IsNullOrWhiteSpace(SummarizeOutCsv) ? "diff_roi_summary.csv" : Path.GetFileName(SummarizeOutCsv),
+            DefaultExt = ".csv"
+        };
+        if (!string.IsNullOrWhiteSpace(SummarizeOutCsv))
+        {
+            try
+            {
+                string? dir = Path.GetDirectoryName(Path.GetFullPath(SummarizeOutCsv));
+                if (!string.IsNullOrEmpty(dir) && Directory.Exists(dir))
+                    d.InitialDirectory = dir;
+            }
+            catch { /* ignore */ }
+        }
+        else if (!string.IsNullOrWhiteSpace(BatchFolder) && Directory.Exists(BatchFolder))
+            d.InitialDirectory = BatchFolder;
+
+        if (d.ShowDialog() == true)
+        {
+            SummarizeOutCsv = d.FileName;
+            CommandManager.InvalidateRequerySuggested();
+        }
     }
 
     private GridAlignmentOptions BuildAlign() => new()
@@ -281,6 +390,7 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
             _lastResult = GridPipeline.Run(rawA, rawB, align, pre, pre, combine);
             _drawnRois.Clear();
             SelectedRoi = null;
+            CommandManager.InvalidateRequerySuggested();
             _log.AddLog($"Grid pipeline OK: diff {_lastResult.Diff.Rows}x{_lastResult.Diff.Cols}");
             var vis = new GridVisualizationOptions();
             var (aLo, aHi) = GridVisualizationService.GetNormalizeRange(_lastResult.ProcessedA, vis);
@@ -388,6 +498,9 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
         if (_lastResult == null || _drawnRois.Count == 0)
             throw new InvalidOperationException("저장할 ROI가 없습니다. Diff 미리보기에서 도구로 그리세요.");
 
+        for (int i = 0; i < _drawnRois.Count; i++)
+            NormalizeRoiIdentity(_drawnRois[i], i + 1);
+
         var catalog = new GridRoiCatalog
         {
             Schema = "imagy.roi.catalog.v1",
@@ -407,28 +520,40 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
         var d = new Microsoft.Win32.OpenFileDialog { Filter = "JSON|*.json" };
         if (d.ShowDialog() != true) return;
         RoiJsonPath = d.FileName;
-        if (_lastResult == null) return;
         try
         {
-            var loaded = LoadRoisFromFile(RoiJsonPath, _lastResult.Diff);
+            var loaded = _lastResult == null
+                ? LoadRoisFromFileWithoutGrid(RoiJsonPath)
+                : LoadRoisFromFile(RoiJsonPath, _lastResult.Diff);
             _drawnRois.Clear();
-            foreach (var roi in loaded)
+            for (int i = 0; i < loaded.Count; i++)
+            {
+                var roi = loaded[i];
+                NormalizeRoiIdentity(roi, i + 1);
                 _drawnRois.Add(roi);
+            }
             SelectedRoi = _drawnRois.FirstOrDefault();
+            UpdateSelectedRoiStats();
+            CommandManager.InvalidateRequerySuggested();
         }
         catch (Exception ex)
         {
             _drawnRois.Clear();
             SelectedRoi = null;
             _log.AddLog($"ROI JSON 로드 실패: {ex.Message}");
+            CommandManager.InvalidateRequerySuggested();
         }
     }
 
     public void UpsertCurrentRoi(GridRoiDefinition roi)
     {
-        string name = string.IsNullOrWhiteSpace(NewRoiName) ? "roi" : NewRoiName.Trim();
+        int selectedIndex = SelectedRoi != null ? Math.Max(0, _drawnRois.IndexOf(SelectedRoi)) : _drawnRois.Count;
+        string defaultLabel = BuildDefaultRoiLabel(selectedIndex + 1, roi.Kind);
+        string name = string.IsNullOrWhiteSpace(NewRoiName) ? defaultLabel : NewRoiName.Trim();
         var normalized = CloneRoi(roi);
         normalized.Name = name;
+        if (string.IsNullOrWhiteSpace(normalized.Id))
+            normalized.Id = defaultLabel;
 
         if (SelectedRoi != null)
         {
@@ -445,21 +570,26 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
 
         _drawnRois.Add(normalized);
         SelectedRoi = normalized;
-        NewRoiName = $"roi_{_drawnRois.Count + 1}";
+        NewRoiName = BuildDefaultRoiLabel(_drawnRois.Count + 1, roi.Kind);
         UpdateSelectedRoiStats();
+        CommandManager.InvalidateRequerySuggested();
         _log.AddLog($"ROI 추가: {normalized.Name} ({normalized.Kind})");
     }
 
     public void AddDrawnRoi(GridRoiDefinition roi)
     {
-        string name = string.IsNullOrWhiteSpace(NewRoiName) ? $"roi_{_drawnRois.Count + 1}" : NewRoiName.Trim();
+        string defaultLabel = BuildDefaultRoiLabel(_drawnRois.Count + 1, roi.Kind);
+        string name = string.IsNullOrWhiteSpace(NewRoiName) ? defaultLabel : NewRoiName.Trim();
         var normalized = CloneRoi(roi);
         normalized.Name = name;
+        if (string.IsNullOrWhiteSpace(normalized.Id))
+            normalized.Id = defaultLabel;
         _drawnRois.Add(normalized);
         SelectedRoi = normalized;
-        NewRoiName = $"roi_{_drawnRois.Count + 1}";
+        NewRoiName = BuildDefaultRoiLabel(_drawnRois.Count + 1, roi.Kind);
         UpdateSelectedRoiStats();
-        _log.AddLog($"ROI 추가: {normalized.Name} ({normalized.Kind})");
+        CommandManager.InvalidateRequerySuggested();
+        _log.AddLog($"ROI 추가: {normalized.Name} [{normalized.Id}] ({normalized.Kind})");
     }
 
     public void RemoveSelectedRoi()
@@ -470,6 +600,7 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
         _drawnRois.RemoveAt(idx);
         SelectedRoi = idx < _drawnRois.Count ? _drawnRois[idx] : _drawnRois.LastOrDefault();
         UpdateSelectedRoiStats();
+        CommandManager.InvalidateRequerySuggested();
     }
 
     public void ClearDrawnRois()
@@ -477,6 +608,7 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
         _drawnRois.Clear();
         SelectedRoi = null;
         SelectedRoiStatsText = "ROI 통계 없음";
+        CommandManager.InvalidateRequerySuggested();
     }
 
     private bool[] BuildUnionMaskFromDrawnRois(int rows, int cols)
@@ -523,8 +655,23 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
         }
     }
 
+    private static List<GridRoiDefinition> LoadRoisFromFileWithoutGrid(string path)
+    {
+        try
+        {
+            var cat = GridRoiCatalog.Load(path);
+            return cat.EnumerateDefinitions().ToList();
+        }
+        catch
+        {
+            var roi = GridRoiJsonIO.ReadSingleRoi(path, out _, out _);
+            return new List<GridRoiDefinition> { roi };
+        }
+    }
+
     private static RoiCatalogEntryDto ToCatalogEntry(GridRoiDefinition roi) => new()
     {
+        Id = roi.Id,
         Kind = roi.Kind.ToString(),
         Name = roi.Name,
         X = roi.X,
@@ -544,6 +691,7 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
 
     private static GridRoiDefinition CloneRoi(GridRoiDefinition roi) => new()
     {
+        Id = roi.Id,
         Name = roi.Name,
         Kind = roi.Kind,
         X = roi.X,
@@ -560,6 +708,18 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
         CenterRow = roi.CenterRow,
         RadiusPixels = roi.RadiusPixels
     };
+
+    private static string BuildDefaultRoiLabel(int roiNumber, RoiKind kind) =>
+        $"roi{Math.Max(1, roiNumber):000}_{kind.ToString().ToLowerInvariant()}";
+
+    private static void NormalizeRoiIdentity(GridRoiDefinition roi, int roiNumber)
+    {
+        string label = BuildDefaultRoiLabel(roiNumber, roi.Kind);
+        if (string.IsNullOrWhiteSpace(roi.Id))
+            roi.Id = label;
+        if (string.IsNullOrWhiteSpace(roi.Name))
+            roi.Name = roi.Id;
+    }
 
     public void UpdateDiffCursorInfo(int col, int row)
     {
@@ -621,6 +781,14 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
     {
         try
         {
+            if (!Directory.Exists(BatchFolder))
+                throw new DirectoryNotFoundException($"배치 폴더를 찾을 수 없습니다: {BatchFolder}");
+
+            // 매 실행마다 저장 루트를 명시적으로 선택
+            PickOutputFolder();
+            if (string.IsNullOrWhiteSpace(OutputFolder) || !Directory.Exists(OutputFolder))
+                return;
+
             var opt = new GridBatchOptions
             {
                 Alignment = BuildAlign(),
@@ -633,9 +801,13 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
             };
             if (File.Exists(CatalogPath))
                 opt.Catalog = GridRoiCatalog.Load(CatalogPath);
-            string outRoot = string.IsNullOrWhiteSpace(OutputFolder) ? BatchFolder : OutputFolder;
-            GridBatchService.RunFolderParallel(BatchFolder, Path.Combine(outRoot, "_batch_out"), opt);
-            _log.AddLog($"Batch finished → {Path.Combine(outRoot, "_batch_out")}");
+            else if (_drawnRois.Count > 0)
+                opt.Catalog = BuildCatalogFromCurrentRois();
+            string folderName = new DirectoryInfo(BatchFolder).Name;
+            string stamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            string outDir = Path.Combine(OutputFolder, $"{folderName}_{stamp}");
+            GridBatchService.RunFolderParallel(BatchFolder, outDir, opt);
+            _log.AddLog($"Batch finished → {outDir}");
         }
         catch (Exception ex)
         {
@@ -648,7 +820,7 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
     {
         try
         {
-            var cat = GridRoiCatalog.Load(CatalogPath);
+            var cat = File.Exists(CatalogPath) ? GridRoiCatalog.Load(CatalogPath) : BuildCatalogFromCurrentRois();
             string outCsv = string.IsNullOrWhiteSpace(SummarizeOutCsv)
                 ? Path.Combine(BatchFolder, "diff_roi_summary.csv")
                 : SummarizeOutCsv;
@@ -658,6 +830,23 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
         {
             System.Windows.MessageBox.Show(ex.Message);
         }
+    }
+
+    private GridRoiCatalog BuildCatalogFromCurrentRois()
+    {
+        if (_drawnRois.Count == 0)
+            throw new InvalidOperationException("현재 워크벤치에 ROI가 없습니다. 먼저 ROI를 그리거나 ROI JSON을 불러오세요.");
+
+        for (int i = 0; i < _drawnRois.Count; i++)
+            NormalizeRoiIdentity(_drawnRois[i], i + 1);
+
+        return new GridRoiCatalog
+        {
+            // 참조 크기를 0으로 두면 각 diff CSV의 크기 검사 없이 동일 ROI 좌표를 적용합니다.
+            ReferenceRows = 0,
+            ReferenceCols = 0,
+            Rois = _drawnRois.Select(ToCatalogEntry).ToList()
+        };
     }
 
     /// <summary>Diff 미리보기 갱신. 표시 min/max가 둘 다 유효하면 그 범위로, 아니면 결합 옵션 기반 자동 범위.</summary>

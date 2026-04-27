@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.IO;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
@@ -29,6 +31,7 @@ public partial class GridWorkbenchWindow : Window
     private System.Windows.Point _diffPanStartViewport;
     private double _diffPanStartHorizontalOffset;
     private double _diffPanStartVerticalOffset;
+    private GridWorkbenchViewModel? _observedVm;
 
     public GridWorkbenchWindow()
     {
@@ -38,19 +41,39 @@ public partial class GridWorkbenchWindow : Window
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        if (DataContext is GridWorkbenchViewModel vm)
-        {
-            vm.PropertyChanged += VmOnPropertyChanged;
-        }
+        HookVm(DataContext as GridWorkbenchViewModel);
         SyncCanvasToHost();
         RedrawRoiShapes();
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        HookVm(null);
+        base.OnClosed(e);
+    }
+
+    private void HookVm(GridWorkbenchViewModel? vm)
+    {
+        if (_observedVm != null)
+        {
+            _observedVm.PropertyChanged -= VmOnPropertyChanged;
+            _observedVm.DrawnRois.CollectionChanged -= VmOnDrawnRoisChanged;
+        }
+
+        _observedVm = vm;
+        if (_observedVm != null)
+        {
+            _observedVm.PropertyChanged += VmOnPropertyChanged;
+            _observedVm.DrawnRois.CollectionChanged += VmOnDrawnRoisChanged;
+        }
     }
 
     private void VmOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(GridWorkbenchViewModel.SelectedRoi)
             or nameof(GridWorkbenchViewModel.PreviewDiff)
-            or nameof(GridWorkbenchViewModel.RoiDrawTool))
+            or nameof(GridWorkbenchViewModel.RoiDrawTool)
+            or nameof(GridWorkbenchViewModel.RoiJsonPath))
         {
             Dispatcher.BeginInvoke(new Action(() =>
             {
@@ -60,6 +83,15 @@ public partial class GridWorkbenchWindow : Window
                 RedrawRoiShapes();
             }));
         }
+    }
+
+    private void VmOnDrawnRoisChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            SyncCanvasToHost();
+            RedrawRoiShapes();
+        }));
     }
 
     private void DiffPreviewImage_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -489,14 +521,39 @@ public partial class GridWorkbenchWindow : Window
         if (DataContext is not GridWorkbenchViewModel vm) return;
         try
         {
-            string path = vm.RoiJsonPath;
-            if (string.IsNullOrWhiteSpace(path))
+            string stamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            string initialDir = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            string fileName = "roi_catalog_" + stamp + ".json";
+            if (!string.IsNullOrWhiteSpace(vm.RoiJsonPath))
             {
-                var dlg = new Microsoft.Win32.SaveFileDialog { Filter = "JSON|*.json", FileName = "roi.json" };
-                if (dlg.ShowDialog() != true) return;
-                path = dlg.FileName;
+                try
+                {
+                    var d = System.IO.Path.GetDirectoryName(vm.RoiJsonPath);
+                    if (!string.IsNullOrEmpty(d) && Directory.Exists(d))
+                        initialDir = d;
+                    var baseName = System.IO.Path.GetFileNameWithoutExtension(vm.RoiJsonPath);
+                    if (!string.IsNullOrEmpty(baseName))
+                        fileName = baseName + "_" + stamp + ".json";
+                }
+                catch
+                {
+                    // keep defaults
+                }
             }
-            vm.SaveDrawnRoiToJson(path);
+
+            var dlg = new Microsoft.Win32.SaveFileDialog
+            {
+                Filter = "ROI 카탈로그 JSON|*.json|All|*.*",
+                Title = "ROI JSON 다른 이름으로 저장",
+                InitialDirectory = initialDir,
+                FileName = fileName,
+                DefaultExt = ".json",
+                AddExtension = true,
+                OverwritePrompt = true
+            };
+            if (dlg.ShowDialog() != true)
+                return;
+            vm.SaveDrawnRoiToJson(dlg.FileName);
         }
         catch (Exception ex)
         {

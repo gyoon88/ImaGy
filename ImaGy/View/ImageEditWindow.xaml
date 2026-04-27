@@ -1,0 +1,60 @@
+<Window x:Class="ImaGy.View.ImageEditWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Image Edit — 밝기·대비·감마" Height="560" Width="720"
+        MinHeight="480" MinWidth="560"
+        WindowStartupLocation="CenterOwner"
+        ToolTip="After 이미지에 산술 밝기, 대비(128 기준), 감마를 적용합니다">
+    <Grid Margin="14" Background="{StaticResource WindowBackgroundBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Background="{StaticResource PrimaryGrayBrush}" BorderBrush="{StaticResource SecondaryGrayBrush}" BorderThickness="1" Padding="6">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                <Image Source="{Binding PreviewBitmap}" Stretch="Uniform" MaxHeight="420" HorizontalAlignment="Center" VerticalAlignment="Center"
+                       ToolTip="미리보기 (After와 동일 해상도)"/>
+            </ScrollViewer>
+        </Border>
+
+        <StackPanel Grid.Row="1" Margin="0,12,0,0">
+            <TextBlock Foreground="{StaticResource TextBrush}" Margin="0,0,0,4" TextWrapping="Wrap"
+                       Text="대비는 128 기준 선형 스케일, 밝기는 가산, 감마는 0~1 정규화 후 거듭제곱(γ=1일 때 변화 없음)입니다."/>
+
+            <DockPanel Margin="0,6,0,0">
+                <TextBlock DockPanel.Dock="Left" Width="88" VerticalAlignment="Center" Foreground="{StaticResource TextBrush}" Text="밝기"/>
+                <TextBlock DockPanel.Dock="Right" Width="72" TextAlignment="Right" VerticalAlignment="Center" Foreground="{StaticResource TextBrush}"
+                           Text="{Binding Brightness, StringFormat={}{0:F0}}"/>
+                <Slider Minimum="-128" Maximum="128" SmallChange="1" LargeChange="16" TickFrequency="16" IsSnapToTickEnabled="False"
+                        Value="{Binding Brightness, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" Margin="8,0"/>
+            </DockPanel>
+
+            <DockPanel Margin="0,8,0,0">
+                <TextBlock DockPanel.Dock="Left" Width="88" VerticalAlignment="Center" Foreground="{StaticResource TextBrush}" Text="대비"/>
+                <TextBlock DockPanel.Dock="Right" Width="72" TextAlignment="Right" VerticalAlignment="Center" Foreground="{StaticResource TextBrush}"
+                           Text="{Binding Contrast, StringFormat={}{0:F2}}"/>
+                <Slider Minimum="0.25" Maximum="3.5" SmallChange="0.05" LargeChange="0.25" TickFrequency="0.05"
+                        Value="{Binding Contrast, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" Margin="8,0"/>
+            </DockPanel>
+
+            <DockPanel Margin="0,8,0,0">
+                <TextBlock DockPanel.Dock="Left" Width="88" VerticalAlignment="Center" Foreground="{StaticResource TextBrush}" Text="감마"/>
+                <TextBlock DockPanel.Dock="Right" Width="72" TextAlignment="Right" VerticalAlignment="Center" Foreground="{StaticResource TextBrush}"
+                           Text="{Binding Gamma, StringFormat={}{0:F2}}"/>
+                <Slider Minimum="0.2" Maximum="3.5" SmallChange="0.05" LargeChange="0.1" TickFrequency="0.05"
+                        Value="{Binding Gamma, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" Margin="8,0"/>
+            </DockPanel>
+        </StackPanel>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+            <Button Content="초기화" Command="{Binding ResetCommand}" Padding="14,6" Margin="0,0,8,0" ToolTip="밝기 0, 대비 1, 감마 1"/>
+            <Button Content="취소" Command="{Binding CancelCommand}" Padding="14,6" Margin="0,0,8,0" ToolTip="변경 없이 닫기"/>
+            <Button Content="적용" Command="{Binding ApplyCommand}" Padding="18,6" FontWeight="SemiBold" ToolTip="After에 반영하고 실행 취소 스택에 이전 상태를 넣습니다"/>
+        </StackPanel>
+    </Grid>
+</Window>

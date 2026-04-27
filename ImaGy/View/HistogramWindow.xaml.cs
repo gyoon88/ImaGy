@@ -34,6 +34,9 @@ namespace ImaGy.View
                 || e.PropertyName == nameof(HistogramViewModel.HistogramValueMin)
                 || e.PropertyName == nameof(HistogramViewModel.HistogramValueMax)
                 || e.PropertyName == nameof(HistogramViewModel.IsFloatHistogram)
+                || e.PropertyName == nameof(HistogramViewModel.IsIndexAxisProfile)
+                || e.PropertyName == nameof(HistogramViewModel.ProfileYValues)
+                || e.PropertyName == nameof(HistogramViewModel.ProfileYMax)
                 || e.PropertyName == nameof(HistogramViewModel.SampleModeIndex)
                 || e.PropertyName == nameof(HistogramViewModel.GrayscaleHistogramData)
                 || e.PropertyName == nameof(HistogramViewModel.R_HistogramData))
@@ -72,7 +75,16 @@ namespace ImaGy.View
             XAxisLabelsPanel.Children.Clear();
             YAxisLabelsPanel.Children.Clear();
 
-            if (_viewModel == null || _viewModel.MaxHistogramValue == 0) return;
+            if (_viewModel == null) return;
+            if (_viewModel.IsIndexAxisProfile)
+            {
+                if (_viewModel.ProfileYValues == null || _viewModel.ProfileYValues.Length == 0)
+                    return;
+            }
+            else if (_viewModel.MaxHistogramValue == 0)
+                return;
+
+            UpdateYAxisTitleText();
 
             DrawAxes();
             DrawHistogram();
@@ -104,9 +116,24 @@ namespace ImaGy.View
             HistogramCanvas.Children.Add(xAxis);
         }
 
+        private void UpdateYAxisTitleText()
+        {
+            if (FindName("YAxisTitleText") is not TextBlock tb || _viewModel == null) return;
+            tb.Text = _viewModel.IsIndexAxisProfile ? "합" : "count";
+            tb.ToolTip = _viewModel.IsIndexAxisProfile
+                ? "세로축: 해당 행(열)의 밝기 합"
+                : "세로축: 빈도(카운트)";
+        }
+
         private void DrawHistogram()
         {
             if (_viewModel == null) return;
+
+            if (_viewModel.IsIndexAxisProfile && _viewModel.ProfileYValues is { Length: > 0 } profile)
+            {
+                DrawProfileBars(profile, Colors.WhiteSmoke);
+                return;
+            }
 
             if (_viewModel.IsColorImage)
             {
@@ -117,6 +144,42 @@ namespace ImaGy.View
             else
             {
                 DrawChannelHistogram(_viewModel.GrayscaleHistogramData, Colors.WhiteSmoke);
+            }
+        }
+
+        private void DrawProfileBars(double[] values, System.Windows.Media.Color color)
+        {
+            if (_viewModel == null || values.Length == 0) return;
+
+            double maxY = Math.Max(_viewModel.ProfileYMax, 1e-12);
+            double canvasWidth = HistogramCanvas.ActualWidth;
+            double canvasHeight = HistogramCanvas.ActualHeight;
+            double barWidth = canvasWidth / values.Length;
+            double logDenom = Math.Log10(maxY + 1.0);
+
+            var brush = new SolidColorBrush(color);
+            brush.Freeze();
+
+            for (int i = 0; i < values.Length; i++)
+            {
+                double v = values[i];
+                double normalized = _useLogScale
+                    ? (logDenom <= 0 ? 0 : Math.Log10(v + 1.0) / logDenom)
+                    : v / maxY;
+                double barHeight = normalized * canvasHeight;
+                if (barHeight <= 0) continue;
+
+                var bar = new System.Windows.Shapes.Rectangle
+                {
+                    Width = Math.Max(1, barWidth),
+                    Height = barHeight,
+                    Fill = brush,
+                    ToolTip = $"index={i}, sum={FormatValue(v)}"
+                };
+
+                Canvas.SetLeft(bar, i * barWidth);
+                Canvas.SetBottom(bar, 0);
+                HistogramCanvas.Children.Add(bar);
             }
         }
 
@@ -188,15 +251,43 @@ namespace ImaGy.View
 
             double panelHeight = Math.Max(1, HistogramCanvas.ActualHeight);
             const int labelCount = 5;
-            int max = _viewModel.MaxHistogramValue;
             YAxisLabelsPanel.Children.Clear();
-            double logDenom = Math.Log10(max + 1.0);
+
+            if (_viewModel.IsIndexAxisProfile)
+            {
+                double maxY = Math.Max(_viewModel.ProfileYMax, 1e-12);
+                double logDenom = Math.Log10(maxY + 1.0);
+                for (int i = 0; i < labelCount; i++)
+                {
+                    double valueFraction = (double)i / (labelCount - 1);
+                    double value = _useLogScale
+                        ? Math.Pow(10.0, (1.0 - valueFraction) * logDenom) - 1.0
+                        : maxY * (1 - valueFraction);
+                    value = Math.Max(0, value);
+                    double y = valueFraction * panelHeight;
+
+                    var label = new TextBlock
+                    {
+                        Text = FormatValue(value),
+                        Foreground = System.Windows.Media.Brushes.WhiteSmoke,
+                        VerticalAlignment = VerticalAlignment.Center
+                    };
+                    label.Measure(new System.Windows.Size(double.PositiveInfinity, double.PositiveInfinity));
+                    Canvas.SetLeft(label, 0);
+                    Canvas.SetTop(label, Math.Max(0, y - label.DesiredSize.Height / 2));
+                    YAxisLabelsPanel.Children.Add(label);
+                }
+                return;
+            }
+
+            int max = _viewModel.MaxHistogramValue;
+            double logDenomInt = Math.Log10(max + 1.0);
 
             for (int i = 0; i < labelCount; i++)
             {
                 double valueFraction = (double)i / (labelCount - 1);
                 int value = _useLogScale
-                    ? (int)Math.Round(Math.Pow(10.0, (1.0 - valueFraction) * logDenom) - 1.0)
+                    ? (int)Math.Round(Math.Pow(10.0, (1.0 - valueFraction) * logDenomInt) - 1.0)
                     : (int)Math.Round(max * (1 - valueFraction));
                 double y = valueFraction * panelHeight;
 
@@ -248,6 +339,18 @@ namespace ImaGy.View
         private void HistogramCanvas_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
             if (_viewModel == null) return;
+
+            if (_viewModel.IsIndexAxisProfile && _viewModel.ProfileYValues is { Length: > 0 } prof)
+            {
+                double w = HistogramCanvas.ActualWidth;
+                if (w <= 0) return;
+                double mx = e.GetPosition(HistogramCanvas).X;
+                int idx = (int)Math.Floor(mx / w * prof.Length);
+                idx = Math.Clamp(idx, 0, prof.Length - 1);
+                SetHoverInfoText($"index={idx} sum={FormatValue(prof[idx])}");
+                return;
+            }
+
             int binCount = _viewModel.IsColorImage
                 ? Math.Max(_viewModel.R_HistogramData?.Length ?? 0, Math.Max(_viewModel.G_HistogramData?.Length ?? 0, _viewModel.B_HistogramData?.Length ?? 0))
                 : (_viewModel.GrayscaleHistogramData?.Length ?? 0);

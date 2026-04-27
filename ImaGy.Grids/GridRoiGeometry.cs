@@ -9,6 +9,8 @@ public enum RoiKind
 
 public sealed class GridRoiDefinition
 {
+    /// <summary>ROI 식별자(예: roi001_rectangle). 비어 있어도 동작하지만 저장 시 채워집니다.</summary>
+    public string Id { get; set; } = "";
     public string Name { get; set; } = "roi";
     public RoiKind Kind { get; set; }
     /// <summary>Rectangle: top-left column (x).</summary>

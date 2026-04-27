@@ -33,9 +33,11 @@
                 <MenuItem Header="작업기록 내보내기" Command="{Binding ExportHistoryCommand}" ToolTip="필터 적용 이력을 파일로 내보냅니다"/>
                 <MenuItem Header="로그 내보내기" Command="{Binding ExportLogCommand}" ToolTip="로그 텍스트를 파일로 내보냅니다"/>
             </MenuItem>
-            <MenuItem Header="_편집" ToolTip="실행 취소·클립보드">
+            <MenuItem Header="_편집" ToolTip="실행 취소·클립보드·톤">
                 <MenuItem Header="되돌리기" Command="{Binding UndoCommand}" ToolTip="Ctrl+Z"/>
                 <MenuItem Header="다시 실행" Command="{Binding RedoCommand}" ToolTip="Ctrl+Y"/>
+                <Separator />
+                <MenuItem Header="Image Edit…" Command="{Binding OpenImageEditCommand}" ToolTip="밝기(가산)·대비(128 기준)·감마 — After 미리보기 후 적용"/>
                 <Separator />
                 <MenuItem Header="복사" Command="{Binding CopyImageCommand}" ToolTip="After 이미지를 클립보드에 복사 (Ctrl+C)"/>
                 <MenuItem Header="붙여넣기" Command="{Binding PasteImageCommand}" ToolTip="클립보드 이미지를 붙여넣습니다"/>
