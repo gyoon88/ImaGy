@@ -37,10 +37,10 @@ namespace ImaGy.Services
 
         public Action<double, double>? RequestScrollAction { get; set; }
 
-        private Point lastMousePositionForPan;
+        private System.Windows.Point lastMousePositionForPan;
         private bool isPanning;
 
-        public void Zoom(double delta, Point mousePosition)
+        public void Zoom(double delta, System.Windows.Point mousePosition)
         {
             double oldScale = CurrentZoomScale;
 
@@ -52,7 +52,7 @@ namespace ImaGy.Services
             if (Math.Abs(newScale - oldScale) < 0.001) return;
 
             // mousePosition is the unscaled coordinate 'U'
-            Point unscaledMousePos = mousePosition;
+            System.Windows.Point unscaledMousePos = mousePosition;
 
             // Calculate the new offset using the formula: O_new = O_old + U * (S_new - S_old)
             double newHorizontalOffset = HorizontalOffset + unscaledMousePos.X * (newScale - oldScale);
@@ -63,13 +63,13 @@ namespace ImaGy.Services
             RequestScrollAction?.Invoke(newHorizontalOffset, newVerticalOffset);
         }
 
-        public void PanMouseDown(Point mousePosition)
+        public void PanMouseDown(System.Windows.Point mousePosition)
         {
             lastMousePositionForPan = mousePosition;
             isPanning = true;
         }
 
-        public void PanMouseMove(Point currentMousePosition)
+        public void PanMouseMove(System.Windows.Point currentMousePosition)
         {
             if (isPanning)
             {

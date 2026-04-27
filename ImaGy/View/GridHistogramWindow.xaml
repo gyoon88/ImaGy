@@ -1,0 +1,195 @@
+<Window x:Class="ImaGy.View.GridHistogramWindow"
+
+        x:Name="HostWindow"
+
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+
+        mc:Ignorable="d"
+
+        Title="격자 히스토그램 / 통계" Height="560" Width="520"
+        ToolTip="격자 값의 빈(bin)별 분포와 요약 통계">
+
+    <Grid Background="{StaticResource WindowBackgroundBrush}">
+
+        <Grid.RowDefinitions>
+
+            <RowDefinition Height="Auto"/>
+
+            <RowDefinition Height="*"/>
+
+        </Grid.RowDefinitions>
+
+
+
+        <!-- HistogramWindow과 동일: 요약은 Border + 2열 그리드 -->
+
+        <Border Grid.Row="0"
+
+                BorderBrush="{StaticResource PrimaryGrayBrush}"
+
+                BorderThickness="1"
+
+                Margin="10"
+
+                Padding="10"
+                ToolTip="격자 전체에 대한 요약 통계">
+
+            <StackPanel>
+
+                <TextBlock Text="Summary Statistics"
+
+                           FontWeight="Bold"
+
+                           Margin="0,0,0,10"
+
+                           Foreground="White"
+
+                           TextAlignment="Center"/>
+
+                <Grid>
+
+                    <Grid.ColumnDefinitions>
+
+                        <ColumnDefinition Width="Auto"/>
+
+                        <ColumnDefinition Width="*"/>
+
+                    </Grid.ColumnDefinitions>
+
+                    <Grid.RowDefinitions>
+
+                        <RowDefinition Height="Auto"/>
+
+                        <RowDefinition Height="Auto"/>
+
+                        <RowDefinition Height="Auto"/>
+
+                        <RowDefinition Height="Auto"/>
+
+                        <RowDefinition Height="Auto"/>
+
+                        <RowDefinition Height="Auto"/>
+
+                        <RowDefinition Height="Auto"/>
+
+                        <RowDefinition Height="Auto"/>
+
+                    </Grid.RowDefinitions>
+
+
+
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Count:" Margin="0,2,5,2" Foreground="White"/>
+
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Stats.Count, Mode=OneWay}"
+
+                               HorizontalAlignment="Right" Margin="0,2" Foreground="White"/>
+
+
+
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Mean:" Margin="0,2,5,2" Foreground="White"/>
+
+                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Stats.Mean, Mode=OneWay, StringFormat=F6}"
+
+                               HorizontalAlignment="Right" Margin="0,2" Foreground="White"/>
+
+
+
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Std:" Margin="0,2,5,2" Foreground="White"/>
+
+                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Stats.Std, Mode=OneWay, StringFormat=F6}"
+
+                               HorizontalAlignment="Right" Margin="0,2" Foreground="White"/>
+
+
+
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Min:" Margin="0,2,5,2" Foreground="White"/>
+
+                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Stats.Min, Mode=OneWay, StringFormat=F6}"
+
+                               HorizontalAlignment="Right" Margin="0,2" Foreground="White"/>
+
+
+
+                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Max:" Margin="0,2,5,2" Foreground="White"/>
+
+                    <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding Stats.Max, Mode=OneWay, StringFormat=F6}"
+
+                               HorizontalAlignment="Right" Margin="0,2" Foreground="White"/>
+
+
+
+                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Median:" Margin="0,2,5,2" Foreground="White"/>
+
+                    <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding Stats.Median, Mode=OneWay, StringFormat=F6}"
+
+                               HorizontalAlignment="Right" Margin="0,2" Foreground="White"/>
+
+
+
+                    <TextBlock Grid.Row="6" Grid.Column="0" Text="P25:" Margin="0,2,5,2" Foreground="White"/>
+
+                    <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding Stats.P25, Mode=OneWay, StringFormat=F6}"
+
+                               HorizontalAlignment="Right" Margin="0,2" Foreground="White"/>
+
+
+
+                    <TextBlock Grid.Row="7" Grid.Column="0" Text="P75:" Margin="0,2,5,2" Foreground="White"/>
+
+                    <TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding Stats.P75, Mode=OneWay, StringFormat=F6}"
+
+                               HorizontalAlignment="Right" Margin="0,2" Foreground="White"/>
+
+                </Grid>
+
+            </StackPanel>
+
+        </Border>
+
+
+
+        <ScrollViewer Grid.Row="1"
+
+                      VerticalScrollBarVisibility="Auto"
+
+                      Margin="10,0,10,10"
+
+                      Background="{StaticResource WindowBackgroundBrush}"
+                      ToolTip="각 bin의 상대적 크기(막대)">
+
+            <ItemsControl x:Name="BinHost" ItemsSource="{Binding Bins}">
+
+                <ItemsControl.ItemTemplate>
+
+                    <DataTemplate>
+
+                        <ProgressBar Height="10"
+
+                                     Margin="0,1"
+
+                                     Minimum="0"
+
+                                     Maximum="{Binding DataContext.MaxBinForUi, ElementName=HostWindow}"
+
+                                     Value="{Binding Mode=OneWay}"
+                                     ToolTip="해당 bin의 상대 빈도"/>
+
+                    </DataTemplate>
+
+                </ItemsControl.ItemTemplate>
+
+            </ItemsControl>
+
+        </ScrollViewer>
+
+    </Grid>
+
+</Window>
+
+

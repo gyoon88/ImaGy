@@ -1,5 +1,4 @@
 using ImaGy.Wrapper;
-using OpenCvSharp;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -7,14 +6,14 @@ using System.Windows.Media.Imaging;
 namespace ImaGy.Models
 {
     /// <summary>
-    /// ÀÌ¹ÌÁöÀÇ »ö»ó ¸ðµ¨À» ±Ùº»ÀûÀ¸·Î º¯°æÇÏ°Å³ª, Èæ¹é ÀÌ¹ÌÁö¸¦ ´ë»óÀ¸·Î ÇÏ´Â Ã³¸®µéÀ» ´ã´ç
-    /// (±×·¹ÀÌ½ºÄÉÀÏ º¯È¯, ÀÌÁøÈ­, ÆòÈ°È­ µî)
+    /// ï¿½Ì¹ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ùºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°Å³ï¿½, ï¿½ï¿½ï¿½ ï¿½Ì¹ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ï´ï¿½ Ã³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
+    /// (ï¿½×·ï¿½ï¿½Ì½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯, ï¿½ï¿½ï¿½ï¿½È­, ï¿½ï¿½È°È­ ï¿½ï¿½)
     /// </summary>
     public class ColorContrastProcess
     {
         /// <summary>
-        /// ÀÌ¹ÌÁö¸¦ Èæ¹éÀ¸·Î º¯È¯ÇÏ´Â ³»ºÎ ÇïÆÛ ¸Þ¼­µå
-        /// ÀÌÁøÈ­, ¿ÀÃ÷ ÀÌÁøÈ­ µî Èæ¹é ÀÌ¹ÌÁö°¡ ÇÊ¿äÇÑ Ã³¸®¿¡ Àç»ç¿ë
+        /// ï¿½Ì¹ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯ï¿½Ï´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Þ¼ï¿½ï¿½ï¿½
+        /// ï¿½ï¿½ï¿½ï¿½È­, ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½È­ ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½Ì¹ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¿ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         /// </summary>
         public BitmapSource ToGrayscale(BitmapSource source)
         {
@@ -31,8 +30,8 @@ namespace ImaGy.Models
         }
 
         /// <summary>
-        /// ÁöÁ¤µÈ ÀÓ°è°ªÀ¸·Î ÀÌÁøÈ­¸¦ Àû¿ë
-        /// ÄÃ·¯ ÀÌ¹ÌÁö°¡ µé¾î¿À¸é ¸ÕÀú Èæ¹éÀ¸·Î º¯È¯ÇÑ ÈÄ Ã³¸®
+        /// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ó°è°ªï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½È­ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+        /// ï¿½Ã·ï¿½ ï¿½Ì¹ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯ï¿½ï¿½ ï¿½ï¿½ Ã³ï¿½ï¿½
         /// </summary>
         public BitmapSource ApplyBinarization(BitmapSource source, int threshold)
         {
@@ -58,22 +57,22 @@ namespace ImaGy.Models
 
 
         ///// <summary>
-        ///// GMM(Gaussian Mixture Model) Å¬·¯½ºÅÍ¸µÀ» ¼ø¼ö C# ÄÚµå·Î ÀÌ¹ÌÁö¿¡ Àû¿ëÇÕ´Ï´Ù.
-        ///// »ö»ó(BGR)°ú °ø°£(x, y) Á¤º¸¸¦ ÇÔ²² »ç¿ëÇÏ¿© ¿µ¿ªÀ» ºÐÇÒÇÕ´Ï´Ù.
+        ///// GMM(Gaussian Mixture Model) Å¬ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ C# ï¿½Úµï¿½ï¿½ ï¿½Ì¹ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
+        ///// ï¿½ï¿½ï¿½ï¿½(BGR)ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½(x, y) ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ô²ï¿½ ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
         ///// </summary>
-        ///// <param name="source">Ã³¸®ÇÒ ¿øº» BitmapSource.</param>
-        ///// <param name="numClusters">ºÐÇÒÇÒ Å¬·¯½ºÅÍÀÇ °³¼ö (k).</param>
-        ///// <param name="spatialWeight">°ø°£ Á¤º¸ÀÇ °¡ÁßÄ¡ (0.0 ~ 1.0).</param>
-        ///// <returns>GMM ºÐÇÒ °á°ú°¡ Àû¿ëµÈ »õ·Î¿î BitmapSource.</returns>
+        ///// <param name="source">Ã³ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ BitmapSource.</param>
+        ///// <param name="numClusters">ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (k).</param>
+        ///// <param name="spatialWeight">ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ä¡ (0.0 ~ 1.0).</param>
+        ///// <returns>GMM ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Î¿ï¿½ BitmapSource.</returns>
         //public BitmapSource ApplyGmmSegmentation(BitmapSource source, int numClusters, float spatialWeight)
         //{
-        //    // GMMÀº ÄÃ·¯ ÀÌ¹ÌÁö¸¦ ´ë»óÀ¸·Î ÇÏ¹Ç·Î Èæ¹é ÀÌ¹ÌÁö´Â Ã³¸®ÇÏÁö ¾ÊÀ½.
+        //    // GMMï¿½ï¿½ ï¿½Ã·ï¿½ ï¿½Ì¹ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ï¹Ç·ï¿½ ï¿½ï¿½ï¿½ ï¿½Ì¹ï¿½ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
         //    if (source.Format == PixelFormats.Gray8)
         //    {
         //        return source;
         //    }
 
-        //    // OpenCvSharpÀÇ Mat °´Ã¼µéÀº C++ ¸Þ¸ð¸®¸¦ »ç¿ëÇÏ¹Ç·Î, using ¶Ç´Â Dispose()·Î °ü¸®ÇØ¾ß ÇÕ´Ï´Ù.
+        //    // OpenCvSharpï¿½ï¿½ Mat ï¿½ï¿½Ã¼ï¿½ï¿½ï¿½ï¿½ C++ ï¿½Þ¸ð¸®¸ï¿½ ï¿½ï¿½ï¿½ï¿½Ï¹Ç·ï¿½, using ï¿½Ç´ï¿½ Dispose()ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ø¾ï¿½ ï¿½Õ´Ï´ï¿½.
         //    Mat sourceMat = null;
         //    Mat samples = null;
         //    Mat labels = null;
@@ -83,9 +82,9 @@ namespace ImaGy.Models
 
         //    try
         //    {
-        //        // 1. ÀÔ·Â BitmapSource¸¦ OpenCvSharpÀÇ Mat °´Ã¼·Î º¯È¯
+        //        // 1. ï¿½Ô·ï¿½ BitmapSourceï¿½ï¿½ OpenCvSharpï¿½ï¿½ Mat ï¿½ï¿½Ã¼ï¿½ï¿½ ï¿½ï¿½È¯
         //        sourceMat = BitmapSourceConverter.ToMat(source);
-        //        // GMMÀÌ BGRÀ» ±âÁØÀ¸·Î ÇÏ¹Ç·Î, BGRA Æ÷¸ËÀÎ °æ¿ì BGR·Î º¯È¯
+        //        // GMMï¿½ï¿½ BGRï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ï¹Ç·ï¿½, BGRA ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ BGRï¿½ï¿½ ï¿½ï¿½È¯
         //        if (sourceMat.Channels() == 4)
         //        {
         //            Cv2.CvtColor(sourceMat, sourceMat, ColorConversionCodes.BGRA2BGR);
@@ -95,7 +94,7 @@ namespace ImaGy.Models
         //        int width = sourceMat.Cols;
         //        int numPixels = height * width;
 
-        //        // 2. Æ¯Â¡ º¤ÅÍ »ý¼º (B, G, R, x*w, y*w)
+        //        // 2. Æ¯Â¡ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (B, G, R, x*w, y*w)
         //        samples = new Mat(numPixels, 5, MatType.CV_32FC1);
         //        for (int y = 0; y < height; y++)
         //        {
@@ -104,7 +103,7 @@ namespace ImaGy.Models
         //                Vec3b pixel = sourceMat.At<Vec3b>(y, x);
         //                int pixelIndex = y * width + x;
 
-        //                // samples Mat¿¡ °ª ¼³Á¤
+        //                // samples Matï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         //                samples.Set(pixelIndex, 0, (float)pixel.Item0); // B
         //                samples.Set(pixelIndex, 1, (float)pixel.Item1); // G
         //                samples.Set(pixelIndex, 2, (float)pixel.Item2); // R
@@ -113,7 +112,7 @@ namespace ImaGy.Models
         //            }
         //        }
 
-        //        // 3. GMM ¸ðµ¨ »ý¼º ¹× ÇÐ½À
+        //        // 3. GMM ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ð½ï¿½
         //        using (var gmm = EM.Create())
         //        {
         //            gmm.ClustersNumber = numClusters;
@@ -123,7 +122,7 @@ namespace ImaGy.Models
         //            gmm.TrainEM(samples, null, labels, null);
         //        }
 
-        //        // 4. °á°ú¸¦ ½Ã°¢È­ °¡´ÉÇÑ ÀÌ¹ÌÁö·Î º¯È¯
+        //        // 4. ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½È­ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¹ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯
         //        segmentedLabels = labels.Reshape(1, height);
         //        normalizedLabels = new Mat();
         //        segmentedLabels.ConvertTo(normalizedLabels, MatType.CV_8UC1, 255.0 / (numClusters - 1));
@@ -131,12 +130,12 @@ namespace ImaGy.Models
         //        coloredResult = new Mat();
         //        Cv2.ApplyColorMap(normalizedLabels, coloredResult, ColormapTypes.Jet);
 
-        //        // 5. ÃÖÁ¾ °á°ú MatÀ» BitmapSource·Î º¯È¯ÇÏ¿© ¹ÝÈ¯
+        //        // 5. ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ Matï¿½ï¿½ BitmapSourceï¿½ï¿½ ï¿½ï¿½È¯ï¿½Ï¿ï¿½ ï¿½ï¿½È¯
         //        return BitmapSourceConverter.ToBitmapSource(coloredResult);
         //    }
         //    finally
         //    {
-        //        // C# °¡ºñÁö ÄÃ·ºÅÍ°¡ °ü¸®ÇÏÁö ¾Ê´Â C++ ¸Þ¸ð¸®¸¦ ¸í½ÃÀûÀ¸·Î ÇØÁ¦ÇÕ´Ï´Ù.
+        //        // C# ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½Í°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê´ï¿½ C++ ï¿½Þ¸ð¸®¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.
         //        sourceMat?.Dispose();
         //        samples?.Dispose();
         //        labels?.Dispose();
@@ -149,8 +148,8 @@ namespace ImaGy.Models
 
 
         /// <summary>
-        /// ¿ÀÃ÷ ¾Ë°í¸®ÁòÀ» »ç¿ëÇÑ ÀÌÁøÈ­¸¦ Àû¿ë
-        /// ³×ÀÌÆ¼ºê ÇÔ¼ö¿¡ ÀÓ°è°ªÀ¸·Î -1À» Àü´ÞÇÏ¿© ¿ÀÃ÷ ¾Ë°í¸®Áò »ç¿ëÀ» Áö½Ã
+        /// ï¿½ï¿½ï¿½ï¿½ ï¿½Ë°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½È­ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+        /// ï¿½ï¿½ï¿½ï¿½Æ¼ï¿½ï¿½ ï¿½Ô¼ï¿½ï¿½ï¿½ ï¿½Ó°è°ªï¿½ï¿½ï¿½ï¿½ -1ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ë°ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         /// </summary>
         public BitmapSource ApplyOtsuBinarization(BitmapSource source)
         {
@@ -163,7 +162,7 @@ namespace ImaGy.Models
         }
 
         /// <summary>
-        /// Èæ¹é ÀÌ¹ÌÁö¿¡ ´ëÇÑ È÷½ºÅä±×·¥ ÆòÈ°È­¸¦ Àû¿ë
+        /// ï¿½ï¿½ï¿½ ï¿½Ì¹ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×·ï¿½ ï¿½ï¿½È°È­ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         /// </summary>
         public BitmapSource ApplyEqualization(BitmapSource source)
         {
@@ -176,12 +175,12 @@ namespace ImaGy.Models
         }
 
         /// <summary>
-        ///  ÄÃ·¯ ÀÌ¹ÌÁö¿¡ ´ëÇÑ È÷½ºÅä±×·¥ ÆòÈ°È­¸¦ Àû¿ë
-        /// BitmapProcessorHelper.ProcessBitmapSourcePixels °¡ ÀÚµ¿À¸·Î R, G, B Ã¤³ÎÀ» ºÐ¸®ÇÏ¿© °¢°¢ ÆòÈ°È­¸¦ Àû¿ëÇÏ°í ´Ù½Ã º´ÇÕ
+        ///  ï¿½Ã·ï¿½ ï¿½Ì¹ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×·ï¿½ ï¿½ï¿½È°È­ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+        /// BitmapProcessorHelper.ProcessBitmapSourcePixels ï¿½ï¿½ ï¿½Úµï¿½ï¿½ï¿½ï¿½ï¿½ R, G, B Ã¤ï¿½ï¿½ï¿½ï¿½ ï¿½Ð¸ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È°È­ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½ ï¿½Ù½ï¿½ ï¿½ï¿½ï¿½ï¿½
         /// </summary>
         public BitmapSource ApplyColorEqualization(BitmapSource source)
         {
-            // Èæ¹é ÀÌ¹ÌÁö ÀÔ·Â ½Ã Èæ¹é ÆòÈ°È­·Î ¿¹¿ÜÃ³¸®
+            // ï¿½ï¿½ï¿½ ï¿½Ì¹ï¿½ï¿½ï¿½ ï¿½Ô·ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½È°È­ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ã³ï¿½ï¿½
             if (source.Format == PixelFormats.Gray8)
             {
                 return ApplyEqualization(source);

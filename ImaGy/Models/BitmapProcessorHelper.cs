@@ -200,9 +200,9 @@ namespace ImaGy.Models
             using (DrawingContext drawingContext = drawingVisual.RenderOpen())
             {
                 drawingContext.DrawImage(drawingSource, new Rect(0, 0, drawingSource.PixelWidth, drawingSource.PixelHeight));
-                Pen redPen = new Pen(Brushes.Red, 2);
+                System.Windows.Media.Pen redPen = new System.Windows.Media.Pen(System.Windows.Media.Brushes.Red, 2);
                 // 25% 투명도를 가진 빨간색 브러시 (A:128, R:255, G:0, B:0)
-                Brush semiTransparentRedBrush = new SolidColorBrush(Color.FromArgb(64, 255, 0, 0));
+                System.Windows.Media.Brush semiTransparentRedBrush = new SolidColorBrush(System.Windows.Media.Color.FromArgb(64, 255, 0, 0));
                 drawingContext.DrawRectangle(semiTransparentRedBrush, redPen, new Rect(box.X, box.Y, box.Width, box.Height));
             }
             var renderTarget = new RenderTargetBitmap(drawingSource.PixelWidth, drawingSource.PixelHeight, drawingSource.DpiX, drawingSource.DpiY, PixelFormats.Pbgra32);

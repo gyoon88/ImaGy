@@ -4,13 +4,15 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Collections.Generic;
 using System.ComponentModel;
+using ImaGy.Grids;
 using ImaGy.Models;
 
 namespace ImaGy.ViewModels
 {
     public class HistogramViewModel : BaseViewModel
     {
-        private MainViewModel mainViewModel;
+        private MainViewModel? _mainViewModel;
+        private const int DefaultBinCount = 256;
 
         #region Public Properties for View Binding
 
@@ -34,32 +36,93 @@ namespace ImaGy.ViewModels
             private set => SetProperty(ref isColorImage, value);
         }
 
+        private bool isFloatHistogram;
+        public bool IsFloatHistogram
+        {
+            get => isFloatHistogram;
+            private set => SetProperty(ref isFloatHistogram, value);
+        }
+
+        private double histogramValueMin;
+        public double HistogramValueMin
+        {
+            get => histogramValueMin;
+            private set => SetProperty(ref histogramValueMin, value);
+        }
+
+        private double histogramValueMax = 255;
+        public double HistogramValueMax
+        {
+            get => histogramValueMax;
+            private set => SetProperty(ref histogramValueMax, value);
+        }
+
+        public string XAxisTitle => IsFloatHistogram ? "Value" : "Pixel level";
+
         #endregion
 
         #region Public Properties for Statistics
         // 요약 통계량
         private double? mean;
         private double? std;
-        private int? median;
-        private int? mode;
-        private int? max;
-        private int? min;
-        private int? range;
+        private double? median;
+        private double? mode;
+        private double? max;
+        private double? min;
+        private double? range;
 
         public double? Mean { get => mean; private set => SetProperty(ref mean, value); }
         public double? Std { get => std; private set => SetProperty(ref std, value); }
-        public int? Median { get => median; private set => SetProperty(ref median, value); }
-        public int? Mode { get => mode; private set => SetProperty(ref mode, value); }
-        public int? Max { get => max; private set => SetProperty(ref max, value); }
-        public int? Min { get => min; private set => SetProperty(ref min, value); }
-        public int? Range { get => range; private set => SetProperty(ref range, value); }
+        public double? Median { get => median; private set => SetProperty(ref median, value); }
+        public double? Mode { get => mode; private set => SetProperty(ref mode, value); }
+        public double? Max { get => max; private set => SetProperty(ref max, value); }
+        public double? Min { get => min; private set => SetProperty(ref min, value); }
+        public double? Range { get => range; private set => SetProperty(ref range, value); }
         #endregion
 
         public HistogramViewModel(MainViewModel mainViewModel)
         {
-            this.mainViewModel = mainViewModel;
-            this.mainViewModel.PropertyChanged += MainViewModel_PropertyChanged;
+            _mainViewModel = mainViewModel;
+            _mainViewModel.PropertyChanged += MainViewModel_PropertyChanged;
             UpdateAllHistograms();
+        }
+
+        /// <summary>CSV 격자 Diff 등 부동소수 그리드용. 기존 HistogramWindow UI(256 bin) 재사용.</summary>
+        public HistogramViewModel(FloatGrid grid, bool[]? mask)
+        {
+            _mainViewModel = null;
+            LoadHistogramFromFloatGrid(grid, mask);
+        }
+
+        private void LoadHistogramFromFloatGrid(FloatGrid grid, bool[]? mask)
+        {
+            var stats = GridStatisticsService.Compute(grid, mask, null, null);
+            var hist = GridStatisticsService.ComputeHistogram(grid, mask, null, null, DefaultBinCount);
+            IsColorImage = false;
+            IsFloatHistogram = true;
+            GrayscaleHistogramData = hist;
+            R_HistogramData = G_HistogramData = B_HistogramData = null;
+            MaxHistogramValue = hist.Length > 0 ? hist.Max() : 0;
+            if (stats.Count > 0)
+            {
+                HistogramValueMin = stats.Min;
+                HistogramValueMax = stats.Max;
+            }
+            else
+            {
+                HistogramValueMin = 0;
+                HistogramValueMax = 1;
+            }
+            SetFloatStatistics(stats, hist);
+            OnPropertyChanged(nameof(IsColorImage));
+            OnPropertyChanged(nameof(IsFloatHistogram));
+            OnPropertyChanged(nameof(HistogramValueMin));
+            OnPropertyChanged(nameof(HistogramValueMax));
+            OnPropertyChanged(nameof(XAxisTitle));
+            OnPropertyChanged(nameof(R_HistogramData));
+            OnPropertyChanged(nameof(G_HistogramData));
+            OnPropertyChanged(nameof(B_HistogramData));
+            OnPropertyChanged(nameof(GrayscaleHistogramData));
         }
 
         private void MainViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -72,17 +135,20 @@ namespace ImaGy.ViewModels
 
         private void UpdateAllHistograms()
         {
-            if (mainViewModel == null) return;
+            if (_mainViewModel == null) return;
 
-            BitmapSource? imageSource = mainViewModel.AfterImage ?? mainViewModel.BeforeImage;
+            BitmapSource? imageSource = _mainViewModel.AfterImage ?? _mainViewModel.BeforeImage;
             if (imageSource != null)
             {
                 if (imageSource.Format == PixelFormats.Gray8)
                 {
                     IsColorImage = false;
+                    IsFloatHistogram = false;
                     GrayscaleHistogramData = ServeHistogram.CalculateGrayscaleHistogram(imageSource);
                     R_HistogramData = G_HistogramData = B_HistogramData = null;
                     MaxHistogramValue = GrayscaleHistogramData.Any() ? GrayscaleHistogramData.Max() : 0;
+                    HistogramValueMin = 0;
+                    HistogramValueMax = 255;
 
 
                     CalculateAndSetStatistics(GrayscaleHistogramData);
@@ -90,6 +156,7 @@ namespace ImaGy.ViewModels
                 else
                 {
                     IsColorImage = true;
+                    IsFloatHistogram = false;
                     var colorHistograms = ServeHistogram.CalculateColorHistograms(imageSource);
 
                     colorHistograms.TryGetValue("R", out var rData);
@@ -105,6 +172,8 @@ namespace ImaGy.ViewModels
                     int maxG = G_HistogramData?.Max() ?? 0;
                     int maxB = B_HistogramData?.Max() ?? 0;
                     MaxHistogramValue = Math.Max(maxR, Math.Max(maxG, maxB));
+                    HistogramValueMin = 0;
+                    HistogramValueMax = 255;
 
                     // 컬러 이미지의 경우, 그레이스케일로 변환하여 통계 계산
                     var statsHistogram = ServeHistogram.CalculateGrayscaleHistogram(imageSource);
@@ -115,13 +184,20 @@ namespace ImaGy.ViewModels
             {
                 // 이미지가 없을 경우 모든 데이터 초기화
                 IsColorImage = false;
+                IsFloatHistogram = false;
                 GrayscaleHistogramData = R_HistogramData = G_HistogramData = B_HistogramData = null;
                 MaxHistogramValue = 0;
+                HistogramValueMin = 0;
+                HistogramValueMax = 255;
                 ClearStatistics();
             }
 
             // View가 데이터를 다시 그리도록 모든 관련 속성의 변경을 알림.
             OnPropertyChanged(nameof(IsColorImage));
+            OnPropertyChanged(nameof(IsFloatHistogram));
+            OnPropertyChanged(nameof(HistogramValueMin));
+            OnPropertyChanged(nameof(HistogramValueMax));
+            OnPropertyChanged(nameof(XAxisTitle));
             OnPropertyChanged(nameof(R_HistogramData));
             OnPropertyChanged(nameof(G_HistogramData));
             OnPropertyChanged(nameof(B_HistogramData));
@@ -222,8 +298,8 @@ namespace ImaGy.ViewModels
                     maxValue = i;
                 }
             }
-            Min = minValue != -1 ? minValue : (int?)null;
-            Max = maxValue != -1 ? maxValue : (int?)null;
+            Min = minValue != -1 ? (double?)minValue : null;
+            Max = maxValue != -1 ? (double?)maxValue : null;
 
             // Range (범위)
             if (Min.HasValue && Max.HasValue)
@@ -234,6 +310,64 @@ namespace ImaGy.ViewModels
             {
                 Range = null;
             }
+        }
+
+        private void SetFloatStatistics(GridStatisticsResult stats, int[] histogram)
+        {
+            if (stats.Count <= 0)
+            {
+                ClearStatistics();
+                return;
+            }
+
+            Mean = stats.Mean;
+            Std = stats.Std;
+            Median = stats.Median;
+            Min = stats.Min;
+            Max = stats.Max;
+            Range = stats.Max - stats.Min;
+
+            int modeBin = 0;
+            int bestCount = 0;
+            for (int i = 0; i < histogram.Length; i++)
+            {
+                if (histogram[i] > bestCount)
+                {
+                    bestCount = histogram[i];
+                    modeBin = i;
+                }
+            }
+            Mode = GetBinCenter(modeBin, histogram.Length);
+        }
+
+        public double GetValueAtFraction(double fraction)
+        {
+            double t = Math.Clamp(fraction, 0, 1);
+            return HistogramValueMin + (HistogramValueMax - HistogramValueMin) * t;
+        }
+
+        public int GetBinCount => GrayscaleHistogramData?.Length ?? 256;
+
+        public double GetBinStart(int binIndex, int binCount)
+        {
+            if (binCount <= 0) return HistogramValueMin;
+            if (HistogramValueMax <= HistogramValueMin) return HistogramValueMin;
+            double width = (HistogramValueMax - HistogramValueMin) / binCount;
+            return HistogramValueMin + Math.Clamp(binIndex, 0, binCount - 1) * width;
+        }
+
+        public double GetBinEnd(int binIndex, int binCount)
+        {
+            if (binCount <= 0) return HistogramValueMax;
+            if (HistogramValueMax <= HistogramValueMin) return HistogramValueMax;
+            double width = (HistogramValueMax - HistogramValueMin) / binCount;
+            return HistogramValueMin + Math.Clamp(binIndex + 1, 1, binCount) * width;
+        }
+
+        public double GetBinCenter(int binIndex, int binCount)
+        {
+            if (HistogramValueMax <= HistogramValueMin) return HistogramValueMin;
+            return 0.5 * (GetBinStart(binIndex, binCount) + GetBinEnd(binIndex, binCount));
         }
     }
 }

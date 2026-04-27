@@ -4,16 +4,19 @@
         Title="Minimap"
         Width="300"
         Height="300"
-        Closed="MinimapWindow_Closed">
-    <Canvas x:Name="MinimapCanvas" SizeChanged="MinimapCanvas_SizeChanged">
+        Closed="MinimapWindow_Closed"
+        ToolTip="전체 이미지 축소 보기. 빨간 사각형은 현재 메인 뷰 영역">
+    <Canvas x:Name="MinimapCanvas" SizeChanged="MinimapCanvas_SizeChanged" ToolTip="미니맵 캔버스">
         <Image x:Name="MinimapImage" Source="{Binding MainImage}" Stretch="Uniform"
                Width="{Binding ActualWidth, ElementName=MinimapCanvas}"
-               Height="{Binding ActualHeight, ElementName=MinimapCanvas}"/>
+               Height="{Binding ActualHeight, ElementName=MinimapCanvas}"
+               ToolTip="전체 이미지 미리보기"/>
 
         <Rectangle Fill="#80FF0000" Stroke="Red" StrokeThickness="1"
                    Canvas.Left="{Binding ScaledViewportX}"
                    Canvas.Top="{Binding ScaledViewportY}"
                    Width="{Binding ScaledViewportWidth}"
-                   Height="{Binding ScaledViewportHeight}" />
+                   Height="{Binding ScaledViewportHeight}"
+                   ToolTip="메인 창에서 현재 보이는 뷰포트"/>
     </Canvas>
 </Window>

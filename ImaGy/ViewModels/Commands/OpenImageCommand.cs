@@ -55,7 +55,7 @@ namespace ImaGy.ViewModels.Commands
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to load the image.\n\nError: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Windows.MessageBox.Show($"Failed to load the image.\n\nError: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 _loggingService.AddLog($"Error loading image: {ex.Message}");
             }
             finally

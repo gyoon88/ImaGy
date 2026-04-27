@@ -6,8 +6,9 @@
         xmlns:local="clr-namespace:ImaGy.View"
         xmlns:vm="clr-namespace:ImaGy.ViewModels"
         mc:Ignorable="d"
-        Title="Template Image Viewer" Height="450" Width="600">
+        Title="Template Image Viewer" Height="450" Width="600"
+        ToolTip="템플릿/참조 이미지 뷰어">
     <Grid>
-        <Image Source="{Binding TemplateImage}" Stretch="Uniform"/>
+        <Image Source="{Binding TemplateImage}" Stretch="Uniform" ToolTip="열어둔 템플릿 이미지"/>
     </Grid>
 </Window>

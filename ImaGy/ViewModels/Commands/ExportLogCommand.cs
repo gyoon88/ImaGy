@@ -41,7 +41,7 @@ namespace ImaGy.ViewModels.Commands
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Failed to export log.\n\nError: {ex.Message}",
+                    System.Windows.MessageBox.Show($"Failed to export log.\n\nError: {ex.Message}",
                         "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     _loggingService.AddLog($"Error exporting log: {ex.Message}");
                 }

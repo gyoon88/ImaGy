@@ -44,7 +44,7 @@ namespace ImaGy.ViewModels.Commands
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Failed to export history.\n\nError: {ex.Message}",
+                    System.Windows.MessageBox.Show($"Failed to export history.\n\nError: {ex.Message}",
                         "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     _loggingService.AddLog($"Error exporting history: {ex.Message}");
                 }

@@ -7,7 +7,8 @@
         xmlns:vm="clr-namespace:ImaGy.ViewModels"
         xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
         mc:Ignorable="d"
-        Title="ImaGy" Height="800" Width="1300" MinHeight="500" MinWidth="1000">
+        Title="ImaGy" Height="800" Width="1300" MinHeight="500" MinWidth="1000"
+        ToolTip="ImaGy 이미지 편집기">
     <Window.DataContext>
         <vm:MainViewModel/>
     </Window.DataContext>
@@ -24,54 +25,54 @@
     <DockPanel>        
         <!-- Menu -->
         <Menu DockPanel.Dock="Top">
-            <MenuItem Header="_파일">
-                <MenuItem Header="열기" Command="{Binding OpenImageCommand}"/>
-                <MenuItem Header="템플릿 이미지 열기" Command="{Binding OpenTemplateImageCommand}"/>
-                <MenuItem Header="저장" Command="{Binding SaveImageCommand}"/>
+            <MenuItem Header="_파일" ToolTip="이미지 열기·저장·내보내기">
+                <MenuItem Header="열기" Command="{Binding OpenImageCommand}" ToolTip="이미지 파일 열기 (Ctrl+O)"/>
+                <MenuItem Header="템플릿 이미지 열기" Command="{Binding OpenTemplateImageCommand}" ToolTip="템플릿/참조 이미지를 별도로 엽니다"/>
+                <MenuItem Header="저장" Command="{Binding SaveImageCommand}" ToolTip="현재 After 이미지 저장 (Ctrl+S)"/>
                 <Separator />
-                <MenuItem Header="작업기록 내보내기" Command="{Binding ExportHistoryCommand}"/>
-                <MenuItem Header="로그 내보내기" Command="{Binding ExportLogCommand}"/>
+                <MenuItem Header="작업기록 내보내기" Command="{Binding ExportHistoryCommand}" ToolTip="필터 적용 이력을 파일로 내보냅니다"/>
+                <MenuItem Header="로그 내보내기" Command="{Binding ExportLogCommand}" ToolTip="로그 텍스트를 파일로 내보냅니다"/>
             </MenuItem>
-            <MenuItem Header="_편집">
-                <MenuItem Header="되돌리기" Command="{Binding UndoCommand}"/>
-                <MenuItem Header="다시 실행" Command="{Binding RedoCommand}"/>
+            <MenuItem Header="_편집" ToolTip="실행 취소·클립보드">
+                <MenuItem Header="되돌리기" Command="{Binding UndoCommand}" ToolTip="Ctrl+Z"/>
+                <MenuItem Header="다시 실행" Command="{Binding RedoCommand}" ToolTip="Ctrl+Y"/>
                 <Separator />
-                <MenuItem Header="복사" Command="{Binding CopyImageCommand}"/>
-                <MenuItem Header="붙여넣기" Command="{Binding PasteImageCommand}"/>
+                <MenuItem Header="복사" Command="{Binding CopyImageCommand}" ToolTip="After 이미지를 클립보드에 복사 (Ctrl+C)"/>
+                <MenuItem Header="붙여넣기" Command="{Binding PasteImageCommand}" ToolTip="클립보드 이미지를 붙여넣습니다"/>
             </MenuItem>
-            <MenuItem Header="_보기">
-                <MenuItem Header="히스토그램 보기" Command="{Binding ViewHistogramCommand}"/>
-                <MenuItem Header="미니맵 보기" Command="{Binding MinimapCommand}"/>
+            <MenuItem Header="_보기" ToolTip="보조 창">
+                <MenuItem Header="히스토그램 보기" Command="{Binding ViewHistogramCommand}" ToolTip="현재 이미지의 히스토그램 창"/>
+                <MenuItem Header="미니맵 보기" Command="{Binding MinimapCommand}" ToolTip="전체 이미지와 뷰포트 위치"/>
             </MenuItem>
-            <MenuItem Header="_도구">
-                <MenuItem Header="자르기" Command="{Binding ApplyCropCommand}"/>
-                
+            <MenuItem Header="_도구" ToolTip="추가 도구">
+                <MenuItem Header="자르기" Command="{Binding ApplyCropCommand}" ToolTip="표시된 영역으로 자르기 적용"/>
+                <MenuItem Header="CSV 격자 워크벤치" Command="{Binding OpenGridWorkbenchCommand}" ToolTip="2D CSV 격자 Diff·ROI 워크벤치"/>
             </MenuItem>
-            <MenuItem Header="_도움말">
-                <MenuItem Header="단축키 안내"/>
-                <MenuItem Header="정보"/>
+            <MenuItem Header="_도움말" ToolTip="도움말">
+                <MenuItem Header="단축키 안내" ToolTip="주요 단축키 안내(준비 중)"/>
+                <MenuItem Header="정보" ToolTip="프로그램 정보(준비 중)"/>
             </MenuItem>
         </Menu>
 
         <!-- Status Bar -->
-        <StatusBar DockPanel.Dock="Bottom">
+        <StatusBar DockPanel.Dock="Bottom" ToolTip="현재 파일·해상도·배율·좌표·처리 시간">
             <StatusBarItem>
-                <TextBlock Text="{Binding FileName}" Foreground="White" />
+                <TextBlock Text="{Binding FileName}" Foreground="White" ToolTip="현재 이미지 파일 이름"/>
             </StatusBarItem>
             <Separator/>
             <StatusBarItem>
-                <TextBlock Text="{Binding ImageResolution}" Foreground="White" />
+                <TextBlock Text="{Binding ImageResolution}" Foreground="White" ToolTip="픽셀 해상도"/>
             </StatusBarItem>
             <Separator/>
             <StatusBarItem>
-                <TextBlock Text="{Binding ZoomLevel}"  Foreground="White"/>
+                <TextBlock Text="{Binding ZoomLevel}"  Foreground="White" ToolTip="표시 배율"/>
             </StatusBarItem>
             <StatusBarItem>
-                <TextBlock Text="{Binding MouseCoordinates}"  Foreground="White"/>
+                <TextBlock Text="{Binding MouseCoordinates}"  Foreground="White" ToolTip="이미지 위 마우스 좌표"/>
             </StatusBarItem>
             <Separator/>
             <StatusBarItem>
-                <TextBlock Text="{Binding ProcessingTime}"  Foreground="White"/>
+                <TextBlock Text="{Binding ProcessingTime}"  Foreground="White" ToolTip="마지막 처리 소요 시간"/>
             </StatusBarItem>
         </StatusBar>
 
@@ -85,7 +86,7 @@
             </Grid.ColumnDefinitions>
 
             <!-- Original Image View -->
-            <Border Grid.Column="0" BorderThickness="1" Margin="10,10,0,10">
+            <Border Grid.Column="0" BorderThickness="1" Margin="10,10,0,10" ToolTip="처리 전 이미지. 휠 확대·중클릭 드래그로 이동">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -98,7 +99,8 @@
                         Margin="0,5,0,0"
                         FontSize="12"
                         FontWeight="Bold"
-                        Foreground="{StaticResource TextBrush}"/>
+                        Foreground="{StaticResource TextBrush}"
+                        ToolTip="원본(또는 이전 단계) 이미지"/>
                     <Border Grid.Row="1" 
                         Height="1" 
                         Background="{StaticResource SecondaryGrayBrush}" 
@@ -116,7 +118,7 @@
                                               ScaleY="{Binding ImageDisplay.CurrentZoomScale}"/>
                             </Border.LayoutTransform>
                             <Grid>
-                                <Image Source="{Binding BeforeImage}" Stretch="None" x:Name="BeforeImage">
+                                <Image Source="{Binding BeforeImage}" Stretch="None" x:Name="BeforeImage" ToolTip="Before 이미지">
                                     <b:Interaction.Triggers>
                                         <b:EventTrigger EventName="MouseWheel">
                                             <b:InvokeCommandAction Command="{Binding ZoomCommand}" PassEventArgsToCommand="True" />
@@ -150,10 +152,12 @@
                 </Grid>
             </Border>
 
-            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Center" VerticalAlignment="Stretch" />
+            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Center" VerticalAlignment="Stretch"
+                          Background="{StaticResource SecondaryGrayBrush}" ShowsPreview="True"
+                          ToolTip="Before와 After 패널 사이 폭을 조절합니다."/>
 
             <!-- Processed Image View -->
-            <Border Grid.Column="2" BorderThickness="1" Margin="0,10,10,10">
+            <Border Grid.Column="2" BorderThickness="1" Margin="0,10,10,10" ToolTip="필터 적용 결과 이미지">
                  <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -166,7 +170,8 @@
                         Margin="0,5,0,0"
                         FontSize="12"
                         FontWeight="Bold"
-                        Foreground="{StaticResource TextBrush}"/>
+                        Foreground="{StaticResource TextBrush}"
+                        ToolTip="현재 처리 결과"/>
                     <Border Grid.Row="1" 
                         Height="1" 
                         Background="{StaticResource SecondaryGrayBrush}" 
@@ -175,7 +180,7 @@
                                   x:Name="AfterImageScrollViewer"
                                   ScrollChanged="ScrollViewer_Sync">
                         <Grid>
-                            <Image Source="{Binding AfterImage}" Stretch="None">
+                            <Image Source="{Binding AfterImage}" Stretch="None" ToolTip="After 이미지">
                                 <Image.LayoutTransform>
                                     <ScaleTransform ScaleX="{Binding ImageDisplay.CurrentZoomScale}" 
                                                   ScaleY="{Binding ImageDisplay.CurrentZoomScale}"/>
@@ -194,6 +199,9 @@
                                     <b:EventTrigger EventName="MouseUp">
                                         <b:InvokeCommandAction Command="{Binding PanMouseUpCommand}" PassEventArgsToCommand="True" />
                                     </b:EventTrigger>
+                                    <b:EventTrigger EventName="MouseLeave">
+                                        <b:InvokeCommandAction Command="{Binding ClearMouseCoordinatesCommand}" />
+                                    </b:EventTrigger>
                                 </b:Interaction.Triggers>
                             </Image>
                         </Grid>
@@ -201,9 +209,11 @@
                 </Grid>
             </Border>
 
-            <GridSplitter Grid.Column="3" Width="5" HorizontalAlignment="Center" VerticalAlignment="Stretch" />
+            <GridSplitter Grid.Column="3" Width="5" HorizontalAlignment="Center" VerticalAlignment="Stretch"
+                          Background="{StaticResource SecondaryGrayBrush}" ShowsPreview="True"
+                          ToolTip="이미지 뷰와 오른쪽 도구 패널 사이 폭을 조절합니다."/>
             <!-- Right Side Panel -->
-            <Grid Grid.Column="4" Margin="10,10,10,10">
+            <Grid Grid.Column="4" Margin="10,10,10,10" ToolTip="필터·작업 내역·로그 패널">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="2*" />
                     <RowDefinition Height="Auto"/>
@@ -213,14 +223,14 @@
                 </Grid.RowDefinitions>
                 <!-- Button Groups -->
                 <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
-                    <GroupBox Header="Image Editor" Foreground="White">
+                    <GroupBox Header="Image Editor" Foreground="White" ToolTip="필터·형태학·매칭 등 이미지 처리 도구">
                         <StackPanel>
-                            <Expander Header="Colour | Contrast" Foreground="White" Margin="0,4,0,4">
+                            <Expander Header="Colour | Contrast" Foreground="White" Margin="0,4,0,4" ToolTip="이진화·클러스터·명암 조절">
                                 <StackPanel>
-                                    <GroupBox Header="Seperation">
+                                    <GroupBox Header="Seperation" ToolTip="임계값 기반 분리·이진화">
                                         <StackPanel>
-                                            <Button Content="Otsu's Binarization" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Bin_Otsu"/>
-                                            <Button Content="Binarization" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Bin"/>
+                                            <Button Content="Otsu's Binarization" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Bin_Otsu" ToolTip="Otsu 자동 임계값 이진화"/>
+                                            <Button Content="Binarization" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Bin" ToolTip="고정 임계값 이진화"/>
                                             <Separator Margin="5" Foreground="Gray"/>
                                             <Grid Margin="5">
                                                 <Grid.ColumnDefinitions>
@@ -228,22 +238,22 @@
                                                     <ColumnDefinition Width="50"/>
                                                     <ColumnDefinition Width="*"/>
                                                 </Grid.ColumnDefinitions>
-                                                <TextBlock Grid.Column="0" Text="Threshold:" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                                <TextBox Grid.Column="1" Text="{Binding Parameters.Threshold, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
-                                                <Slider Grid.Column="2" Value="{Binding Parameters.Threshold, Mode=TwoWay}" Minimum="0" Maximum="255" TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="0" Text="Threshold:" VerticalAlignment="Center" Margin="0,0,5,0" ToolTip="이진화 임계값 (0–255)"/>
+                                                <TextBox Grid.Column="1" Text="{Binding Parameters.Threshold, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" ToolTip="임계값 숫자 입력"/>
+                                                <Slider Grid.Column="2" Value="{Binding Parameters.Threshold, Mode=TwoWay}" Minimum="0" Maximum="255" TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center" ToolTip="임계값 슬라이더"/>
                                             </Grid>
                                             <Separator Margin="5" Foreground="Gray"/>
-                                            <Button Content="KMeansClustering" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Clustering"/>
-                                            <Button Content="KMeansClustering with loc" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="ClusteringLoc"/>
+                                            <Button Content="KMeansClustering" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Clustering" ToolTip="K-평균 색/밝기 클러스터링"/>
+                                            <Button Content="KMeansClustering with loc" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="ClusteringLoc" ToolTip="공간 정보를 포함한 K-평균"/>
                                             <Grid Margin="5">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
                                                     <ColumnDefinition Width="50"/>
                                                     <ColumnDefinition Width="*"/>
                                                 </Grid.ColumnDefinitions>
-                                                <TextBlock Grid.Column="0" Text="K-Groups:" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                                <TextBox Grid.Column="1" Text="{Binding Parameters.KGroup, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
-                                                <Slider Grid.Column="2" Value="{Binding Parameters.KGroup, Mode=TwoWay}" Minimum="2" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="0" Text="K-Groups:" VerticalAlignment="Center" Margin="0,0,5,0" ToolTip="클러스터 개수 K"/>
+                                                <TextBox Grid.Column="1" Text="{Binding Parameters.KGroup, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" ToolTip="K 값 입력"/>
+                                                <Slider Grid.Column="2" Value="{Binding Parameters.KGroup, Mode=TwoWay}" Minimum="2" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center" ToolTip="K 슬라이더"/>
                                             </Grid>
                                             <Grid Margin="5">
                                                 <Grid.ColumnDefinitions>
@@ -251,29 +261,29 @@
                                                     <ColumnDefinition Width="50"/>
                                                     <ColumnDefinition Width="*"/>
                                                 </Grid.ColumnDefinitions>
-                                                <TextBlock Grid.Column="0" Text="Iteration:" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                                <TextBox Grid.Column="1" Text="{Binding Parameters.Iteration, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
-                                                <Slider Grid.Column="2" Value="{Binding Parameters.Iteration, Mode=TwoWay}" Minimum="20" Maximum="500" TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="0" Text="Iteration:" VerticalAlignment="Center" Margin="0,0,5,0" ToolTip="K-평균 반복 횟수"/>
+                                                <TextBox Grid.Column="1" Text="{Binding Parameters.Iteration, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" ToolTip="반복 횟수 입력"/>
+                                                <Slider Grid.Column="2" Value="{Binding Parameters.Iteration, Mode=TwoWay}" Minimum="20" Maximum="500" TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center" ToolTip="반복 횟수 슬라이더"/>
                                             </Grid>
                                         </StackPanel>
                                     </GroupBox>
-                                    <GroupBox Header="Color-Contrast">
+                                    <GroupBox Header="Color-Contrast" ToolTip="그레이스케일·히스토그램 평활화">
                                         <StackPanel>
-                                            <Button Content="Gray Scale" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Gray"/>
-                                            <Button Content="Equalization" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Equal" />
-                                            <Button Content="Color Equalization" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Equal_color"  IsEnabled="{Binding IsColor}"/>
+                                            <Button Content="Gray Scale" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Gray" ToolTip="그레이스케일 변환"/>
+                                            <Button Content="Equalization" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Equal" ToolTip="히스토그램 평활화"/>
+                                            <Button Content="Color Equalization" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Equal_color"  IsEnabled="{Binding IsColor}" ToolTip="컬러 이미지 평활화"/>
                                         </StackPanel>                 
                                     </GroupBox>
                                 </StackPanel>
                             </Expander>
 
-                            <Expander Header="Filterring" Foreground="White"  Margin="0,4,0,4">
+                            <Expander Header="Filterring" Foreground="White"  Margin="0,4,0,4" ToolTip="엣지·블러·FFT 필터">
                                 <StackPanel Cursor="">
-                                    <GroupBox Header="Edge Detection">
+                                    <GroupBox Header="Edge Detection" ToolTip="미분·소벨·라플라시안 엣지">
                                         <StackPanel>
-                                            <Button Content="Differential" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Diff" />
-                                            <Button Content="Sobel" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Sobel"/>
-                                            <Button Content="Laplacian" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Laplace"/>
+                                            <Button Content="Differential" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Diff" ToolTip="1차 미분 엣지"/>
+                                            <Button Content="Sobel" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Sobel" ToolTip="Sobel 엣지"/>
+                                            <Button Content="Laplacian" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Laplace" ToolTip="라플라시안 엣지"/>
                                             <Separator Margin="5" Foreground="Gray"/>
                                             <Grid Margin="5">
                                                 <Grid.ColumnDefinitions>
@@ -281,28 +291,28 @@
                                                     <ColumnDefinition Width="50"/>
                                                     <ColumnDefinition Width="*"/>
                                                 </Grid.ColumnDefinitions>
-                                                <TextBlock Grid.Column="0" Text="Kernel:" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                                <TextBox Grid.Column="1" Text="{Binding Parameters.KernelSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
-                                                <Slider Grid.Column="2" Value="{Binding Parameters.KernelSize, Mode=TwoWay}" Minimum="1" Maximum="25" TickFrequency="2" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="0" Text="Kernel:" VerticalAlignment="Center" Margin="0,0,5,0" ToolTip="커널 크기"/>
+                                                <TextBox Grid.Column="1" Text="{Binding Parameters.KernelSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" ToolTip="커널 크기 입력"/>
+                                                <Slider Grid.Column="2" Value="{Binding Parameters.KernelSize, Mode=TwoWay}" Minimum="1" Maximum="25" TickFrequency="2" IsSnapToTickEnabled="True" VerticalAlignment="Center" ToolTip="커널 크기 슬라이더"/>
                                             </Grid> 
                                         </StackPanel>
                                     </GroupBox>
                                     
-                                    <GroupBox Header="Blur">
+                                    <GroupBox Header="Blur" ToolTip="평균·가우시안 블러">
                                         <StackPanel>
-                                            <Button Content="Average" Margin="2"  Command="{Binding FilterringCommand}" CommandParameter="Average"/>
-                                            <Button Content="Gaussian" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Gaussian"/>
+                                            <Button Content="Average" Margin="2"  Command="{Binding FilterringCommand}" CommandParameter="Average" ToolTip="박스 블러"/>
+                                            <Button Content="Gaussian" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Gaussian" ToolTip="가우시안 블러"/>
                                             <Separator Margin="5" Foreground="Gray"/>
-                                            <ToggleButton Content="Circular Kernel" IsChecked="{Binding Parameters.UseCircularKernel, Mode=TwoWay}" Margin="60,5,60,5" />
+                                            <ToggleButton Content="Circular Kernel" IsChecked="{Binding Parameters.UseCircularKernel, Mode=TwoWay}" Margin="60,5,60,5" ToolTip="원형 커널 사용 여부"/>
                                             <Grid Margin="5">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
                                                     <ColumnDefinition Width="50"/>
                                                     <ColumnDefinition Width="*"/>                                                    
                                                 </Grid.ColumnDefinitions>
-                                                <TextBlock Grid.Column="0" Text="Sigma:" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                                <TextBox Grid.Column="1" Text="{Binding Parameters.Sigma, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
-                                                <Slider Grid.Column="2" Value="{Binding Parameters.Sigma, Mode=TwoWay}" Minimum="0.1" Maximum="15" TickFrequency="0.1" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="0" Text="Sigma:" VerticalAlignment="Center" Margin="0,0,5,0" ToolTip="가우시안 시그마"/>
+                                                <TextBox Grid.Column="1" Text="{Binding Parameters.Sigma, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" ToolTip="시그마 입력"/>
+                                                <Slider Grid.Column="2" Value="{Binding Parameters.Sigma, Mode=TwoWay}" Minimum="0.1" Maximum="15" TickFrequency="0.1" VerticalAlignment="Center" ToolTip="시그마 슬라이더"/>
                                             </Grid>
                                             <Grid Margin="5">
                                                 <Grid.ColumnDefinitions>
@@ -310,21 +320,21 @@
                                                     <ColumnDefinition Width="50"/>
                                                     <ColumnDefinition Width="*"/>
                                                 </Grid.ColumnDefinitions>
-                                                <TextBlock Grid.Column="0" Text="Kernel:" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                                <TextBox Grid.Column="1" Text="{Binding Parameters.KernelSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
-                                                <Slider Grid.Column="2" Value="{Binding Parameters.KernelSize, Mode=TwoWay}" Minimum="1" Maximum="15" TickFrequency="2" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="0" Text="Kernel:" VerticalAlignment="Center" Margin="0,0,5,0" ToolTip="블러 커널 크기"/>
+                                                <TextBox Grid.Column="1" Text="{Binding Parameters.KernelSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" ToolTip="커널 크기"/>
+                                                <Slider Grid.Column="2" Value="{Binding Parameters.KernelSize, Mode=TwoWay}" Minimum="1" Maximum="15" TickFrequency="2" IsSnapToTickEnabled="True" VerticalAlignment="Center" ToolTip="커널 슬라이더"/>
                                             </Grid>
                                         </StackPanel>
                                     </GroupBox>
-                                    <GroupBox Header="FFT">
+                                    <GroupBox Header="FFT" ToolTip="주파수 영역 필터·스펙트럼">
                                         <StackPanel>
-                                            <Button Content="FFT Spectrum Visualization" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="FFT"/>
+                                            <Button Content="FFT Spectrum Visualization" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="FFT" ToolTip="FFT 스펙트럼 시각화"/>
                                             <!--<ToggleButton Content="CPU" IsChecked="{Binding Parameters.IsCPU, Mode=TwoWay}" Margin="60,5,60,5" />
                                             --><!--<ToggleButton Content="IsInverse" IsChecked="{Binding Parameters.IsInverse, Mode=TwoWay}" Margin="60,5,60,5" />--><!--
                                             <ToggleButton Content="IsPhase" IsChecked="{Binding Parameters.IsPhase, Mode=TwoWay}" Margin="60,5,60,5" />-->
 
-                                            <Button Content="FFT Low pass filter" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="FFT_Low"/>
-                                            <Button Content="FFT High pass filter" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="FFT_High"/>
+                                            <Button Content="FFT Low pass filter" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="FFT_Low" ToolTip="저역 통과"/>
+                                            <Button Content="FFT High pass filter" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="FFT_High" ToolTip="고역 통과"/>
 
                                             <Separator Margin="5" Foreground="Gray"/>
                                             <Grid Margin="5">
@@ -333,18 +343,18 @@
                                                     <ColumnDefinition Width="50"/>
                                                     <ColumnDefinition Width="*"/>
                                                 </Grid.ColumnDefinitions>
-                                                <TextBlock Grid.Column="0" Text="Radius Ratio:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                                <TextBlock Grid.Column="0" Text="Radius Ratio:" VerticalAlignment="Center" Margin="0,0,5,0" ToolTip="차단 주파수 반경 비율"/>
                                                 <TextBox Grid.Column="1" Text="{Binding Parameters.RadiusRatio, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
-                                                <Slider Grid.Column="2" Value="{Binding Parameters.RadiusRatio, Mode=TwoWay}" Minimum="0.01" Maximum="1" TickFrequency="0.01" VerticalAlignment="Center"/>
+                                                <Slider Grid.Column="2" Value="{Binding Parameters.RadiusRatio, Mode=TwoWay}" Minimum="0.01" Maximum="1" TickFrequency="0.01" VerticalAlignment="Center" ToolTip="반경 비율"/>
                                             </Grid>
-                                            <Button Content="FFT Bnad filter" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="FFT_Band"/>
+                                            <Button Content="FFT Bnad filter" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="FFT_Band" ToolTip="대역 통과 필터"/>
                                             <Grid Margin="5">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
                                                     <ColumnDefinition Width="50"/>
                                                     <ColumnDefinition Width="*"/>
                                                 </Grid.ColumnDefinitions>
-                                                <TextBlock Grid.Column="0" Text="Freq Radius:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                                <TextBlock Grid.Column="0" Text="Freq Radius:" VerticalAlignment="Center" Margin="0,0,5,0" ToolTip="주파수 반경"/>
                                                 <TextBox Grid.Column="1" Text="{Binding Parameters.LowFreqRadius, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
                                                 <Slider Grid.Column="2" Value="{Binding Parameters.LowFreqRadius, Mode=TwoWay}" Minimum="10" Maximum="50" TickFrequency="1" VerticalAlignment="Center"/>
                                             </Grid>
@@ -354,7 +364,7 @@
                                                     <ColumnDefinition Width="50"/>
                                                     <ColumnDefinition Width="*"/>
                                                 </Grid.ColumnDefinitions>
-                                                <TextBlock Grid.Column="0" Text="Magnitude Threshold:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                                <TextBlock Grid.Column="0" Text="Magnitude Threshold:" VerticalAlignment="Center" Margin="0,0,5,0" ToolTip="크기 임계값"/>
                                                 <TextBox Grid.Column="1" Text="{Binding Parameters.MagnitudeThreshold, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
                                                 <Slider Grid.Column="2" Value="{Binding Parameters.MagnitudeThreshold, Mode=TwoWay}" Minimum="0.1" Maximum="10" TickFrequency="0.1" VerticalAlignment="Center"/>
                                             </Grid>
@@ -362,24 +372,24 @@
                                     </GroupBox>
                                 </StackPanel>
                             </Expander>
-                            <Expander Header="Morphorogy" Foreground="White"  Margin="0,4,0,4">
+                            <Expander Header="Morphorogy" Foreground="White"  Margin="0,4,0,4" ToolTip="팽창·침식·열림·닫힘">
                                 <StackPanel>
-                                    <GroupBox Header = "Default" Foreground="White">
+                                    <GroupBox Header = "Default" Foreground="White" ToolTip="구조 요소 크기는 Kernel로 조절">
                                         <StackPanel>
                                             <StackPanel>
-                                                <Button Content="Dilation" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Dilation"/>
-                                                <Button Content="Erosion" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Erosion"/>
-                                                <Button Content="Opening" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Opening"/>
-                                                <Button Content="Closing" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Closing"/>
+                                                <Button Content="Dilation" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Dilation" ToolTip="팽창"/>
+                                                <Button Content="Erosion" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Erosion" ToolTip="침식"/>
+                                                <Button Content="Opening" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Opening" ToolTip="열림(침식 후 팽창)"/>
+                                                <Button Content="Closing" Margin="2" Command="{Binding FilterringCommand}" CommandParameter="Closing" ToolTip="닫힘(팽창 후 침식)"/>
                                                 <Separator Margin="5" Foreground="Gray"/>
-                                                <ToggleButton Content="Circular Kernel" IsChecked="{Binding Parameters.UseCircularKernel, Mode=TwoWay}" Margin="60,5,60,5" />
+                                                <ToggleButton Content="Circular Kernel" IsChecked="{Binding Parameters.UseCircularKernel, Mode=TwoWay}" Margin="60,5,60,5" ToolTip="원형 구조 요소"/>
                                                 <Grid Margin="5">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="Auto"/>
                                                         <ColumnDefinition Width="50"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Grid.Column="0" Text="Kernel:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                                    <TextBlock Grid.Column="0" Text="Kernel:" VerticalAlignment="Center" Margin="0,0,5,0" ToolTip="형태학 커널 크기"/>
                                                     <TextBox Grid.Column="1" Text="{Binding Parameters.KernelSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
                                                     <Slider Grid.Column="2" Value="{Binding Parameters.KernelSize, Mode=TwoWay}" Minimum="1" Maximum="25" TickFrequency="2" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
                                                 </Grid>
@@ -388,12 +398,12 @@
                                     </GroupBox>
                                 </StackPanel>
                             </Expander>
-                            <Expander Header="Image Matching" Foreground="White" Margin="0,4,0,4">                                
-                                 <GroupBox Header="Score Base">
+                            <Expander Header="Image Matching" Foreground="White" Margin="0,4,0,4" ToolTip="템플릿과의 유사도 매칭">                                
+                                 <GroupBox Header="Score Base" ToolTip="정규화 상관·합 차이 등">
                                     <StackPanel>
-                                        <Button Content="NCC" Margin="2" Command="{Binding ImageMatchingCommand}" CommandParameter="NCC"/>
-                                        <Button Content="SAD" Margin="2" Command="{Binding ImageMatchingCommand}" CommandParameter="SAD"/>
-                                        <Button Content="SSD" Margin="2" Command="{Binding ImageMatchingCommand}" CommandParameter="SSD"/>
+                                        <Button Content="NCC" Margin="2" Command="{Binding ImageMatchingCommand}" CommandParameter="NCC" ToolTip="정규화 상관 계수"/>
+                                        <Button Content="SAD" Margin="2" Command="{Binding ImageMatchingCommand}" CommandParameter="SAD" ToolTip="합 절대 차이"/>
+                                        <Button Content="SSD" Margin="2" Command="{Binding ImageMatchingCommand}" CommandParameter="SSD" ToolTip="합 제곱 차이"/>
                                     </StackPanel>
                                 </GroupBox>
                             </Expander>
@@ -405,20 +415,22 @@
                   HorizontalAlignment="Stretch" 
                   VerticalAlignment="Center" 
                   Background="{StaticResource SecondaryGrayBrush}"
-                  ShowsPreview="True"/>
+                  ShowsPreview="True"
+                  ToolTip="편집 도구와 작업 내역 패널 높이 비율 조절"/>
                 <!-- History -->
-                <GroupBox Grid.Row="2" Header="작업 내역">
-                    <ListBox x:Name="작업내역" ItemsSource="{Binding HistoryItems}" d:ItemsSource="{d:SampleData ItemCount=5}" />
+                <GroupBox Grid.Row="2" Header="작업 내역" ToolTip="적용한 필터·작업 순서">
+                    <ListBox x:Name="작업내역" ItemsSource="{Binding HistoryItems}" d:ItemsSource="{d:SampleData ItemCount=5}" ToolTip="항목을 두면 해당 단계까지의 상태를 확인할 수 있습니다"/>
                 </GroupBox>
                 <GridSplitter Grid.Row="3" 
                   Height="5" 
                   HorizontalAlignment="Stretch" 
                   VerticalAlignment="Center" 
                   Background="{StaticResource SecondaryGrayBrush}"
-                  ShowsPreview="True"/>
+                  ShowsPreview="True"
+                  ToolTip="작업 내역과 로그 패널 높이 비율 조절"/>
                 <!-- Log -->
-                <GroupBox Grid.Row="4" Header="로그">
-                    <TextBox Text="{Binding LogText, Mode=OneWay}" IsReadOnly="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" />
+                <GroupBox Grid.Row="4" Header="로그" ToolTip="처리 메시지·오류 로그">
+                    <TextBox Text="{Binding LogText, Mode=OneWay}" IsReadOnly="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" ToolTip="읽기 전용 로그"/>
                 </GroupBox>
             </Grid>
         </Grid>

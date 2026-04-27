@@ -6,13 +6,9 @@
 
 // Reference .NET assemblies
 #using <System.dll>
-////#using <PresentationCore.dll>
-//#using <WindowsBase.dll> // For BitmapSource
+// WPF types: add when needed, e.g. #using <PresentationCore.dll> and the relevant namespaces.
 
 using namespace System;
-using namespace System::Windows;
-using namespace System::Windows::Media;
-using namespace System::Windows::Media::Imaging;
 
 namespace ImaGy
 {
@@ -57,12 +53,12 @@ namespace ImaGy
 
 
             // Image Matching
-            static void ApplyNCC(System::IntPtr pixels, int width, int height, int stride, 
-                System::IntPtr templatePixels, int templateWidth, int templateHeight, int templateStride, System::IntPtr outCoords);
-            static void ApplySAD(System::IntPtr pixels, int width, int height, int stride, 
-                System::IntPtr templatePixels, int templateWidth, int templateHeight, int templateStride, System::IntPtr outCoords);
+            static void ApplyNCC(IntPtr pixels, int width, int height, int stride, 
+                IntPtr templatePixels, int templateWidth, int templateHeight, int templateStride, IntPtr outCoords);
+            static void ApplySAD(IntPtr pixels, int width, int height, int stride, 
+                IntPtr templatePixels, int templateWidth, int templateHeight, int templateStride, IntPtr outCoords);
             static void ApplySSD(System::IntPtr pixels, int width, int height, int stride, 
-                System::IntPtr templatePixels, int templateWidth, int templateHeight, int templateStride, System::IntPtr outCoords);
+                IntPtr templatePixels, int templateWidth, int templateHeight, int templateStride, IntPtr outCoords);
         };
     }
 }

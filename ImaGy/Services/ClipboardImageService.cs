@@ -9,15 +9,15 @@ namespace ImaGy.Services
         {
             if (image != null)
             {
-                Clipboard.SetImage(image);
+                System.Windows.Clipboard.SetImage(image);
             }
         }
 
         public BitmapSource? GetImage()
         {
-            if (Clipboard.ContainsImage())
+            if (System.Windows.Clipboard.ContainsImage())
             {
-                return Clipboard.GetImage();
+                return System.Windows.Clipboard.GetImage();
             }
             return null;
         }

@@ -4,7 +4,9 @@ using ImaGy.View;
 using ImaGy.ViewModels.Commands;
 using System;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -138,6 +140,7 @@ namespace ImaGy.ViewModels
         
         public ICommand MinimapCommand { get; }
         public ICommand ApplyCropCommand { get; }
+        public ICommand OpenGridWorkbenchCommand { get; }
 
         public ImageViewerInteractionService InteractionService { get; }
 
@@ -169,12 +172,12 @@ namespace ImaGy.ViewModels
             // Mouse Command
             ZoomCommand = new RelayCommand<MouseWheelEventArgs>(e => ImageDisplay.Zoom(e.Delta, e.GetPosition((IInputElement)e.Source)));
             PanMouseDownCommand = new RelayCommand<MouseButtonEventArgs>(InteractionService.MouseDown);
-            PanMouseMoveCommand = new RelayCommand<MouseEventArgs>(InteractionService.MouseMove);
+            PanMouseMoveCommand = new RelayCommand<System.Windows.Input.MouseEventArgs>(InteractionService.MouseMove);
             PanMouseUpCommand = new RelayCommand<MouseButtonEventArgs>(InteractionService.MouseUp);
-            UpdateMouseCoordinatesCommand = new RelayCommand<MouseEventArgs>(e =>
+            UpdateMouseCoordinatesCommand = new RelayCommand<System.Windows.Input.MouseEventArgs>(e =>
             {
-                Point pos = e.GetPosition((IInputElement)e.Source);
-                UpdateMouseCoordinates((int)pos.X, (int)pos.Y);
+                if (e?.OriginalSource is System.Windows.Controls.Image img)
+                    UpdateMousePixelReadout(img, e.GetPosition(img));
             });
             ClearMouseCoordinatesCommand = new RelayCommand(() => ClearMouseCoordinates());
             // File Command
@@ -194,6 +197,12 @@ namespace ImaGy.ViewModels
             ImageMatchingCommand = new ApplyImageMatchingCommand(this, imageProcessingService);
             ViewHistogramCommand = new ViewHistogramCommand(this, histogramService);
             ApplyCropCommand = new ApplyCropCommand(this);
+            OpenGridWorkbenchCommand = new RelayCommand(() =>
+            {
+                var vm = new GridWorkbenchViewModel(loggingService);
+                var win = new GridWorkbenchWindow { DataContext = vm };
+                win.Show();
+            });
             MinimapCommand = new RelayCommand(() => {
                 MinimapViewModel minimapViewModel = new MinimapViewModel(this);
                 ImaGy.View.MinimapWindow minimapWindow = new ImaGy.View.MinimapWindow
@@ -230,10 +239,76 @@ namespace ImaGy.ViewModels
         }
 
         // 메인뷰어 이미지 조작 메서드
-        public void UpdateMouseCoordinates(int x, int y)
+        /// <summary>
+        /// 이미지 위 마우스: 레이아웃(확대) 좌표를 픽셀 인덱스로 환산한 뒤 GV(밝기)·RGB를 상태줄에 표시합니다.
+        /// </summary>
+        public void UpdateMousePixelReadout(System.Windows.Controls.Image image, System.Windows.Point positionInImage)
         {
-            if (BeforeImage == null) return;
-            MouseCoordinates = $"X: {x}, Y: {y}";
+            if (image.Source is not BitmapSource bmp || bmp.PixelWidth <= 0 || bmp.PixelHeight <= 0)
+            {
+                MouseCoordinates = "X: -, Y: -";
+                return;
+            }
+
+            double s = ImageDisplay.CurrentZoomScale;
+            if (s < 1e-12) s = 1.0;
+
+            int px = (int)Math.Floor(positionInImage.X / s);
+            int py = (int)Math.Floor(positionInImage.Y / s);
+            if (px < 0 || py < 0 || px >= bmp.PixelWidth || py >= bmp.PixelHeight)
+            {
+                MouseCoordinates = "이미지 밖";
+                return;
+            }
+
+            if (!TrySamplePixel(bmp, px, py, out byte r, out byte g, out byte b, out _))
+            {
+                MouseCoordinates = $"X: {px}, Y: {py} | GV: —";
+                return;
+            }
+
+            double gray = 0.299 * r + 0.587 * g + 0.114 * b;
+            bool singleChannel = bmp.Format == PixelFormats.Gray8
+                                 || bmp.Format == PixelFormats.Gray16
+                                 || bmp.Format == PixelFormats.Gray32Float
+                                 || bmp.Format == PixelFormats.Indexed8;
+
+            if (singleChannel)
+                MouseCoordinates = string.Format(CultureInfo.InvariantCulture, "X: {0}, Y: {1} | GV: {2}", px, py, r);
+            else
+                MouseCoordinates = string.Format(CultureInfo.InvariantCulture,
+                    "X: {0}, Y: {1} | GV: {2:F0} (R{3} G{4} B{5})", px, py, gray, r, g, b);
+        }
+
+        private static bool TrySamplePixel(BitmapSource bmp, int px, int py, out byte r, out byte g, out byte b, out byte a)
+        {
+            r = g = b = 0;
+            a = 255;
+            try
+            {
+                var rect = new Int32Rect(px, py, 1, 1);
+                if (bmp.Format == PixelFormats.Gray8)
+                {
+                    var buf = new byte[1];
+                    bmp.CopyPixels(rect, buf, 1, 0);
+                    r = g = b = buf[0];
+                    return true;
+                }
+
+                var cropped = new CroppedBitmap(bmp, rect);
+                var conv = new FormatConvertedBitmap(cropped, PixelFormats.Pbgra32, null, 0);
+                var p = new byte[4];
+                conv.CopyPixels(p, 4, 0);
+                b = p[0];
+                g = p[1];
+                r = p[2];
+                a = p[3];
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         public void ClearMouseCoordinates()

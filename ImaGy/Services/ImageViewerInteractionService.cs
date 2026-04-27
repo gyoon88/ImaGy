@@ -1,6 +1,7 @@
 using ImaGy.Models;
 using ImaGy.ViewModels;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 
@@ -27,7 +28,7 @@ namespace ImaGy.Services
             set => SetProperty(ref _cropRectangle, value);
         }
 
-        private Point _cropStartPoint;
+        private System.Windows.Point _cropStartPoint;
 
         public ImageViewerInteractionService(MainViewModel mainViewModel, ImageDisplayService imageDisplayService, CropService cropService, HistoryService historyService)
         {
@@ -63,20 +64,22 @@ namespace ImaGy.Services
             }
         }
 
-        public void MouseMove(MouseEventArgs e)
+        public void MouseMove(System.Windows.Input.MouseEventArgs e)
         {
             if (e.OriginalSource is FrameworkElement element)
             {
                 if (IsInCropMode && e.LeftButton == MouseButtonState.Pressed)
                 {
-                    Point currentPoint = e.GetPosition(element);
+                    System.Windows.Point currentPoint = e.GetPosition(element);
                     CropRectangle = new Rect(_cropStartPoint, currentPoint);
                 }
                 else
                 {
                     _imageDisplayService.PanMouseMove(e.GetPosition(element));
                 }
-                _mainViewModel.UpdateMouseCoordinates((int)e.GetPosition(element).X, (int)e.GetPosition(element).Y);
+
+                if (e.OriginalSource is System.Windows.Controls.Image img)
+                    _mainViewModel.UpdateMousePixelReadout(img, e.GetPosition(img));
             }
         }
 

@@ -46,7 +46,7 @@ namespace ImaGy.Services
             if (imageToProcess == null)
             {
                 _loggingService.AddLog("No image loaded for processing.");
-                MessageBox.Show("Please load an image first.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Windows.MessageBox.Show("Please load an image first.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return (null, 0);
             }
             if (processAction == null)

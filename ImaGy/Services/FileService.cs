@@ -13,7 +13,7 @@ namespace ImaGy.Services
     {
         public async Task<ImageLoadResult?> OpenImage()
         {
-            OpenFileDialog openDialog = new OpenFileDialog
+            Microsoft.Win32.OpenFileDialog openDialog = new Microsoft.Win32.OpenFileDialog
             {
                 Filter = "Image files (*.png;*.jpeg;*.jpg;*.bmp)|*.png;*.jpeg;*.jpg;*.bmp|All files (*.*)|*.*"
             };
@@ -39,7 +39,7 @@ namespace ImaGy.Services
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"이미지를 여는 데 실패했습니다.\n\n오류: {ex.Message}",
+                    System.Windows.MessageBox.Show($"이미지를 여는 데 실패했습니다.\n\n오류: {ex.Message}",
                                     "파일 열기 오류", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
@@ -48,7 +48,7 @@ namespace ImaGy.Services
 
         public string? GetSaveFilePath(string defaultFileName)
         {
-            SaveFileDialog saveDialog = new SaveFileDialog
+            Microsoft.Win32.SaveFileDialog saveDialog = new Microsoft.Win32.SaveFileDialog
             {
                 Filter = "CSV files (*.csv)|*.csv",
                 FileName = defaultFileName
@@ -66,7 +66,7 @@ namespace ImaGy.Services
         /// </summary>
         public BitmapSource? OpenTemplateImage()
         {
-            OpenFileDialog openDialog = new OpenFileDialog
+            Microsoft.Win32.OpenFileDialog openDialog = new Microsoft.Win32.OpenFileDialog
             {
                 Filter = "Image files (*.png;*.jpeg;*.jpg;*.bmp)|*.png;*.jpeg;*.jpg;*.bmp|All files (*.*)|*.*"
             };
@@ -79,7 +79,7 @@ namespace ImaGy.Services
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"템플릿 이미지를 여는 데 실패했습니다.\n\n오류: {ex.Message}",
+                    System.Windows.MessageBox.Show($"템플릿 이미지를 여는 데 실패했습니다.\n\n오류: {ex.Message}",
                                     "오류", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
@@ -91,7 +91,7 @@ namespace ImaGy.Services
         {
             if (image == null) return;
 
-            SaveFileDialog saveDialog = new SaveFileDialog
+            Microsoft.Win32.SaveFileDialog saveDialog = new Microsoft.Win32.SaveFileDialog
             {
                 Filter = "PNG Image|*.png|JPEG Image|*.jpg|BMP Image|*.bmp"
             };
@@ -117,7 +117,7 @@ namespace ImaGy.Services
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Failed to save the image.\n\nError: {ex.Message}",
+                    System.Windows.MessageBox.Show($"Failed to save the image.\n\nError: {ex.Message}",
                      "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }

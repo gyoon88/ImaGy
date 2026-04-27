@@ -4,6 +4,7 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows10.0.26100.0</TargetFramework>
     <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -25,6 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ImaGy.Grids\ImaGy.Grids.csproj" />
     <ProjectReference Include="..\ImaGyWrapper\ImaGyWrapper.vcxproj">
       <Private>true</Private>
     </ProjectReference>
@@ -38,8 +40,6 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
-    <PackageReference Include="OpenCvSharp4.Extensions" Version="4.11.0.20250507" />
-    <PackageReference Include="OpenCvSharp4.Windows" Version="4.11.0.20250507" />
   </ItemGroup>
 
 </Project>
