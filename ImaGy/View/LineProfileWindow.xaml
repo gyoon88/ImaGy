@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Title="라인 프로파일" Height="460" Width="860"
         d:DataContext="{d:DesignInstance Type=vm:LineProfileViewModel, IsDesignTimeCreatable=False}"
-        ToolTip="한 행 또는 한 열의 값을 선 그래프로 표시">
+        ToolTip="분석 ROI 격자에서 한 축을 따라 다른 축 방향 셀 값의 합(라인썸)">
     <Grid Background="{StaticResource WindowBackgroundBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -15,27 +15,22 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10,10,10,8" VerticalAlignment="Center">
-            <TextBlock Text="축" Foreground="White" VerticalAlignment="Center" Margin="0,0,6,0" ToolTip="프로파일 방향"/>
-            <ComboBox Width="100" SelectedValuePath="Content" SelectedValue="{Binding AxisMode, Mode=TwoWay}" Margin="0,0,10,0"
-                      ToolTip="Row: 가로 한 줄, Column: 세로 한 열">
-                <ComboBoxItem Content="Row" ToolTip="고정 행 인덱스, 열 방향으로 값 나열"/>
-                <ComboBoxItem Content="Column" ToolTip="고정 열 인덱스, 행 방향으로 값 나열"/>
-            </ComboBox>
-            <TextBlock Text="{Binding IndexLabel}" Foreground="White" VerticalAlignment="Center" Margin="0,0,6,0" ToolTip="현재 선택한 행/열 번호"/>
-            <Slider Width="380"
-                    Minimum="0"
-                    Maximum="{Binding MaxIndex}"
-                    Value="{Binding Index, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                    TickFrequency="1"
-                    IsSnapToTickEnabled="True"
-                    VerticalAlignment="Center"
-                    ToolTip="행/열 인덱스 빠르게 이동"/>
-            <TextBox Width="70"
-                     Margin="8,0,0,0"
-                     Text="{Binding Index, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                     ToolTip="인덱스 직접 입력"/>
-            <TextBlock Text="{Binding Mean, StringFormat=평균 {0:F4}}" Foreground="White" Margin="12,0,0,0" VerticalAlignment="Center" ToolTip="현재 라인의 평균 값"/>
+        <StackPanel Grid.Row="0" Margin="10,10,10,8" VerticalAlignment="Center">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="모드" Foreground="White" VerticalAlignment="Center" Margin="0,0,6,0" ToolTip="가로 축(그래프)이 나타낼 ROI 인덱스"/>
+                <ComboBox Width="100" SelectedValuePath="Content" SelectedValue="{Binding AxisMode, Mode=TwoWay}" Margin="0,0,10,0"
+                          ToolTip="Row: y(행)마다 x방향 합, Column: x(열)마다 y방향 합">
+                    <ComboBoxItem Content="Row" ToolTip="가로 축 = ROI y(행) 인덱스 0..H-1, 곡선 값 = 그 행에 대한 x(열) 누적 합"/>
+                    <ComboBoxItem Content="Column" ToolTip="가로 축 = ROI x(열) 인덱스 0..W-1, 곡선 값 = 그 열에 대한 y(행) 누적 합"/>
+                </ComboBox>
+                <TextBlock Text="{Binding Mean, StringFormat=유한 수 평균 {0:F4}}" Foreground="White" Margin="8,0,0,0" VerticalAlignment="Center" ToolTip="곡선에서 NaN·무한 제외한 평균"/>
+            </StackPanel>
+            <TextBlock Text="{Binding AxisAbscissaDescription}"
+                       Foreground="#FFCCCCCC"
+                       FontSize="11"
+                       Margin="0,6,0,0"
+                       TextWrapping="Wrap"
+                       ToolTip="이 창의 가로축 = ROI 안에서의 (행 또는 열) 0부터 시작하는 인덱스"/>
         </StackPanel>
 
         <Border Grid.Row="1" Margin="10,0,10,6" BorderBrush="{StaticResource PrimaryGrayBrush}" BorderThickness="1" Background="{StaticResource PrimaryGrayBrush}"

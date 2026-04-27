@@ -33,10 +33,26 @@ namespace ImaGy.View
             if (e.PropertyName == nameof(HistogramViewModel.MaxHistogramValue)
                 || e.PropertyName == nameof(HistogramViewModel.HistogramValueMin)
                 || e.PropertyName == nameof(HistogramViewModel.HistogramValueMax)
-                || e.PropertyName == nameof(HistogramViewModel.IsFloatHistogram))
+                || e.PropertyName == nameof(HistogramViewModel.IsFloatHistogram)
+                || e.PropertyName == nameof(HistogramViewModel.SampleModeIndex)
+                || e.PropertyName == nameof(HistogramViewModel.GrayscaleHistogramData)
+                || e.PropertyName == nameof(HistogramViewModel.R_HistogramData))
             {
                 DrawUI();
             }
+        }
+
+        private void OpenLineProfile_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is not HistogramViewModel vm)
+                return;
+            if (!vm.TryOpenLineProfile(out var lpVm))
+            {
+                System.Windows.MessageBox.Show(this, "라인 프로파일을 열 수 없습니다. 메인에 이미지가 있는지 확인하세요.", "ImaGy",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+            new LineProfileWindow { DataContext = lpVm }.Show();
         }
 
         private void HistogramCanvas_SizeChanged(object sender, SizeChangedEventArgs e)

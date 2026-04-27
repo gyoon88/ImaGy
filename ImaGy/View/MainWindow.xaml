@@ -46,6 +46,8 @@
             </MenuItem>
             <MenuItem Header="_도구" ToolTip="추가 도구">
                 <MenuItem Header="자르기" Command="{Binding ApplyCropCommand}" ToolTip="표시된 영역으로 자르기 적용"/>
+                <MenuItem Header="분석 ROI: Shift+좌클릭 드래그" IsEnabled="False" ToolTip="After(또는 단일 Before) 이미지 위에서 Shift를 누른 채 좌클릭으로 사각형을 그립니다. 히스토그램·행/열 합·라인 프로파일에 적용됩니다."/>
+                <MenuItem Header="분석 ROI 지우기" Command="{Binding ClearAnalysisRoiCommand}" ToolTip="분석 영역을 전체 이미지로 되돌립니다."/>
                 <MenuItem Header="CSV 격자 워크벤치" Command="{Binding OpenGridWorkbenchCommand}" ToolTip="2D CSV 격자 Diff·ROI 워크벤치"/>
             </MenuItem>
             <MenuItem Header="_도움말" ToolTip="도움말">
@@ -69,6 +71,10 @@
             </StatusBarItem>
             <StatusBarItem>
                 <TextBlock Text="{Binding MouseCoordinates}"  Foreground="White" ToolTip="이미지 위 마우스 좌표"/>
+            </StatusBarItem>
+            <Separator/>
+            <StatusBarItem>
+                <TextBlock Text="{Binding AnalysisRoiHint}" Foreground="#FFB0E0B0" FontSize="11" ToolTip="메인: 보기 → 분석 ROI(Shift+좌클릭 드래그)"/>
             </StatusBarItem>
             <Separator/>
             <StatusBarItem>
@@ -145,6 +151,20 @@
                                                Canvas.Top="{Binding InteractionService.CropRectangle.Y}"                  
                                                Width="{Binding InteractionService.CropRectangle.Width}"                   
                                                Height="{Binding InteractionService.CropRectangle.Height}"/>
+                                    <Rectangle Stroke="#FFFFA500" StrokeThickness="2"
+                                               Fill="#40FFA500"
+                                               Visibility="{Binding HasAnalysisRoi, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                               Canvas.Left="{Binding RoiOverlayLeft}"
+                                               Canvas.Top="{Binding RoiOverlayTop}"
+                                               Width="{Binding RoiOverlayWidth}"
+                                               Height="{Binding RoiOverlayHeight}"/>
+                                    <Rectangle Stroke="Yellow" StrokeThickness="1" StrokeDashArray="3 2"
+                                               Fill="#30FFFF00"
+                                               Visibility="{Binding InteractionService.ShowHistogramRoiDraft, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                               Canvas.Left="{Binding InteractionService.HistogramRoiDraft.X}"
+                                               Canvas.Top="{Binding InteractionService.HistogramRoiDraft.Y}"
+                                               Width="{Binding InteractionService.HistogramRoiDraft.Width}"
+                                               Height="{Binding InteractionService.HistogramRoiDraft.Height}"/>
                                 </Canvas>
                             </Grid>
                         </Border>
@@ -179,13 +199,15 @@
                     <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
                                   x:Name="AfterImageScrollViewer"
                                   ScrollChanged="ScrollViewer_Sync">
-                        <Grid>
-                            <Image Source="{Binding AfterImage}" Stretch="None" ToolTip="After 이미지">
-                                <Image.LayoutTransform>
-                                    <ScaleTransform ScaleX="{Binding ImageDisplay.CurrentZoomScale}" 
-                                                  ScaleY="{Binding ImageDisplay.CurrentZoomScale}"/>
-                                </Image.LayoutTransform>
-                                
+                        <!-- Before 패널과 동일: 확대는 Border.LayoutTransform → Image/Canvas가 같은 좌표계(ROI·팬·픽셀 변환 일치) -->
+                        <Border HorizontalAlignment="Center"
+                                VerticalAlignment="Center">
+                            <Border.LayoutTransform>
+                                <ScaleTransform ScaleX="{Binding ImageDisplay.CurrentZoomScale}"
+                                                ScaleY="{Binding ImageDisplay.CurrentZoomScale}"/>
+                            </Border.LayoutTransform>
+                            <Grid>
+                                <Image x:Name="AfterImage" Source="{Binding AfterImage}" Stretch="None" ToolTip="After 이미지">
                                 <b:Interaction.Triggers>
                                      <b:EventTrigger EventName="MouseWheel">
                                         <b:InvokeCommandAction Command="{Binding ZoomCommand}" PassEventArgsToCommand="True" />
@@ -204,7 +226,24 @@
                                     </b:EventTrigger>
                                 </b:Interaction.Triggers>
                             </Image>
-                        </Grid>
+                            <Canvas IsHitTestVisible="False">
+                                <Rectangle Stroke="#FFFFA500" StrokeThickness="2"
+                                           Fill="#40FFA500"
+                                           Visibility="{Binding HasAnalysisRoi, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                           Canvas.Left="{Binding RoiOverlayLeft}"
+                                           Canvas.Top="{Binding RoiOverlayTop}"
+                                           Width="{Binding RoiOverlayWidth}"
+                                           Height="{Binding RoiOverlayHeight}"/>
+                                <Rectangle Stroke="Yellow" StrokeThickness="1" StrokeDashArray="3 2"
+                                           Fill="#30FFFF00"
+                                           Visibility="{Binding InteractionService.ShowHistogramRoiDraft, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                           Canvas.Left="{Binding InteractionService.HistogramRoiDraft.X}"
+                                           Canvas.Top="{Binding InteractionService.HistogramRoiDraft.Y}"
+                                           Width="{Binding InteractionService.HistogramRoiDraft.Width}"
+                                           Height="{Binding InteractionService.HistogramRoiDraft.Height}"/>
+                            </Canvas>
+                            </Grid>
+                        </Border>
                     </ScrollViewer>
                 </Grid>
             </Border>

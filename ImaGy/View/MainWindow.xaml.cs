@@ -14,6 +14,9 @@ namespace ImaGy.View
             InitializeComponent();
             viewModel = (MainViewModel)DataContext;
 
+            BeforeImage.LayoutUpdated += OnViewerImageLayoutUpdated;
+            AfterImage.LayoutUpdated += OnViewerImageLayoutUpdated;
+
             viewModel.ImageDisplay.RequestScrollAction = (h, v) =>
             {
                 BeforeImageScrollViewer.ScrollToHorizontalOffset(h);
@@ -21,6 +24,12 @@ namespace ImaGy.View
                 AfterImageScrollViewer.ScrollToHorizontalOffset(h);
                 AfterImageScrollViewer.ScrollToVerticalOffset(v);
             };
+        }
+
+        private void OnViewerImageLayoutUpdated(object? sender, EventArgs e)
+        {
+            System.Windows.Controls.Image canonical = viewModel.AfterImage != null ? AfterImage : BeforeImage;
+            viewModel.UpdateViewPixelScaleFromImage(canonical);
         }
 
         private void ScrollViewer_Sync(object sender, ScrollChangedEventArgs e)

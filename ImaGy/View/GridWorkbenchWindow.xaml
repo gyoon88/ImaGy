@@ -103,8 +103,8 @@
                               Background="{StaticResource SecondaryGrayBrush}"
                               ShowsPreview="True"
                               ToolTip="A/B 미리보기 열과 Diff 뷰 사이 폭을 조절합니다."/>
-                <GroupBox Grid.Column="2" Header="Diff ROI (메인 뷰: 휠 확대/중클릭 드래그 이동)" Margin="0,0,0,0"
-                          ToolTip="Diff 격자와 ROI 오버레이. 마우스 휠로 확대·축소, 가운데 버튼 드래그로 이동합니다.">
+                <GroupBox Grid.Column="2" Header="Diff ROI (휠 확대·가운데 드래그 팬, ROI: Shift+좌클릭)" Margin="0,0,0,0"
+                          ToolTip="Diff 격자와 ROI. 휠 확대/축소, 가운데 버튼 드래그로 팬, 도구 선택 후 Shift+좌클릭(드래그)로 ROI.">
                     <Border Background="{StaticResource PrimaryGrayBrush}" Padding="2" ClipToBounds="True">
                         <Grid>
                             <Grid.RowDefinitions>
@@ -120,7 +120,7 @@
                                           PreviewMouseDown="DiffScrollViewer_PreviewMouseDown"
                                           PreviewMouseMove="DiffScrollViewer_PreviewMouseMove"
                                           PreviewMouseUp="DiffScrollViewer_PreviewMouseUp"
-                                          ToolTip="휠: 확대/축소, 가운데 버튼 드래그: 팬, 스크롤바: 이동">
+                                          ToolTip="휠: 확대/축소, 가운데: 팬(드래그), Shift+좌클릭: ROI(도구 선택 시)">
                                 <Grid x:Name="DiffHostGrid" MinHeight="80">
                                     <Image x:Name="DiffPreviewImage"
                                            Source="{Binding PreviewDiff}"
@@ -143,7 +143,7 @@
                                             MouseLeave="RoiOverlay_MouseLeave"
                                             MouseLeftButtonUp="RoiOverlay_MouseLeftButtonUp"
                                             MouseRightButtonDown="RoiOverlay_MouseRightButtonDown"
-                                            ToolTip="ROI 도구 선택 시 여기서 도형 그리기. 우클릭: 삼각형 그리기 취소"/>
+                                            ToolTip="도구 선택 후 Shift+좌클릭(드래그: 사각/원, 3클릭: 삼각). 우클릭: 삼각 취소"/>
                                 </Grid>
                             </ScrollViewer>
                             <TextBlock Grid.Row="1"
@@ -233,18 +233,18 @@
                             </Expander>
 
                             <Expander Header="Diff ROI 그리기" IsExpanded="True" Margin="0,0,0,4" Foreground="White"
-                                      ToolTip="Diff 뷰 위에 ROI를 그리고 목록·히스토그램 마스크에 사용합니다.">
+                                      ToolTip="Diff 위에서 Shift+좌클릭으로 그립니다(메인 분석 ROI와 동일). 목록·히스토그램 마스크에 사용됩니다.">
                                 <StackPanel Margin="0,6,0,0">
                                     <TextBlock Text="도구" Foreground="White" Margin="0,0,0,4" ToolTip="ROI 도형 종류"/>
                                     <ComboBox SelectedValuePath="Content" SelectedValue="{Binding RoiDrawTool, Mode=TwoWay}" Margin="0,2"
-                                              ToolTip="사각형·원은 드래그, 삼각형은 점 3개 클릭">
+                                              ToolTip="모든 도구: Diff 위에서 Shift+사용. 사각/원: 드래그, 삼각: 점 3회 클릭">
                                         <ComboBoxItem Content="없음" ToolTip="그리기 비활성"/>
-                                        <ComboBoxItem Content="사각형" ToolTip="대각 드래그로 사각형"/>
-                                        <ComboBoxItem Content="원" ToolTip="대각 드래그로 타원/원"/>
-                                        <ComboBoxItem Content="삼각형" ToolTip="좌클릭으로 꼭짓점 3개"/>
+                                        <ComboBoxItem Content="사각형" ToolTip="Shift+좌클릭으로 대각 드래그"/>
+                                        <ComboBoxItem Content="원" ToolTip="Shift+좌클릭으로 대각 드래그"/>
+                                        <ComboBoxItem Content="삼각형" ToolTip="Shift+좌클릭으로 꼭짓점 3회"/>
                                     </ComboBox>
                                     <TextBlock TextWrapping="Wrap" FontSize="10" Foreground="White" Opacity="0.85" Margin="0,8,0,0"
-                                               Text="사각형·원: 드래그. 삼각형: 좌클릭 3점. 우클릭: 진행 중 취소."/>
+                                               Text="사각·원: Shift+드래그. 삼각: Shift+클릭 3점. 우클릭: 삼각 진행 취소."/>
                                     <TextBlock Text="ROI 이름" Foreground="White" Margin="0,8,0,2" ToolTip="추가·갱신 시 사용할 레이블"/>
                                     <TextBox Text="{Binding NewRoiName, UpdateSourceTrigger=PropertyChanged}" Margin="0,2"
                                              ToolTip="목록에 표시될 ROI 이름"/>
@@ -417,7 +417,7 @@
                              BorderThickness="0"
                              Background="Transparent"
                              Foreground="White"
-                             Text="Diff 뷰: 휠 확대·축소, 가운데 버튼 드래그로 팬. ROI는 도구 선택 후 Diff 위에서 그리기. 히스토그램·라인 프로파일은 상단 도구줄에서 열 수 있으며, ROI 선택 시 해당 영역만 반영됩니다. 출력 폴더를 지정한 뒤 PNG·CSV 저장을 사용하세요."/>
+                             Text="Diff: 휠로 확대·축소, 가운데 드래그로 팬. ROI는 메인 뷰와 같이 Shift+좌클릭(사각/원은 드래그, 삼각은 Shift+클릭 3회). 히스토그램·라인 프로파일은 상단에서 열 수 있으며, ROI 목록에서 선택한 영역이 반영됩니다. 출력 폴더를 지정한 뒤 PNG·CSV를 저장하세요."/>
                 </GroupBox>
             </Grid>
         </Grid>

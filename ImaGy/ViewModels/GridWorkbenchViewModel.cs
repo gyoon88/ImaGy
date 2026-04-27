@@ -614,7 +614,7 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
         int invalidInRoi = roiPixels - s.Count;
         string invalidHint = invalidInRoi > 0 ? $", 비유효(ROI 내)={invalidInRoi}" : "";
         SelectedRoiStatsText =
-            $"선택 ROI '{SelectedRoi.Name}' | ROI 픽셀={roiPixels}, 유효 픽셀={s.Count}{invalidHint} | Mean={s.Mean:F6}, Std={s.Std:F6}, Min={s.Min:F6}, Max={s.Max:F6}";
+            $"선택 ROI '{SelectedRoi.Name}' \n ROI 픽셀={roiPixels}, 유효 픽셀={s.Count}{invalidHint}, Finite Ratio = {s.Count/roiPixels} \n Mean={s.Mean:F6}, Std={s.Std:F6}, Min={s.Min:F6}, Max={s.Max:F6}, Count: {s.Count}";
     }
 
     private void RunBatchFolder()

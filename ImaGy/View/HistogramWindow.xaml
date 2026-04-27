@@ -11,6 +11,22 @@
         ToolTip="이미지 또는 격자 값 분포 히스토그램">
 
     <Grid Background="{StaticResource WindowBackgroundBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <DockPanel Grid.Row="0" LastChildFill="False" Margin="10,8,10,4">
+            <TextBlock Text="표본" Foreground="White" VerticalAlignment="Center" Margin="0,0,10,0" DockPanel.Dock="Left"
+                       ToolTip="픽셀 GV 또는 행/열 방향 밝기 합의 분포"/>
+            <ComboBox Width="268" DockPanel.Dock="Left" SelectedIndex="{Binding SampleModeIndex, Mode=TwoWay}">
+                <ComboBoxItem Content="픽셀 (GV)"/>
+                <ComboBoxItem Content="행 합 (X방향 누적)"/>
+                <ComboBoxItem Content="열 합 (Y방향 누적)"/>
+            </ComboBox>
+            <Button Content="라인 프로파일" Click="OpenLineProfile_Click" Margin="12,0,0,0" Padding="12,4" DockPanel.Dock="Left"
+                    ToolTip="메인 이미지·분석 ROI를 격자로 열어 행/열 프로파일 (별 창)"/>
+        </DockPanel>
+        <Grid Grid.Row="1">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="Auto"/>
@@ -81,6 +97,7 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
                     <TextBlock Grid.Row="0" Grid.Column="0" Text="Mean:" Margin="0,2,5,2" Foreground="White" ToolTip="산술 평균"/>
@@ -103,9 +120,12 @@
 
                     <TextBlock Grid.Row="6" Grid.Column="0" Text="Range:" Margin="0,2,5,2"  Foreground="White" ToolTip="Max − Min"/>
                     <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding Range, StringFormat={}{0:F4}, FallbackValue='N/A'}" HorizontalAlignment="Right" Margin="0,2" Foreground="White" ToolTip="범위"/>
-                </Grid>
+                    <TextBlock Grid.Row="7" Grid.Column="0" Text="Count:" Margin="0,2,5,2"  Foreground="White" ToolTip="Pixel Count"/>
+                    <TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding Count, StringFormat={}{0:F4}, FallbackValue='N/A'}" HorizontalAlignment="Right" Margin="0,2" Foreground="White" ToolTip="픽셀 갯수"/>
+                    </Grid>
             </StackPanel>
         </Border>
 
+        </Grid>
     </Grid>
 </Window>

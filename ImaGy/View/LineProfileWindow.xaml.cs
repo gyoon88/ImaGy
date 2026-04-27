@@ -32,8 +32,7 @@ public partial class LineProfileWindow : Window
         if (e.PropertyName is nameof(LineProfileViewModel.ProfileValues)
             or nameof(LineProfileViewModel.ValueMin)
             or nameof(LineProfileViewModel.ValueMax)
-            or nameof(LineProfileViewModel.AxisMode)
-            or nameof(LineProfileViewModel.Index))
+            or nameof(LineProfileViewModel.AxisMode))
         {
             DrawProfile();
         }
@@ -46,7 +45,7 @@ public partial class LineProfileWindow : Window
         ProfileCanvas.Children.Clear();
         if (_viewModel == null) return;
         var data = _viewModel.ProfileValues;
-        if (data.Length < 2 || ProfileCanvas.ActualWidth <= 2 || ProfileCanvas.ActualHeight <= 2) return;
+        if (data.Length < 1 || ProfileCanvas.ActualWidth <= 2 || ProfileCanvas.ActualHeight <= 2) return;
 
         double w = ProfileCanvas.ActualWidth;
         double h = ProfileCanvas.ActualHeight;
@@ -60,6 +59,7 @@ public partial class LineProfileWindow : Window
         ProfileCanvas.Children.Add(xAxis);
 
         Polyline? current = null;
+        int denomX = Math.Max(1, data.Length - 1);
         for (int i = 0; i < data.Length; i++)
         {
             double v = data[i];
@@ -69,7 +69,7 @@ public partial class LineProfileWindow : Window
                 continue;
             }
 
-            double x = (i / (double)(data.Length - 1)) * (w - 1);
+            double x = (i / (double)denomX) * (w - 1);
             double y = h - ((v - min) / span) * h;
             y = Math.Clamp(y, 0, h);
 
@@ -94,11 +94,13 @@ public partial class LineProfileWindow : Window
 
         double x = e.GetPosition(ProfileCanvas).X;
         int n = _viewModel.ProfileValues.Length;
-        int idx = (int)Math.Round((x / Math.Max(1, ProfileCanvas.ActualWidth)) * (n - 1));
+        if (n <= 0) return;
+        int denomX = Math.Max(1, n - 1);
+        int idx = (int)Math.Round((x / Math.Max(1, ProfileCanvas.ActualWidth)) * denomX);
         idx = Math.Clamp(idx, 0, n - 1);
         double v = _viewModel.ProfileValues[idx];
-        string vText = FloatGrid.IsFinite(v) ? v.ToString("F6") : "NaN";
-        ProfileHoverText.Text = $"{_viewModel.AxisLabel}={idx}, value={vText}";
+        string vText = FloatGrid.IsFinite(v) ? v.ToString("F4") : "합 없음(마스크/유효 셀 없음)";
+        ProfileHoverText.Text = $"{_viewModel.AbscissaName}={idx}, 누적 합={vText}";
     }
 
     private void ProfileCanvas_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)

@@ -1,11 +1,13 @@
-﻿using System;
+using System;
 using System.Linq;
+using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Collections.Generic;
 using System.ComponentModel;
 using ImaGy.Grids;
 using ImaGy.Models;
+using ImaGy.Services;
 
 namespace ImaGy.ViewModels
 {
@@ -57,7 +59,41 @@ namespace ImaGy.ViewModels
             private set => SetProperty(ref histogramValueMax, value);
         }
 
-        public string XAxisTitle => IsFloatHistogram ? "Value" : "Pixel level";
+        public string XAxisTitle => GetXAxisTitle();
+
+        private string GetXAxisTitle()
+        {
+            if (!IsFloatHistogram)
+                return "Pixel level";
+            return _sampleMode switch
+            {
+                MainHistogramSampleMode.RowSumAlongX => "행 합 (X누적)",
+                MainHistogramSampleMode.ColSumAlongY => "열 합 (Y누적)",
+                _ => "Value",
+            };
+        }
+
+        private MainHistogramSampleMode _sampleMode = MainHistogramSampleMode.PixelIntensity;
+
+        public MainHistogramSampleMode SampleMode
+        {
+            get => _sampleMode;
+            set
+            {
+                if (!SetProperty(ref _sampleMode, value))
+                    return;
+                OnPropertyChanged(nameof(SampleModeIndex));
+                OnPropertyChanged(nameof(XAxisTitle));
+                UpdateAllHistograms();
+            }
+        }
+
+        /// <summary>ComboBox SelectedIndex 바인딩용 (0=픽셀, 1=행합, 2=열합).</summary>
+        public int SampleModeIndex
+        {
+            get => (int)SampleMode;
+            set => SampleMode = (MainHistogramSampleMode)Math.Clamp(value, 0, 2);
+        }
 
         #endregion
 
@@ -70,6 +106,7 @@ namespace ImaGy.ViewModels
         private double? max;
         private double? min;
         private double? range;
+        private int? count;
 
         public double? Mean { get => mean; private set => SetProperty(ref mean, value); }
         public double? Std { get => std; private set => SetProperty(ref std, value); }
@@ -78,6 +115,7 @@ namespace ImaGy.ViewModels
         public double? Max { get => max; private set => SetProperty(ref max, value); }
         public double? Min { get => min; private set => SetProperty(ref min, value); }
         public double? Range { get => range; private set => SetProperty(ref range, value); }
+        public int? Count { get => count; private set => SetProperty(ref count, value); }
         #endregion
 
         public HistogramViewModel(MainViewModel mainViewModel)
@@ -85,6 +123,26 @@ namespace ImaGy.ViewModels
             _mainViewModel = mainViewModel;
             _mainViewModel.PropertyChanged += MainViewModel_PropertyChanged;
             UpdateAllHistograms();
+        }
+
+        public bool TryOpenLineProfile(out LineProfileViewModel? vm)
+        {
+            vm = null;
+            if (_mainViewModel == null)
+                return false;
+            BitmapSource? src = _mainViewModel.AfterImage ?? _mainViewModel.BeforeImage;
+            if (src == null)
+                return false;
+            try
+            {
+                var grid = MainImageRoiSampling.ToLuminanceFloatGrid(src, _mainViewModel.AnalysisRoiPixels);
+                vm = new LineProfileViewModel(grid, null);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         /// <summary>CSV 격자 Diff 등 부동소수 그리드용. 기존 HistogramWindow UI(256 bin) 재사용.</summary>
@@ -127,72 +185,16 @@ namespace ImaGy.ViewModels
 
         private void MainViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(MainViewModel.AfterImage) || e.PropertyName == nameof(MainViewModel.BeforeImage))
+            if (e.PropertyName == nameof(MainViewModel.AfterImage)
+                || e.PropertyName == nameof(MainViewModel.BeforeImage)
+                || e.PropertyName == nameof(MainViewModel.AnalysisRoiPixels))
             {
                 UpdateAllHistograms();
             }
         }
 
-        private void UpdateAllHistograms()
+        private void PushHistogramPropertyNotifications()
         {
-            if (_mainViewModel == null) return;
-
-            BitmapSource? imageSource = _mainViewModel.AfterImage ?? _mainViewModel.BeforeImage;
-            if (imageSource != null)
-            {
-                if (imageSource.Format == PixelFormats.Gray8)
-                {
-                    IsColorImage = false;
-                    IsFloatHistogram = false;
-                    GrayscaleHistogramData = ServeHistogram.CalculateGrayscaleHistogram(imageSource);
-                    R_HistogramData = G_HistogramData = B_HistogramData = null;
-                    MaxHistogramValue = GrayscaleHistogramData.Any() ? GrayscaleHistogramData.Max() : 0;
-                    HistogramValueMin = 0;
-                    HistogramValueMax = 255;
-
-
-                    CalculateAndSetStatistics(GrayscaleHistogramData);
-                }
-                else
-                {
-                    IsColorImage = true;
-                    IsFloatHistogram = false;
-                    var colorHistograms = ServeHistogram.CalculateColorHistograms(imageSource);
-
-                    colorHistograms.TryGetValue("R", out var rData);
-                    colorHistograms.TryGetValue("G", out var gData);
-                    colorHistograms.TryGetValue("B", out var bData);
-
-                    R_HistogramData = rData;
-                    G_HistogramData = gData;
-                    B_HistogramData = bData;
-                    GrayscaleHistogramData = null;
-
-                    int maxR = R_HistogramData?.Max() ?? 0;
-                    int maxG = G_HistogramData?.Max() ?? 0;
-                    int maxB = B_HistogramData?.Max() ?? 0;
-                    MaxHistogramValue = Math.Max(maxR, Math.Max(maxG, maxB));
-                    HistogramValueMin = 0;
-                    HistogramValueMax = 255;
-
-                    // 컬러 이미지의 경우, 그레이스케일로 변환하여 통계 계산
-                    var statsHistogram = ServeHistogram.CalculateGrayscaleHistogram(imageSource);
-                    CalculateAndSetStatistics(statsHistogram);
-                }
-            }
-            else
-            {
-                // 이미지가 없을 경우 모든 데이터 초기화
-                IsColorImage = false;
-                IsFloatHistogram = false;
-                GrayscaleHistogramData = R_HistogramData = G_HistogramData = B_HistogramData = null;
-                MaxHistogramValue = 0;
-                HistogramValueMin = 0;
-                HistogramValueMax = 255;
-                ClearStatistics();
-            }
-
-            // View가 데이터를 다시 그리도록 모든 관련 속성의 변경을 알림.
             OnPropertyChanged(nameof(IsColorImage));
             OnPropertyChanged(nameof(IsFloatHistogram));
             OnPropertyChanged(nameof(HistogramValueMin));
@@ -202,6 +204,125 @@ namespace ImaGy.ViewModels
             OnPropertyChanged(nameof(G_HistogramData));
             OnPropertyChanged(nameof(B_HistogramData));
             OnPropertyChanged(nameof(GrayscaleHistogramData));
+        }
+
+        private void ResetEmptyHistogram()
+        {
+            IsColorImage = false;
+            IsFloatHistogram = false;
+            GrayscaleHistogramData = R_HistogramData = G_HistogramData = B_HistogramData = null;
+            MaxHistogramValue = 0;
+            HistogramValueMin = 0;
+            HistogramValueMax = 255;
+            ClearStatistics();
+            PushHistogramPropertyNotifications();
+        }
+
+        private void LoadHistogramFrom1DSamples(double[] samples)
+        {
+            if (samples == null || samples.Length == 0)
+            {
+                IsColorImage = false;
+                IsFloatHistogram = true;
+                GrayscaleHistogramData = new int[DefaultBinCount];
+                R_HistogramData = G_HistogramData = B_HistogramData = null;
+                MaxHistogramValue = 0;
+                HistogramValueMin = 0;
+                HistogramValueMax = 1;
+                ClearStatistics();
+                PushHistogramPropertyNotifications();
+                return;
+            }
+
+            var data = samples.ToArray();
+            var og = Enumerable.Range(0, data.Length).Select(_ => true).ToArray();
+            var fg = new FloatGrid(data.Length, 1, data, og);
+            var stats = GridStatisticsService.Compute(fg, null, null, null);
+            var hist = GridStatisticsService.ComputeHistogram(fg, null, null, null, DefaultBinCount);
+            IsColorImage = false;
+            IsFloatHistogram = true;
+            GrayscaleHistogramData = hist;
+            R_HistogramData = G_HistogramData = B_HistogramData = null;
+            MaxHistogramValue = hist.Length > 0 ? hist.Max() : 0;
+            if (stats.Count > 0)
+            {
+                HistogramValueMin = stats.Min;
+                HistogramValueMax = stats.Max;
+            }
+            else
+            {
+                HistogramValueMin = 0;
+                HistogramValueMax = 1;
+            }
+            SetFloatStatistics(stats, hist);
+            PushHistogramPropertyNotifications();
+        }
+
+        private void UpdateAllHistograms()
+        {
+            if (_mainViewModel == null)
+                return;
+
+            BitmapSource? imageSource = _mainViewModel.AfterImage ?? _mainViewModel.BeforeImage;
+            if (imageSource == null)
+            {
+                ResetEmptyHistogram();
+                return;
+            }
+
+            Int32Rect? roi = _mainViewModel.AnalysisRoiPixels;
+
+            if (_sampleMode != MainHistogramSampleMode.PixelIntensity)
+            {
+                BitmapSource gray = MainImageRoiSampling.ToGray8Cropped(imageSource, roi);
+                double[] samples = _sampleMode == MainHistogramSampleMode.RowSumAlongX
+                    ? MainImageRoiSampling.RowSumsAlongX(gray)
+                    : MainImageRoiSampling.ColSumsAlongY(gray);
+                LoadHistogramFrom1DSamples(samples);
+                return;
+            }
+
+            BitmapSource workPixel = imageSource;
+            if (roi.HasValue)
+            {
+                var r = MainImageRoiSampling.ClipToBitmap(roi.Value, imageSource.PixelWidth, imageSource.PixelHeight);
+                workPixel = new CroppedBitmap(imageSource, r);
+            }
+
+            if (workPixel.Format == PixelFormats.Gray8)
+            {
+                IsColorImage = false;
+                IsFloatHistogram = false;
+                GrayscaleHistogramData = ServeHistogram.CalculateGrayscaleHistogram(workPixel);
+                R_HistogramData = G_HistogramData = B_HistogramData = null;
+                MaxHistogramValue = GrayscaleHistogramData.Any() ? GrayscaleHistogramData.Max() : 0;
+                HistogramValueMin = 0;
+                HistogramValueMax = 255;
+                CalculateAndSetStatistics(GrayscaleHistogramData);
+            }
+            else
+            {
+                IsColorImage = true;
+                IsFloatHistogram = false;
+                var colorHistograms = ServeHistogram.CalculateColorHistograms(workPixel);
+                colorHistograms.TryGetValue("R", out var rData);
+                colorHistograms.TryGetValue("G", out var gData);
+                colorHistograms.TryGetValue("B", out var bData);
+                R_HistogramData = rData;
+                G_HistogramData = gData;
+                B_HistogramData = bData;
+                GrayscaleHistogramData = null;
+                int maxR = R_HistogramData?.Max() ?? 0;
+                int maxG = G_HistogramData?.Max() ?? 0;
+                int maxB = B_HistogramData?.Max() ?? 0;
+                MaxHistogramValue = Math.Max(maxR, Math.Max(maxG, maxB));
+                HistogramValueMin = 0;
+                HistogramValueMax = 255;
+                var statsHistogram = ServeHistogram.CalculateGrayscaleHistogram(workPixel);
+                CalculateAndSetStatistics(statsHistogram);
+            }
+
+            PushHistogramPropertyNotifications();
         }
 
         /// <summary>
@@ -216,6 +337,7 @@ namespace ImaGy.ViewModels
             Max = null;
             Min = null;
             Range = null;
+            Count = null;
         }
 
         /// <summary>
@@ -243,13 +365,17 @@ namespace ImaGy.ViewModels
                 ClearStatistics();
                 return;
             }
-
+            // Count (픽셀 수)
+            Count = (int)totalPixels;
             // Mean (평균)
             double meanValue = (double)sumOfIntensities / totalPixels;
             Mean = meanValue;
 
+
             // Standard Deviation (표준편차)
             double sumOfSquaredDifferences = 0;
+            // 병렬처리 
+
             for (int i = 0; i < 256; i++)
             {
                 sumOfSquaredDifferences += Math.Pow(i - meanValue, 2) * histogram[i];
@@ -326,6 +452,7 @@ namespace ImaGy.ViewModels
             Min = stats.Min;
             Max = stats.Max;
             Range = stats.Max - stats.Min;
+            Count = stats.Count;
 
             int modeBin = 0;
             int bestCount = 0;

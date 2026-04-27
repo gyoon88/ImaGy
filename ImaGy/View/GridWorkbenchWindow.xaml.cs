@@ -16,6 +16,8 @@ public partial class GridWorkbenchWindow : Window
 {
     private const double MinDiffZoom = 0.25;
     private const double MaxDiffZoom = 24.0;
+
+    private static bool IsShiftDown => (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
     private readonly List<(int C, int R)> _triangleCorners = new();
     private (int C, int R)? _rectAnchor;
     private (int C, int R)? _rectCurrent;
@@ -343,6 +345,8 @@ public partial class GridWorkbenchWindow : Window
             return;
         }
         vm.UpdateDiffCursorInfo(c, r);
+        if (!IsShiftDown)
+            return;
 
         switch (CurrentTool)
         {

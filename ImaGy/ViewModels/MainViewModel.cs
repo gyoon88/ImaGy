@@ -51,18 +51,30 @@ namespace ImaGy.ViewModels
         public BitmapSource? BeforeImage
         {
             get => beforeImage;
-            set => SetProperty(ref beforeImage, value);
+            set
+            {
+                var prev = beforeImage;
+                if (!SetProperty(ref beforeImage, value))
+                    return;
+                if (beforeImage == null || prev == null
+                    || prev.PixelWidth != beforeImage.PixelWidth
+                    || prev.PixelHeight != beforeImage.PixelHeight)
+                    ClearAnalysisRoi();
+            }
         }
         public BitmapSource? AfterImage
         {
             get => afterImage;
-            set        
+            set
             {
-                if (SetProperty(ref afterImage, value)) // 값이 변경되었을 때만 실행
-                {
-                    //CurrentImage가 바뀔 때 IsColor 속성도 함께 업데이트
-                    IsColor = afterImage?.Format == PixelFormats.Bgra32;
-                }
+                var prev = afterImage;
+                if (!SetProperty(ref afterImage, value))
+                    return;
+                IsColor = afterImage?.Format == PixelFormats.Bgra32;
+                if (afterImage == null || prev == null
+                    || prev.PixelWidth != afterImage.PixelWidth
+                    || prev.PixelHeight != afterImage.PixelHeight)
+                    ClearAnalysisRoi();
             }
         }
         public BitmapSource? TemplateImage
@@ -141,8 +153,88 @@ namespace ImaGy.ViewModels
         public ICommand MinimapCommand { get; }
         public ICommand ApplyCropCommand { get; }
         public ICommand OpenGridWorkbenchCommand { get; }
+        public ICommand ClearAnalysisRoiCommand { get; }
 
         public ImageViewerInteractionService InteractionService { get; }
+
+        private System.Windows.Int32Rect? _analysisRoiPixels;
+        /// <summary>히스토그램·라인합·라인 프로파일에 쓰는 분석 영역(픽셀, After 또는 단일 Before 좌표계).</summary>
+        public System.Windows.Int32Rect? AnalysisRoiPixels
+        {
+            get => _analysisRoiPixels;
+            private set
+            {
+                if (!SetProperty(ref _analysisRoiPixels, value))
+                    return;
+                OnPropertyChanged(nameof(HasAnalysisRoi));
+                OnPropertyChanged(nameof(AnalysisRoiHint));
+                RefreshAnalysisRoiOverlayLayout();
+            }
+        }
+
+        public bool HasAnalysisRoi => _analysisRoiPixels.HasValue;
+
+        public string AnalysisRoiHint =>
+            _analysisRoiPixels is { } r
+                ? $"분석 ROI {r.Width}×{r.Height} @({r.X},{r.Y})"
+                : "분석 ROI 없음 — 히스토그램은 전체 이미지";
+
+        private double _dipPerPixelX = 1;
+        private double _dipPerPixelY = 1;
+        private double _roiOverlayLeft;
+        private double _roiOverlayTop;
+        private double _roiOverlayWidth;
+        private double _roiOverlayHeight;
+
+        public double RoiOverlayLeft { get => _roiOverlayLeft; private set => SetProperty(ref _roiOverlayLeft, value); }
+        public double RoiOverlayTop { get => _roiOverlayTop; private set => SetProperty(ref _roiOverlayTop, value); }
+        public double RoiOverlayWidth { get => _roiOverlayWidth; private set => SetProperty(ref _roiOverlayWidth, value); }
+        public double RoiOverlayHeight { get => _roiOverlayHeight; private set => SetProperty(ref _roiOverlayHeight, value); }
+
+        /// <summary>메인 뷰어 Image 레이아웃이 바뀐 뒤(줌·창 크기) 호출: DIP/픽셀 비율을 맞추고 분석 ROI 오버레이를 다시 그립니다.</summary>
+        public void UpdateViewPixelScaleFromImage(System.Windows.Controls.Image? img)
+        {
+            if (img?.Source is not BitmapSource bmp || bmp.PixelWidth < 1 || bmp.PixelHeight < 1)
+            {
+                RefreshAnalysisRoiOverlayLayout();
+                return;
+            }
+
+            if (img.ActualWidth < 1e-3 || img.ActualHeight < 1e-3)
+                return;
+
+            _dipPerPixelX = img.ActualWidth / bmp.PixelWidth;
+            _dipPerPixelY = img.ActualHeight / bmp.PixelHeight;
+            RefreshAnalysisRoiOverlayLayout();
+        }
+
+        public void RefreshAnalysisRoiOverlayLayout()
+        {
+            if (!_analysisRoiPixels.HasValue)
+            {
+                RoiOverlayLeft = 0;
+                RoiOverlayTop = 0;
+                RoiOverlayWidth = 0;
+                RoiOverlayHeight = 0;
+                return;
+            }
+
+            var r = _analysisRoiPixels.Value;
+            RoiOverlayLeft = r.X * _dipPerPixelX;
+            RoiOverlayTop = r.Y * _dipPerPixelY;
+            RoiOverlayWidth = r.Width * _dipPerPixelX;
+            RoiOverlayHeight = r.Height * _dipPerPixelY;
+        }
+
+        public void SetAnalysisRoiPixels(System.Windows.Int32Rect rectPixels)
+        {
+            var src = AfterImage ?? BeforeImage;
+            if (src == null)
+                return;
+            AnalysisRoiPixels = MainImageRoiSampling.ClipToBitmap(rectPixels, src.PixelWidth, src.PixelHeight);
+        }
+
+        public void ClearAnalysisRoi() => AnalysisRoiPixels = null;
 
         
 
@@ -197,6 +289,9 @@ namespace ImaGy.ViewModels
             ImageMatchingCommand = new ApplyImageMatchingCommand(this, imageProcessingService);
             ViewHistogramCommand = new ViewHistogramCommand(this, histogramService);
             ApplyCropCommand = new ApplyCropCommand(this);
+            ClearAnalysisRoiCommand = new RelayCommand(
+                () => ClearAnalysisRoi(),
+                () => HasAnalysisRoi);
             OpenGridWorkbenchCommand = new RelayCommand(() =>
             {
                 var vm = new GridWorkbenchViewModel(loggingService);
@@ -217,6 +312,7 @@ namespace ImaGy.ViewModels
                 if (e.PropertyName == nameof(ImageDisplay.CurrentZoomScale) || e.PropertyName == nameof(ImageDisplay.InitialZoomScale))
                 {
                     OnPropertyChanged(nameof(ZoomLevel)); // ZoomLevel UI 업데이트
+                    // ROI 오버레이는 Image.LayoutUpdated → UpdateViewPixelScaleFromImage 에서 갱신
                 }
             };
             
@@ -250,11 +346,14 @@ namespace ImaGy.ViewModels
                 return;
             }
 
-            double s = ImageDisplay.CurrentZoomScale;
-            if (s < 1e-12) s = 1.0;
+            if (!MainImageRoiSampling.TryGetDipPerPixel(image, out var dppx, out var dppy) || dppx < 1e-12 || dppy < 1e-12)
+            {
+                MouseCoordinates = "X: -, Y: -";
+                return;
+            }
 
-            int px = (int)Math.Floor(positionInImage.X / s);
-            int py = (int)Math.Floor(positionInImage.Y / s);
+            int px = (int)Math.Floor(positionInImage.X / dppx);
+            int py = (int)Math.Floor(positionInImage.Y / dppy);
             if (px < 0 || py < 0 || px >= bmp.PixelWidth || py >= bmp.PixelHeight)
             {
                 MouseCoordinates = "이미지 밖";
