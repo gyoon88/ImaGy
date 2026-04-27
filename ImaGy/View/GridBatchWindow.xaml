@@ -1,0 +1,30 @@
+<Window x:Class="ImaGy.View.GridBatchWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="배치"
+        Height="420" Width="520"
+        MinHeight="320" MinWidth="420"
+        WindowStartupLocation="CenterOwner">
+    <Grid Margin="10" Background="{StaticResource WindowBackgroundBrush}">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+            <StackPanel>
+                <TextBlock Text="배치 상위 폴더" Foreground="White" Margin="0,0,0,2"/>
+                <TextBox Text="{Binding BatchFolder, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6"/>
+                <Button Content="배치 폴더 찾아보기…" Command="{Binding PickBatchFolderCommand}" Margin="0,0,0,8"/>
+
+                <TextBlock Text="ROI 카탈로그 JSON (선택)" Foreground="White" Margin="0,0,0,2"/>
+                <TextBox Text="{Binding CatalogPath, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6"/>
+                <Button Content="ROI JSON 찾아보기…" Command="{Binding PickBatchCatalogJsonCommand}" Margin="0,0,0,8"/>
+
+                <TextBlock Text="요약 출력 CSV (선택)" Foreground="White" Margin="0,0,0,2"/>
+                <TextBox Text="{Binding SummarizeOutCsv, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6"/>
+                <Button Content="요약 CSV 경로 선택…" Command="{Binding PickSummarizeOutCsvCommand}" Margin="0,0,0,10"/>
+
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="배치 실행" Command="{Binding RunBatchFolderCommand}" Margin="0,0,6,0"/>
+                    <Button Content="Diff CSV들 ROI 요약" Command="{Binding SummarizeDiffsCommand}"/>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Window>

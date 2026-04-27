@@ -568,6 +568,36 @@ public partial class GridWorkbenchWindow : Window
             vm.OpenLineProfileCommand.Execute(null);
     }
 
+    private void OpenRoiStatsWindow_Click(object sender, RoutedEventArgs e)
+    {
+        var w = new GridRoiStatsWindow
+        {
+            Owner = this,
+            DataContext = DataContext
+        };
+        w.Show();
+    }
+
+    private void OpenBatchWindow_Click(object sender, RoutedEventArgs e)
+    {
+        var w = new GridBatchWindow
+        {
+            Owner = this,
+            DataContext = DataContext
+        };
+        w.Show();
+    }
+
+    private void OpenHelpWindow_Click(object sender, RoutedEventArgs e)
+    {
+        var w = new GridHelpWindow
+        {
+            Owner = this,
+            DataContext = DataContext
+        };
+        w.Show();
+    }
+
     private void AddOrUpdateRoi_Click(object sender, RoutedEventArgs e)
     {
         if (DataContext is not GridWorkbenchViewModel vm) return;
