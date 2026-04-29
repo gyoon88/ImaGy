@@ -6,7 +6,11 @@
         mc:Ignorable="d"
         Title="CSV 2D 격자 워크벤치" Height="780" Width="1100"
         ToolTip="CSV 격자 정렬·Diff·ROI·배치 워크벤치">
-    <Grid Background="{StaticResource WindowBackgroundBrush}">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </Window.Resources>
+    <Grid>
+        <Grid Background="{StaticResource WindowBackgroundBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -164,7 +168,7 @@
                           ToolTip="메인 뷰와 설정 패널 사이 폭을 조절합니다."/>
 
             <!-- 메인창처럼 DockPanel로 분리 -->
-            <DockPanel Grid.Column="2" Margin="0,0,0,0" LastChildFill="True">
+            <DockPanel Grid.Column="2" Margin="0,0,0,0" >
 
                 <ScrollViewer VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Auto"
@@ -358,5 +362,15 @@
 
             </DockPanel>
         </Grid>
+
+        <Border Panel.ZIndex="100" Background="#AA000000"
+                Visibility="{Binding IsGridBusy, Converter={StaticResource BooleanToVisibilityConverter}}"
+                IsHitTestVisible="True">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="420">
+                <TextBlock Text="{Binding GridBusyStatus}" Foreground="White" FontSize="15" TextAlignment="Center"
+                           TextWrapping="Wrap" Margin="0,0,0,14"/>
+                <ProgressBar IsIndeterminate="True" Height="22" Width="320"/>
+            </StackPanel>
+        </Border>
     </Grid>
 </Window>

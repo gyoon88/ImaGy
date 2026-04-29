@@ -7,6 +7,8 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 
@@ -15,6 +17,7 @@ namespace ImaGy.ViewModels;
 public sealed class GridWorkbenchViewModel : BaseViewModel
 {
     private readonly LoggingService _log;
+    private readonly SynchronizationContext? _uiSync;
     private string _pathA = "";
     private string _pathB = "";
     private string _pathDiff = "";
@@ -57,24 +60,29 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
     private string _selectedRoiStatsText = "ROI 통계 없음";
     private double _diffDisplayMin;
     private double _diffDisplayMax = 1;
+    private bool _isGridBusy;
+    private string _gridBusyStatus = "";
+    private int _diffPreviewToken;
+    private int _gridBusyDepth;
 
     public GridWorkbenchViewModel(LoggingService log)
     {
         _log = log;
-        OpenCsvACommand = new RelayCommand(OpenCsvA);
-        OpenCsvBCommand = new RelayCommand(OpenCsvB);
-        OpenDiffCsvCommand = new RelayCommand(OpenDiffCsv);
-        RunPipelineCommand = new RelayCommand(RunPipeline, () => File.Exists(PathA) && File.Exists(PathB));
-        SaveDiffCsvCommand = new RelayCommand(SaveDiffCsv, () => _lastResult != null);
-        SaveHeatmapsCommand = new RelayCommand(SaveHeatmaps, () => _lastResult != null);
-        SaveScottPlotCommand = new RelayCommand(SaveScottPlot, () => _lastResult != null);
+        _uiSync = SynchronizationContext.Current;
+        OpenCsvACommand = new RelayCommand(OpenCsvA, () => !IsGridBusy);
+        OpenCsvBCommand = new RelayCommand(OpenCsvB, () => !IsGridBusy);
+        OpenDiffCsvCommand = new RelayCommand(() => _ = OpenDiffCsvAsync(), () => !IsGridBusy);
+        RunPipelineCommand = new RelayCommand(() => _ = RunPipelineAsync(), () => File.Exists(PathA) && File.Exists(PathB) && !IsGridBusy);
+        SaveDiffCsvCommand = new RelayCommand(SaveDiffCsv, () => _lastResult != null && !IsGridBusy);
+        SaveHeatmapsCommand = new RelayCommand(() => _ = SaveHeatmapsAsync(), () => _lastResult != null && !IsGridBusy);
+        SaveScottPlotCommand = new RelayCommand(() => _ = SaveScottPlotAsync(), () => _lastResult != null && !IsGridBusy);
         OpenHistogramCommand = new RelayCommand(OpenHistogram, () => _lastResult != null);
         OpenLineProfileCommand = new RelayCommand(OpenLineProfile, () => _lastResult != null);
-        PickOutputFolderCommand = new RelayCommand(PickOutputFolder);
-        LoadRoiJsonCommand = new RelayCommand(LoadRoiJson);
-        RunBatchFolderCommand = new RelayCommand(RunBatchFolder, () => Directory.Exists(BatchFolder));
-        SummarizeDiffsCommand = new RelayCommand(SummarizeDiffs, () => Directory.Exists(BatchFolder) && (File.Exists(CatalogPath) || _drawnRois.Count > 0));
-        ApplyDiffPreviewCommand = new RelayCommand(RefreshDiffPreview, () => _lastResult != null);
+        PickOutputFolderCommand = new RelayCommand(PickOutputFolder, () => !IsGridBusy);
+        LoadRoiJsonCommand = new RelayCommand(LoadRoiJson, () => !IsGridBusy);
+        RunBatchFolderCommand = new RelayCommand(() => _ = RunBatchFolderAsync(), () => Directory.Exists(BatchFolder) && !IsGridBusy);
+        SummarizeDiffsCommand = new RelayCommand(() => _ = SummarizeDiffsAsync(), () => Directory.Exists(BatchFolder) && (File.Exists(CatalogPath) || _drawnRois.Count > 0) && !IsGridBusy);
+        ApplyDiffPreviewCommand = new RelayCommand(() => _ = ScheduleRefreshDiffPreviewAsync(), () => _lastResult != null && !IsGridBusy);
         PickBatchFolderCommand = new RelayCommand(PickBatchFolder);
         PickBatchCatalogJsonCommand = new RelayCommand(PickBatchCatalogJson);
         PickSummarizeOutCsvCommand = new RelayCommand(PickSummarizeOutCsv);
@@ -192,6 +200,44 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
     public string DiffCursorInfo { get => _diffCursorInfo; set => SetProperty(ref _diffCursorInfo, value); }
     public string SelectedRoiStatsText { get => _selectedRoiStatsText; private set => SetProperty(ref _selectedRoiStatsText, value); }
 
+    public bool IsGridBusy
+    {
+        get => _isGridBusy;
+        private set
+        {
+            if (!SetProperty(ref _isGridBusy, value))
+                return;
+            CommandManager.InvalidateRequerySuggested();
+        }
+    }
+
+    public string GridBusyStatus
+    {
+        get => _gridBusyStatus;
+        private set => SetProperty(ref _gridBusyStatus, value);
+    }
+
+    private void BeginGridBusy(string status)
+    {
+        var d = Interlocked.Increment(ref _gridBusyDepth);
+        if (d == 1)
+        {
+            GridBusyStatus = status;
+            IsGridBusy = true;
+        }
+    }
+
+    private void EndGridBusy()
+    {
+        var d = Interlocked.Decrement(ref _gridBusyDepth);
+        if (d <= 0)
+        {
+            Interlocked.Exchange(ref _gridBusyDepth, 0);
+            GridBusyStatus = "";
+            IsGridBusy = false;
+        }
+    }
+
     public ICommand OpenCsvACommand { get; }
     public ICommand OpenCsvBCommand { get; }
     public ICommand OpenDiffCsvCommand { get; }
@@ -222,14 +268,42 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
         if (d.ShowDialog() == true) PathB = d.FileName;
     }
 
-    private void OpenDiffCsv()
+    private void PostLog(string message)
+    {
+        if (_uiSync != null)
+            _uiSync.Post(_ => _log.AddLog(message), null);
+        else
+            _log.AddLog(message);
+    }
+
+    private async Task OpenDiffCsvAsync()
     {
         var d = new Microsoft.Win32.OpenFileDialog { Filter = "CSV|*.csv|All|*.*" };
         if (d.ShowDialog() != true) return;
         PathDiff = d.FileName;
+        var path = PathDiff;
+        BeginGridBusy("Diff CSV 로드…");
         try
         {
-            var diff = CsvGridReader.ReadFromFile(PathDiff);
+            var (diff, err) = await Task.Run(() =>
+            {
+                try
+                {
+                    return (CsvGridReader.ReadFromFile(path), (Exception?)null);
+                }
+                catch (Exception ex)
+                {
+                    return (null, ex);
+                }
+            }).ConfigureAwait(true);
+
+            if (err != null || diff == null)
+            {
+                _log.AddLog($"Diff CSV 로드 실패: {err?.Message}");
+                System.Windows.MessageBox.Show(err?.Message ?? "알 수 없는 오류", "Diff CSV 열기", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                return;
+            }
+
             _lastResult = new GridPipelineResult
             {
                 AlignedA = diff,
@@ -241,7 +315,7 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
             PreviewA = null;
             PreviewB = null;
 
-            RefreshDiffPreview();
+            await RefreshDiffPreviewWorkerAsync(Interlocked.Increment(ref _diffPreviewToken), manageBusy: false).ConfigureAwait(true);
             if (_drawnRois.Count == 0)
             {
                 SelectedRoi = null;
@@ -254,12 +328,12 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
                 UpdateSelectedRoiStats();
             }
             DiffCursorInfo = "x=-, y=-, value=-, norm=-";
-            _log.AddLog($"Diff CSV 로드: {PathDiff} ({diff.Rows}x{diff.Cols})");
+            _log.AddLog($"Diff CSV 로드: {path} ({diff.Rows}x{diff.Cols})");
+            CommandManager.InvalidateRequerySuggested();
         }
-        catch (Exception ex)
+        finally
         {
-            _log.AddLog($"Diff CSV 로드 실패: {ex.Message}");
-            System.Windows.MessageBox.Show(ex.Message, "Diff CSV 열기", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            EndGridBusy();
         }
     }
 
@@ -378,35 +452,64 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
         };
     }
 
-    private void RunPipeline()
+    private async Task RunPipelineAsync()
     {
+        if (!File.Exists(PathA) || !File.Exists(PathB))
+            return;
+        var pathA = PathA;
+        var pathB = PathB;
+        var align = BuildAlign();
+        var pre = BuildPre();
+        var combine = BuildCombine();
+        BeginGridBusy("파이프라인 실행…");
         try
         {
-            var rawA = CsvGridReader.ReadFromFile(PathA);
-            var rawB = CsvGridReader.ReadFromFile(PathB);
-            var align = BuildAlign();
-            var pre = BuildPre();
-            var combine = BuildCombine();
-            _lastResult = GridPipeline.Run(rawA, rawB, align, pre, pre, combine);
+            var work = await Task.Run(() =>
+            {
+                try
+                {
+                    var rawA = CsvGridReader.ReadFromFile(pathA);
+                    var rawB = CsvGridReader.ReadFromFile(pathB);
+                    var result = GridPipeline.Run(rawA, rawB, align, pre, pre, combine);
+                    var vis = new GridVisualizationOptions();
+                    var (aLo, aHi) = GridVisualizationService.GetNormalizeRange(result.ProcessedA, vis);
+                    var (bLo, bHi) = GridVisualizationService.GetNormalizeRange(result.ProcessedB, vis);
+                    byte[] pngA;
+                    byte[] pngB;
+                    using (var ma = GridVisualizationService.ToGray8Preview(result.ProcessedA, vis, aLo, aHi))
+                        pngA = GridMatPng.EncodePng(ma);
+                    using (var mb = GridVisualizationService.ToGray8Preview(result.ProcessedB, vis, bLo, bHi))
+                        pngB = GridMatPng.EncodePng(mb);
+                    return (result, pngA, pngB, (Exception?)null);
+                }
+                catch (Exception ex)
+                {
+                    return ((GridPipelineResult?)null, (byte[]?)null, (byte[]?)null, ex);
+                }
+            }).ConfigureAwait(true);
+
+            var (pipeResult, pngA, pngB, pipeErr) = work;
+            if (pipeErr != null)
+            {
+                _log.AddLog($"Grid pipeline error: {pipeErr.Message}");
+                System.Windows.MessageBox.Show(pipeErr.Message, "격자 처리", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                return;
+            }
+
+            _lastResult = pipeResult!;
             _drawnRois.Clear();
             SelectedRoi = null;
             CommandManager.InvalidateRequerySuggested();
             _log.AddLog($"Grid pipeline OK: diff {_lastResult.Diff.Rows}x{_lastResult.Diff.Cols}");
-            var vis = new GridVisualizationOptions();
-            var (aLo, aHi) = GridVisualizationService.GetNormalizeRange(_lastResult.ProcessedA, vis);
-            var (bLo, bHi) = GridVisualizationService.GetNormalizeRange(_lastResult.ProcessedB, vis);
-            using (var ma = GridVisualizationService.ToGray8Preview(_lastResult.ProcessedA, vis, aLo, aHi))
-                PreviewA = MatBitmapConverter.FromPngBytes(GridMatPng.EncodePng(ma));
-            using (var mb = GridVisualizationService.ToGray8Preview(_lastResult.ProcessedB, vis, bLo, bHi))
-                PreviewB = MatBitmapConverter.FromPngBytes(GridMatPng.EncodePng(mb));
-            RefreshDiffPreview();
+            PreviewA = MatBitmapConverter.FromPngBytes(pngA!);
+            PreviewB = MatBitmapConverter.FromPngBytes(pngB!);
+            await RefreshDiffPreviewWorkerAsync(Interlocked.Increment(ref _diffPreviewToken), manageBusy: false).ConfigureAwait(true);
             SelectedRoiStatsText = "ROI 통계 없음";
             DiffCursorInfo = "x=-, y=-, value=-, norm=-";
         }
-        catch (Exception ex)
+        finally
         {
-            _log.AddLog($"Grid pipeline error: {ex.Message}");
-            System.Windows.MessageBox.Show(ex.Message, "격자 처리", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            EndGridBusy();
         }
     }
 
@@ -421,7 +524,7 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
         }
     }
 
-    private void SaveHeatmaps()
+    private async Task SaveHeatmapsAsync()
     {
         if (_lastResult == null) return;
         string dir = OutputFolder;
@@ -431,30 +534,66 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
             dir = OutputFolder;
         }
         if (!Directory.Exists(dir)) return;
-        var vis = new GridVisualizationOptions();
+        var result = _lastResult;
+        var pathA = PathA;
+        var pathB = PathB;
+        var cmapIn = CmapInput;
+        var cmapDf = CmapDiff;
         var combine = BuildCombine();
-        var (aLo, aHi) = GridVisualizationService.GetNormalizeRange(_lastResult.ProcessedA, vis);
-        var (bLo, bHi) = GridVisualizationService.GetNormalizeRange(_lastResult.ProcessedB, vis);
-        var (dmin, dmax) = GridCombineService.GetDisplayRange(_lastResult.Diff, combine);
-        string baseName = Path.GetFileNameWithoutExtension(PathA) + "__" + Path.GetFileNameWithoutExtension(PathB);
-        GridVisualizationService.SaveHeatmapPng(_lastResult.ProcessedA, Path.Combine(dir, $"{baseName}_A_cmap-{CmapInput}.png"), aLo, aHi, CmapInput, vis);
-        GridVisualizationService.SaveHeatmapPng(_lastResult.ProcessedB, Path.Combine(dir, $"{baseName}_B_cmap-{CmapInput}.png"), bLo, bHi, CmapInput, vis);
-        GridVisualizationService.SaveHeatmapPng(_lastResult.Diff, Path.Combine(dir, $"{baseName}_Diff_cmap-{CmapDiff}.png"), dmin, dmax, CmapDiff, vis);
-        _log.AddLog($"Saved heatmaps to {dir}");
+        var vis = new GridVisualizationOptions();
+        BeginGridBusy("히트맵 PNG 저장…");
+        try
+        {
+            await Task.Run(() =>
+            {
+                var (aLo, aHi) = GridVisualizationService.GetNormalizeRange(result.ProcessedA, vis);
+                var (bLo, bHi) = GridVisualizationService.GetNormalizeRange(result.ProcessedB, vis);
+                var (dmin, dmax) = GridCombineService.GetDisplayRange(result.Diff, combine);
+                string baseName = Path.GetFileNameWithoutExtension(pathA) + "__" + Path.GetFileNameWithoutExtension(pathB);
+                GridVisualizationService.SaveHeatmapPng(result.ProcessedA, Path.Combine(dir, $"{baseName}_A_cmap-{cmapIn}.png"), aLo, aHi, cmapIn, vis);
+                GridVisualizationService.SaveHeatmapPng(result.ProcessedB, Path.Combine(dir, $"{baseName}_B_cmap-{cmapIn}.png"), bLo, bHi, cmapIn, vis);
+                GridVisualizationService.SaveHeatmapPng(result.Diff, Path.Combine(dir, $"{baseName}_Diff_cmap-{cmapDf}.png"), dmin, dmax, cmapDf, vis);
+            }).ConfigureAwait(true);
+            _log.AddLog($"Saved heatmaps to {dir}");
+        }
+        finally
+        {
+            EndGridBusy();
+        }
     }
 
-    private void SaveScottPlot()
+    private async Task SaveScottPlotAsync()
     {
         if (_lastResult == null) return;
         string dir = OutputFolder;
-        if (!Directory.Exists(dir)) { PickOutputFolder(); dir = OutputFolder; }
+        if (!Directory.Exists(dir))
+        {
+            PickOutputFolder();
+            dir = OutputFolder;
+        }
         if (!Directory.Exists(dir)) return;
+        var result = _lastResult;
+        var pathA = PathA;
+        var pathB = PathB;
+        var cmapDf = CmapDiff;
         var combine = BuildCombine();
-        var (dmin, dmax) = GridCombineService.GetDisplayRange(_lastResult.Diff, combine);
-        string baseName = Path.GetFileNameWithoutExtension(PathA) + "__" + Path.GetFileNameWithoutExtension(PathB);
-        string path = Path.Combine(dir, $"{baseName}_Diff_scottplot_cmap-{CmapDiff}.png");
-        GridScottPlotExporter.SaveMatplotlibStyleHeatmap(path, _lastResult.Diff.ToDouble2D(), dmin, dmax, "Diff", CmapDiff, 1200, 900);
-        _log.AddLog($"Saved ScottPlot heatmap {path}");
+        BeginGridBusy("ScottPlot PNG 저장…");
+        try
+        {
+            await Task.Run(() =>
+            {
+                var (dmin, dmax) = GridCombineService.GetDisplayRange(result.Diff, combine);
+                string baseName = Path.GetFileNameWithoutExtension(pathA) + "__" + Path.GetFileNameWithoutExtension(pathB);
+                string path = Path.Combine(dir, $"{baseName}_Diff_scottplot_cmap-{cmapDf}.png");
+                GridScottPlotExporter.SaveMatplotlibStyleHeatmap(path, result.Diff.ToDouble2D(), dmin, dmax, "Diff", cmapDf, 1200, 900);
+            }).ConfigureAwait(true);
+            string baseName = Path.GetFileNameWithoutExtension(pathA) + "__" + Path.GetFileNameWithoutExtension(pathB);
+            _log.AddLog($"Saved ScottPlot heatmap {Path.Combine(dir, $"{baseName}_Diff_scottplot_cmap-{cmapDf}.png")}");
+        }
+        finally
+        {
+            EndGridBusy();
+        }
     }
 
     private void OpenHistogram()
@@ -777,14 +916,13 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
             $"선택 ROI '{SelectedRoi.Name}' \n ROI 픽셀={roiPixels}, 유효 픽셀={s.Count}{invalidHint}, Finite Ratio = {s.Count/roiPixels} \n Mean={s.Mean:F6}, Std={s.Std:F6}, Min={s.Min:F6}, Max={s.Max:F6}, Count: {s.Count}";
     }
 
-    private void RunBatchFolder()
+    private async Task RunBatchFolderAsync()
     {
         try
         {
             if (!Directory.Exists(BatchFolder))
                 throw new DirectoryNotFoundException($"배치 폴더를 찾을 수 없습니다: {BatchFolder}");
 
-            // 매 실행마다 저장 루트를 명시적으로 선택
             PickOutputFolder();
             if (string.IsNullOrWhiteSpace(OutputFolder) || !Directory.Exists(OutputFolder))
                 return;
@@ -806,8 +944,17 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
             string folderName = new DirectoryInfo(BatchFolder).Name;
             string stamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
             string outDir = Path.Combine(OutputFolder, $"{folderName}_{stamp}");
-            GridBatchService.RunFolderParallel(BatchFolder, outDir, opt);
-            _log.AddLog($"Batch finished → {outDir}");
+            var batchFolder = BatchFolder;
+            BeginGridBusy("배치 처리 중…");
+            try
+            {
+                await Task.Run(() => GridBatchService.RunFolderParallel(batchFolder, outDir, opt)).ConfigureAwait(true);
+                _log.AddLog($"Batch finished → {outDir}");
+            }
+            finally
+            {
+                EndGridBusy();
+            }
         }
         catch (Exception ex)
         {
@@ -816,19 +963,25 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
         }
     }
 
-    private void SummarizeDiffs()
+    private async Task SummarizeDiffsAsync()
     {
+        BeginGridBusy("Diff ROI 요약…");
         try
         {
             var cat = File.Exists(CatalogPath) ? GridRoiCatalog.Load(CatalogPath) : BuildCatalogFromCurrentRois();
             string outCsv = string.IsNullOrWhiteSpace(SummarizeOutCsv)
                 ? Path.Combine(BatchFolder, "diff_roi_summary.csv")
                 : SummarizeOutCsv;
-            GridBatchService.SummarizeDiffCsvsWithCatalog(BatchFolder, cat, outCsv, m => _log.AddLog(m));
+            var folder = BatchFolder;
+            await Task.Run(() => GridBatchService.SummarizeDiffCsvsWithCatalog(folder, cat, outCsv, PostLog)).ConfigureAwait(true);
         }
         catch (Exception ex)
         {
             System.Windows.MessageBox.Show(ex.Message);
+        }
+        finally
+        {
+            EndGridBusy();
         }
     }
 
@@ -849,38 +1002,62 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
         };
     }
 
-    /// <summary>Diff 미리보기 갱신. 표시 min/max가 둘 다 유효하면 그 범위로, 아니면 결합 옵션 기반 자동 범위.</summary>
-    public void RefreshDiffPreview()
+    /// <summary>Diff 미리보기 갱신(비동기). 표시 min/max가 둘 다 유효하면 그 범위로, 아니면 결합 옵션 기반 자동 범위.</summary>
+    public void RefreshDiffPreview() => _ = ScheduleRefreshDiffPreviewAsync();
+
+    private async Task ScheduleRefreshDiffPreviewAsync()
+    {
+        var token = Interlocked.Increment(ref _diffPreviewToken);
+        await RefreshDiffPreviewWorkerAsync(token, manageBusy: true).ConfigureAwait(true);
+    }
+
+    private async Task RefreshDiffPreviewWorkerAsync(int token, bool manageBusy = true)
     {
         if (_lastResult == null) return;
-        var diff = _lastResult.Diff;
-        var combine = BuildCombine();
-        var vis = new GridVisualizationOptions();
+        if (manageBusy) BeginGridBusy("Diff 미리보기…");
+        try
+        {
+            var diffGrid = _lastResult.Diff;
+            var combine = BuildCombine();
+            var vis = new GridVisualizationOptions();
+            var minT = DiffDisplayMinText;
+            var maxT = DiffDisplayMaxText;
+            var mode = DiffPreviewMode;
+            var cmap = CmapDiff;
 
-        double umin = 0, umax = 0;
-        bool hasMin = double.TryParse(DiffDisplayMinText, NumberStyles.Any, CultureInfo.InvariantCulture, out umin);
-        bool hasMax = double.TryParse(DiffDisplayMaxText, NumberStyles.Any, CultureInfo.InvariantCulture, out umax);
-        bool manual = hasMin && hasMax && umax > umin;
+            var (pngBytes, dMin, dMax) = await Task.Run(() =>
+            {
+                double umin = 0, umax = 0;
+                var hasMin = double.TryParse(minT, NumberStyles.Any, CultureInfo.InvariantCulture, out umin);
+                var hasMax = double.TryParse(maxT, NumberStyles.Any, CultureInfo.InvariantCulture, out umax);
+                var manual = hasMin && hasMax && umax > umin;
+                double dLo, dHi;
+                if (manual)
+                {
+                    dLo = umin;
+                    dHi = umax;
+                }
+                else
+                    (dLo, dHi) = GridCombineService.GetDisplayRange(diffGrid, combine);
 
-        if (manual)
-        {
-            _diffDisplayMin = umin;
-            _diffDisplayMax = umax;
-        }
-        else
-        {
-            (_diffDisplayMin, _diffDisplayMax) = GridCombineService.GetDisplayRange(diff, combine);
-        }
+                if (mode == "그레이스케일")
+                {
+                    using var m = GridVisualizationService.ToGray8Preview(diffGrid, vis, dLo, dHi);
+                    return (GridMatPng.EncodePng(m), dLo, dHi);
+                }
+                using var md = GridVisualizationService.RenderHeatmapBgra(diffGrid, dLo, dHi, cmap, vis);
+                return (GridMatPng.EncodePng(md), dLo, dHi);
+            }).ConfigureAwait(true);
 
-        if (DiffPreviewMode == "그레이스케일")
-        {
-            using var m = GridVisualizationService.ToGray8Preview(diff, vis, _diffDisplayMin, _diffDisplayMax);
-            PreviewDiff = MatBitmapConverter.FromPngBytes(GridMatPng.EncodePng(m));
+            if (token != Volatile.Read(ref _diffPreviewToken))
+                return;
+            _diffDisplayMin = dMin;
+            _diffDisplayMax = dMax;
+            PreviewDiff = MatBitmapConverter.FromPngBytes(pngBytes);
         }
-        else
+        finally
         {
-            using var md = GridVisualizationService.RenderHeatmapBgra(diff, _diffDisplayMin, _diffDisplayMax, CmapDiff, vis);
-            PreviewDiff = MatBitmapConverter.FromPngBytes(GridMatPng.EncodePng(md));
+            if (manageBusy) EndGridBusy();
         }
     }
 }

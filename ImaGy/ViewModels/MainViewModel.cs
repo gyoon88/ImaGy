@@ -154,6 +154,7 @@ namespace ImaGy.ViewModels
         public ICommand MinimapCommand { get; }
         public ICommand ApplyCropCommand { get; }
         public ICommand OpenGridWorkbenchCommand { get; }
+        public ICommand OpenFssCsvConversionCommand { get; }
         public ICommand ClearAnalysisRoiCommand { get; }
 
         public ImageViewerInteractionService InteractionService { get; }
@@ -298,6 +299,12 @@ namespace ImaGy.ViewModels
             {
                 var vm = new GridWorkbenchViewModel(loggingService);
                 var win = new GridWorkbenchWindow { DataContext = vm };
+                win.Show();
+            });
+            OpenFssCsvConversionCommand = new RelayCommand(() =>
+            {
+                var vm = new FssCsvConversionViewModel(loggingService);
+                var win = new FssCsvConversionWindow { DataContext = vm };
                 win.Show();
             });
             MinimapCommand = new RelayCommand(() => {

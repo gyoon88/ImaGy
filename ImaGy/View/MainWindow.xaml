@@ -51,6 +51,7 @@
                 <MenuItem Header="분석 ROI: Shift+좌클릭 드래그" IsEnabled="False" ToolTip="After(또는 단일 Before) 이미지 위에서 Shift를 누른 채 좌클릭으로 사각형을 그립니다. 히스토그램·행/열 합·라인 프로파일에 적용됩니다."/>
                 <MenuItem Header="분석 ROI 지우기" Command="{Binding ClearAnalysisRoiCommand}" ToolTip="분석 영역을 전체 이미지로 되돌립니다."/>
                 <MenuItem Header="CSV 격자 워크벤치" Command="{Binding OpenGridWorkbenchCommand}" ToolTip="2D CSV 격자 Diff·ROI 워크벤치"/>
+                <MenuItem Header="FSS CSV 변환" Command="{Binding OpenFssCsvConversionCommand}" ToolTip="FSS areascan RAW/Interpolation CSV·히트맵 변환"/>
             </MenuItem>
             <MenuItem Header="_도움말" ToolTip="도움말">
                 <MenuItem Header="단축키 안내" ToolTip="주요 단축키 안내(준비 중)"/>

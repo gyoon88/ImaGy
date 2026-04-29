@@ -1,0 +1,107 @@
+<Window x:Class="ImaGy.View.FssCsvConversionWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="FSS CSV 변환" Height="560" Width="720"
+        MinHeight="480" MinWidth="640"
+        ToolTip="FSS areascan 롱형·와이드·Interpolation CSV 변환 (Python myFSS_Conv_Peak4 대응)">
+    <Grid  Background ="{StaticResource WindowBackgroundBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10,10,10,10">
+            <RadioButton Content="RAW 변환" Foreground="White" IsChecked="{Binding IsRawMode, Mode=TwoWay}"  Margin="0,0,20,0"
+                         GroupName="FssMode" ToolTip="롱형 (ID:65/66) 또는 와이드 areascan"/>
+            <RadioButton Content="Interpolation 변환" Foreground="White" IsChecked="{Binding IsInterpMode, Mode=TwoWay}"
+                         GroupName="FssMode" ToolTip="상단 4줄 스킵 후 피크/퀄리티 블록"/>
+        </StackPanel>
+
+        <GroupBox Grid.Row="1" Header="RAW: 그리드 빈 수 (비우면 좌표 패턴으로 자동 추정)" Margin="0,0,0,8"
+                  ToolTip="롱형에서만 사용. 갭이 불명확하면 내부적으로 종횡비 기반으로 크기를 맞춥니다.">
+            <Grid Margin="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="72"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="72"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="가로(X) 빈:" Foreground="White" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <TextBox Grid.Column="1" Text="{Binding BinXText, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="2" Text="세로(Y) 빈:" Foreground="White" VerticalAlignment="Center" Margin="12,0,6,0"/>
+                <TextBox Grid.Column="3" Text="{Binding BinYText, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="4" Text="둘 다 비우면 자동"  VerticalAlignment="Center" Margin="12,0,0,0"
+                           Foreground="{StaticResource SecondaryGrayBrush}" FontSize="11"/>
+            </Grid>
+        </GroupBox>
+
+        <GroupBox Grid.Row="2" Header="파일 및 옵션" Margin="0,0,0,8">
+            <Grid Margin="8">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                    <Button Content="CSV 추가…" Foreground="White" Command="{Binding AddFilesCommand}" Padding="10,4" Margin="0,0,8,0"/>
+                    <Button Content="목록 비우기" Foreground="White" Command="{Binding ClearFilesCommand}" Padding="10,4"/>
+                </StackPanel>
+                <ListBox Grid.Row="1" ItemsSource="{Binding FilePaths}" MinHeight="120"
+                         ToolTip="변환할 CSV 경로 목록"/>
+                <Grid Grid.Row="2" Margin="0,10,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="RAW: 탐색 반경 (픽셀 인덱스)" Foreground="White" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,2">
+                            <TextBlock Text="Search X:" Foreground="White" Width="72" VerticalAlignment="Center"/>
+                            <TextBox Text="{Binding SearchXText, UpdateSourceTrigger=PropertyChanged}" Width="48"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,2">
+                            <TextBlock Text="Search Y:" Foreground="White" Width="72" VerticalAlignment="Center"/>
+                            <TextBox Text="{Binding SearchYText, UpdateSourceTrigger=PropertyChanged}" Width="48"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <TextBlock Text="병렬 코어:" Foreground="White" Width="72" VerticalAlignment="Center"/>
+                            <TextBox Text="{Binding CoresText, UpdateSourceTrigger=PropertyChanged}" Width="48"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,2">
+                            <TextBlock Text="Distance/Quality 쌍 (1~4):" Foreground="White" Width="160" VerticalAlignment="Center"/>
+                            <TextBox Text="{Binding PairCountText, UpdateSourceTrigger=PropertyChanged}" Width="36"/>
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                        <TextBlock Text="저장할 히트맵·CSV" Foreground="White" FontWeight="SemiBold" Margin="0,0,0,4"
+                                   ToolTip="체크한 종류만 CSV·PNG(히트맵)로 저장합니다."/>
+                        <CheckBox Content="Intensity" Foreground="White" IsChecked="{Binding SaveIntensity, Mode=TwoWay}"
+                                  IsEnabled="{Binding IntensityEnabled}" Margin="0,2"/>
+                        <CheckBox Content="Distance (1~N 쌍)" Foreground="White" IsChecked="{Binding SaveDistance, Mode=TwoWay}" Margin="0,2"/>
+                        <CheckBox Content="Quality (1~N 쌍)" Foreground="White" IsChecked="{Binding SaveQuality, Mode=TwoWay}" Margin="0,2"/>
+                        <TextBlock Text="Interpolation 모드에서는 Distance/Quality만 저장됩니다." FontSize="11"
+                                   Foreground="{StaticResource SecondaryGrayBrush}" Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </GroupBox>
+
+        <ProgressBar Grid.Row="3" Margin="8,4,8,4" Minimum="0" Maximum="100" Value="{Binding ProgressPercent}" Height="12"
+                     ToolTip="리샘플링·저장 진행률(%)"/>
+
+        <TextBlock Grid.Row="4" Text="{Binding StatusText}" TextWrapping="Wrap" Margin="8,4,8,8"
+                   Foreground="{StaticResource TextBrush}" FontSize="11"/>
+
+        <Button Grid.Row="5" Margin="8,8,8,8" Content="변환 실행" Command="{Binding RunConversionCommand}"
+                HorizontalAlignment="Right" Padding="20,8" MinWidth="140"
+                ToolTip="목록의 모든 파일을 변환합니다. 메인 창 로그에 진행이 기록됩니다."/>
+    </Grid>
+</Window>
