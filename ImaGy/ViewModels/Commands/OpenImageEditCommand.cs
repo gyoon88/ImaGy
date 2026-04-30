@@ -29,15 +29,19 @@ namespace ImaGy.ViewModels.Commands
         {
             try
             {
-                var win = new ImageEditWindow { Owner = System.Windows.Application.Current?.MainWindow };
+                var main = System.Windows.Application.Current?.MainWindow;
+                var win = new ImageEditWindow { Owner = main };
+                if (main != null)
+                    win.WindowStartupLocation = WindowStartupLocation.CenterOwner;
                 var vm = new ImageEditViewModel(_mainViewModel, _loggingService);
                 vm.RegisterCloseHandler(() => win.Close());
                 win.DataContext = vm;
                 win.Show();
+                win.Activate();
             }
             catch (InvalidOperationException ex)
             {
-                System.Windows.MessageBox.Show(ex.Message, "Image Edit", MessageBoxButton.OK, MessageBoxImage.Information);
+                System.Windows.MessageBox.Show(ex.Message, "Image Edit", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
             }
         }
     }

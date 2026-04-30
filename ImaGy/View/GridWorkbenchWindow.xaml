@@ -9,8 +9,7 @@
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
     </Window.Resources>
-    <Grid>
-        <Grid Background="{StaticResource WindowBackgroundBrush}">
+    <Grid Background="{StaticResource WindowBackgroundBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -46,6 +45,8 @@
                 <MenuItem Header="_도구" ToolTip="실행 도구">
                     <MenuItem Header="파이프라인 실행" Command="{Binding RunPipelineCommand}" ToolTip="A/B 파이프라인 실행"/>
                     <MenuItem Header="Diff 표시 적용" Command="{Binding ApplyDiffPreviewCommand}" ToolTip="Diff 표시 옵션 반영"/>
+                    <MenuItem Header="Diff ROI 2그룹 검정 (t·Welch·MWU·ANOVA)" Click="OpenRoiHypothesis_Click"
+                              ToolTip="Diff 격자에서 ROI 두 개를 골라 등분산 t, Welch t, 일원 ANOVA(F), Mann–Whitney(정규 근사)를 계산합니다."/>
                     <Separator />
                     <MenuItem Header="출력 폴더 선택" Command="{Binding PickOutputFolderCommand}" ToolTip="출력 폴더 선택"/>
                 </MenuItem>
@@ -363,7 +364,8 @@
             </DockPanel>
         </Grid>
 
-        <Border Panel.ZIndex="100" Background="#AA000000"
+        <Border Grid.Row="0" Grid.RowSpan="2"
+                Panel.ZIndex="100" Background="#AA000000"
                 Visibility="{Binding IsGridBusy, Converter={StaticResource BooleanToVisibilityConverter}}"
                 IsHitTestVisible="True">
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="420">

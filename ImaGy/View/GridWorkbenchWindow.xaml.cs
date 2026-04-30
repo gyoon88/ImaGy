@@ -621,4 +621,16 @@ public partial class GridWorkbenchWindow : Window
         vm.RemoveSelectedRoi();
         RedrawRoiShapes();
     }
+
+    private void OpenRoiHypothesis_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not GridWorkbenchViewModel vm) return;
+        if (vm.CurrentPipelineResult == null || vm.DrawnRois.Count < 2)
+        {
+            System.Windows.MessageBox.Show("Diff 격자를 먼저 표시(파이프라인 또는 Diff CSV)하고, ROI를 최소 2개 그려 주세요.",
+                "Diff ROI 2그룹 검정", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+            return;
+        }
+        GridRoiHypothesisWindow.ShowForWorkbench(this, vm);
+    }
 }

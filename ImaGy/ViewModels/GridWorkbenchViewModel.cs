@@ -141,6 +141,9 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
     /// <summary>Diff 미리보기 ROI 도구: 없음 / 사각형 / 원 / 삼각형</summary>
     public string RoiDrawTool { get => _roiDrawTool; set => SetProperty(ref _roiDrawTool, value); }
     public ObservableCollection<GridRoiDefinition> DrawnRois => _drawnRois;
+
+    /// <summary>ROI 2그룹 검정 등에서 현재 Diff 격자에 접근할 때 사용합니다.</summary>
+    public GridPipelineResult? CurrentPipelineResult => _lastResult;
     public GridRoiDefinition? SelectedRoi
     {
         get => _selectedRoi;

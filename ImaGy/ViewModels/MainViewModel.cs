@@ -5,6 +5,7 @@ using ImaGy.ViewModels.Commands;
 using System;
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -155,6 +156,7 @@ namespace ImaGy.ViewModels
         public ICommand ApplyCropCommand { get; }
         public ICommand OpenGridWorkbenchCommand { get; }
         public ICommand OpenFssCsvConversionCommand { get; }
+        public ICommand OpenGridRoiHypothesisCommand { get; }
         public ICommand ClearAnalysisRoiCommand { get; }
 
         public ImageViewerInteractionService InteractionService { get; }
@@ -299,13 +301,26 @@ namespace ImaGy.ViewModels
             {
                 var vm = new GridWorkbenchViewModel(loggingService);
                 var win = new GridWorkbenchWindow { DataContext = vm };
+                if (System.Windows.Application.Current.MainWindow != null)
+                {
+                    win.Owner = System.Windows.Application.Current.MainWindow;
+                    win.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+                }
                 win.Show();
+                win.Activate();
             });
+            OpenGridRoiHypothesisCommand = new RelayCommand(OpenGridRoiHypothesisFromMain);
             OpenFssCsvConversionCommand = new RelayCommand(() =>
             {
                 var vm = new FssCsvConversionViewModel(loggingService);
                 var win = new FssCsvConversionWindow { DataContext = vm };
+                if (System.Windows.Application.Current.MainWindow != null)
+                {
+                    win.Owner = System.Windows.Application.Current.MainWindow;
+                    win.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+                }
                 win.Show();
+                win.Activate();
             });
             MinimapCommand = new RelayCommand(() => {
                 MinimapViewModel minimapViewModel = new MinimapViewModel(this);
@@ -422,6 +437,49 @@ namespace ImaGy.ViewModels
         public void ClearMouseCoordinates()
         {
             MouseCoordinates = "X: -, Y: -";
+        }
+
+        /// <summary>열려 있는 CSV 워크벤치가 있으면 활성화하고, Diff·ROI가 준비되었을 때만 ROI 2그룹 검정 창을 띄웁니다.</summary>
+        private void OpenGridRoiHypothesisFromMain()
+        {
+            var main = System.Windows.Application.Current.MainWindow;
+            var wbWin = System.Windows.Application.Current.Windows.OfType<GridWorkbenchWindow>().FirstOrDefault();
+            GridWorkbenchViewModel vm;
+            Window ownerForHypothesis;
+
+            if (wbWin?.DataContext is GridWorkbenchViewModel existingVm)
+            {
+                vm = existingVm;
+                ownerForHypothesis = wbWin;
+                wbWin.Activate();
+            }
+            else
+            {
+                vm = new GridWorkbenchViewModel(loggingService);
+                var newWb = new GridWorkbenchWindow { DataContext = vm };
+                if (main != null)
+                {
+                    newWb.Owner = main;
+                    newWb.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+                }
+                newWb.Show();
+                newWb.Activate();
+                ownerForHypothesis = newWb;
+                System.Windows.MessageBox.Show(
+                    "먼저 워크벤치에서 Diff를 띄운 뒤 ROI를 2개 이상 그리세요. 준비되면 도구 메뉴의 « Diff ROI 2그룹 검정 »을 다시 선택하세요.",
+                    "Diff ROI 2그룹 검정", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                return;
+            }
+
+            if (vm.CurrentPipelineResult == null || vm.DrawnRois.Count < 2)
+            {
+                System.Windows.MessageBox.Show(
+                    "Diff 격자를 표시(파이프라인 또는 Diff CSV)하고 ROI를 최소 2개 그려 주세요.",
+                    "Diff ROI 2그룹 검정", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                return;
+            }
+
+            GridRoiHypothesisWindow.ShowForWorkbench(ownerForHypothesis, vm);
         }
 
         public void ShowTemplateImageViewer()
