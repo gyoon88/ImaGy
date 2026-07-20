@@ -78,10 +78,10 @@ public static class GridAlignmentService
     private static FloatGrid ResampleGrid(FloatGrid g, int rows, int cols, InterpolationFlags interp)
     {
         if (g.Rows == rows && g.Cols == cols) return g.Clone();
-        using var src = GridMatHelpers.ToMat64(g);
+        using var src = ToMat64(g);
         using var dst = new Mat();
         Cv2.Resize(src, dst, new Size(cols, rows), 0, 0, interp);
-        using var mSrc = GridMatHelpers.ToMaskU8(g.OriginallyFinite, g.Rows, g.Cols);
+        using var mSrc = ToMaskU8(g.OriginallyFinite, g.Rows, g.Cols);
         using var mDst = new Mat();
         Cv2.Resize(mSrc, mDst, new Size(cols, rows), 0, 0, InterpolationFlags.Nearest);
         var d = new double[rows * cols];
@@ -96,5 +96,23 @@ public static class GridAlignmentService
             }
         }
         return new FloatGrid(rows, cols, d, o);
+    }
+
+    private static Mat ToMat64(FloatGrid g)
+    {
+        var m = new Mat(g.Rows, g.Cols, MatType.CV_64FC1);
+        for (int r = 0; r < g.Rows; r++)
+            for (int c = 0; c < g.Cols; c++)
+                m.Set(r, c, g[r, c]);
+        return m;
+    }
+
+    private static Mat ToMaskU8(bool[] mask, int rows, int cols)
+    {
+        var m = new Mat(rows, cols, MatType.CV_8UC1);
+        for (int r = 0; r < rows; r++)
+            for (int c = 0; c < cols; c++)
+                m.Set(r, c, mask[r * cols + c] ? (byte)255 : (byte)0);
+        return m;
     }
 }

@@ -60,3 +60,9 @@ public enum FillMethod
     ConvolutionMean,
     LinearInterpolate1D
 }
+
+public enum GridImageFormat
+{
+    Png,
+    Bmp
+}

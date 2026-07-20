@@ -25,6 +25,7 @@
                     <Separator />
                     <MenuItem Header="Diff CSV 저장" Command="{Binding SaveDiffCsvCommand}" ToolTip="Diff CSV 저장"/>
                     <MenuItem Header="히트맵 PNG 저장" Command="{Binding SaveHeatmapsCommand}" ToolTip="A/B/Diff 히트맵 PNG 저장"/>
+                    <MenuItem Header="히트맵 BMP 저장" Command="{Binding SaveHeatmapsBmpCommand}" ToolTip="A/B/Diff 히트맵 BMP 저장 (Gray 컬러맵이면 8-bit 그레이스케일)"/>
                     <MenuItem Header="ScottPlot 저장" Command="{Binding SaveScottPlotCommand}" ToolTip="ScottPlot PNG 저장"/>
                 </MenuItem>
 

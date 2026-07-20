@@ -13,6 +13,7 @@ public sealed class GridBatchOptions
     public string DiffColormapId { get; set; } = "Turbo";
     public int? HeatmapMaxDim { get; set; } = 2048;
     public bool WriteHeatmaps { get; set; } = true;
+    public GridImageFormat HeatmapFormat { get; set; } = GridImageFormat.Png;
     public bool WriteHistogramPng { get; set; } = false;
     public bool WriteMaskedDiffHeatmap { get; set; } = false;
     public GridRoiCatalog? Catalog { get; set; }
@@ -58,9 +59,10 @@ public static class GridBatchService
         {
             var (aLo, aHi) = GridVisualizationService.GetNormalizeRange(result.ProcessedA, vis);
             var (bLo, bHi) = GridVisualizationService.GetNormalizeRange(result.ProcessedB, vis);
-            GridVisualizationService.SaveHeatmapPng(result.ProcessedA, Path.Combine(outputDir, $"{baseName}_A_cmap-{opt.InputColormapId}.png"), aLo, aHi, opt.InputColormapId, vis, opt.HeatmapMaxDim);
-            GridVisualizationService.SaveHeatmapPng(result.ProcessedB, Path.Combine(outputDir, $"{baseName}_B_cmap-{opt.InputColormapId}.png"), bLo, bHi, opt.InputColormapId, vis, opt.HeatmapMaxDim);
-            GridVisualizationService.SaveHeatmapPng(diff, Path.Combine(outputDir, $"{baseName}_Diff_cmap-{opt.DiffColormapId}.png"), dmin, dmax, opt.DiffColormapId, vis, opt.HeatmapMaxDim);
+            string ext = GridVisualizationService.ExtensionFor(opt.HeatmapFormat);
+            GridVisualizationService.SaveHeatmap(result.ProcessedA, Path.Combine(outputDir, $"{baseName}_A_cmap-{opt.InputColormapId}{ext}"), aLo, aHi, opt.InputColormapId, vis, opt.HeatmapFormat, opt.HeatmapMaxDim);
+            GridVisualizationService.SaveHeatmap(result.ProcessedB, Path.Combine(outputDir, $"{baseName}_B_cmap-{opt.InputColormapId}{ext}"), bLo, bHi, opt.InputColormapId, vis, opt.HeatmapFormat, opt.HeatmapMaxDim);
+            GridVisualizationService.SaveHeatmap(diff, Path.Combine(outputDir, $"{baseName}_Diff_cmap-{opt.DiffColormapId}{ext}"), dmin, dmax, opt.DiffColormapId, vis, opt.HeatmapFormat, opt.HeatmapMaxDim);
         }
 
         var statSb = new StringBuilder();
@@ -88,7 +90,8 @@ public static class GridBatchService
                 if (opt.WriteMaskedDiffHeatmap)
                 {
                     var masked = ApplyMaskToGrid(diff, mask);
-                    GridVisualizationService.SaveHeatmapPng(masked, Path.Combine(outputDir, $"{baseName}_Diff_masked_{roi.Name}_cmap-{opt.DiffColormapId}.png"), dmin, dmax, opt.DiffColormapId, vis, opt.HeatmapMaxDim);
+                    string ext = GridVisualizationService.ExtensionFor(opt.HeatmapFormat);
+                    GridVisualizationService.SaveHeatmap(masked, Path.Combine(outputDir, $"{baseName}_Diff_masked_{roi.Name}_cmap-{opt.DiffColormapId}{ext}"), dmin, dmax, opt.DiffColormapId, vis, opt.HeatmapFormat, opt.HeatmapMaxDim);
                 }
                 if (opt.WriteHistogramPng)
                 {

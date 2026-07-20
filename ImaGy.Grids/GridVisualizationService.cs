@@ -124,29 +124,116 @@ public static class GridVisualizationService
         return bgra;
     }
 
-    public static void SaveHeatmapPng(FloatGrid grid, string path, double vmin, double vmax, string colormapId, GridVisualizationOptions opt, int? upscaleMaxDim = null)
+    public static byte[] EncodePng(Mat mat) => Encode(mat, GridImageFormat.Png);
+
+    public static byte[] EncodeBmp(Mat mat) => Encode(mat, GridImageFormat.Bmp);
+
+    public static byte[] Encode(Mat mat, GridImageFormat format)
     {
-        using var bgra = RenderHeatmapBgra(grid, vmin, vmax, colormapId, opt);
-        using var toSave = MaybeUpscale(bgra, upscaleMaxDim);
-        Cv2.ImWrite(path, toSave);
+        string ext = format == GridImageFormat.Bmp ? ".bmp" : ".png";
+        Cv2.ImEncode(ext, mat, out var buf);
+        return buf.ToArray();
     }
 
-    private static Mat MaybeUpscale(Mat bgra, int? maxDim)
+    public static string ExtensionFor(GridImageFormat format) =>
+        format == GridImageFormat.Bmp ? ".bmp" : ".png";
+
+    public static GridImageFormat FormatFromPath(string path)
     {
-        if (!maxDim.HasValue) return bgra.Clone();
-        int m = Math.Max(bgra.Rows, bgra.Cols);
-        if (m <= maxDim.Value) return bgra.Clone();
+        var ext = Path.GetExtension(path);
+        if (ext.Equals(".bmp", StringComparison.OrdinalIgnoreCase))
+            return GridImageFormat.Bmp;
+        return GridImageFormat.Png;
+    }
+
+    /// <summary>Saves heatmap; format inferred from path extension (.bmp → Bmp, else Png).</summary>
+    public static void SaveHeatmap(
+        FloatGrid grid,
+        string path,
+        double vmin,
+        double vmax,
+        string colormapId,
+        GridVisualizationOptions opt,
+        int? upscaleMaxDim = null)
+        => SaveHeatmap(grid, path, vmin, vmax, colormapId, opt, FormatFromPath(path), upscaleMaxDim);
+
+    public static void SaveHeatmap(
+        FloatGrid grid,
+        string path,
+        double vmin,
+        double vmax,
+        string colormapId,
+        GridVisualizationOptions opt,
+        GridImageFormat format,
+        int? upscaleMaxDim = null)
+    {
+        EnsureParentDirectory(path);
+        if (format == GridImageFormat.Bmp && GridColormapCatalog.IsIntensityOnly(colormapId))
+        {
+            using var gray = ToGray8Preview(grid, opt, vmin, vmax);
+            using var toSave = MaybeUpscale(gray, upscaleMaxDim);
+            Cv2.ImWrite(path, toSave);
+            return;
+        }
+
+        using var bgra = RenderHeatmapBgra(grid, vmin, vmax, colormapId, opt);
+        if (format == GridImageFormat.Bmp)
+        {
+            using var bgr = new Mat();
+            Cv2.CvtColor(bgra, bgr, ColorConversionCodes.BGRA2BGR);
+            using var toSave = MaybeUpscale(bgr, upscaleMaxDim);
+            Cv2.ImWrite(path, toSave);
+            return;
+        }
+
+        using var png = MaybeUpscale(bgra, upscaleMaxDim);
+        Cv2.ImWrite(path, png);
+    }
+
+    /// <summary>Backward-compatible alias for PNG heatmap save.</summary>
+    public static void SaveHeatmapPng(
+        FloatGrid grid,
+        string path,
+        double vmin,
+        double vmax,
+        string colormapId,
+        GridVisualizationOptions opt,
+        int? upscaleMaxDim = null)
+        => SaveHeatmap(grid, path, vmin, vmax, colormapId, opt, GridImageFormat.Png, upscaleMaxDim);
+
+    private static Mat MaybeUpscale(Mat src, int? maxDim)
+    {
+        if (!maxDim.HasValue) return src.Clone();
+        int m = Math.Max(src.Rows, src.Cols);
+        if (m <= maxDim.Value) return src.Clone();
         double s = maxDim.Value / (double)m;
-        var sz = new Size((int)(bgra.Cols * s), (int)(bgra.Rows * s));
+        var sz = new Size((int)(src.Cols * s), (int)(src.Rows * s));
         var dst = new Mat();
-        Cv2.Resize(bgra, dst, sz, 0, 0, InterpolationFlags.Linear);
+        Cv2.Resize(src, dst, sz, 0, 0, InterpolationFlags.Linear);
         return dst;
     }
 
-    public static void SaveNormalizedRgbRaster(FloatGrid grid, string path, GridVisualizationOptions vis, double vmin, double vmax, int? upscaleMaxDim = null)
+    public static void SaveNormalizedRgbRaster(
+        FloatGrid grid,
+        string path,
+        GridVisualizationOptions vis,
+        double vmin,
+        double vmax,
+        int? upscaleMaxDim = null)
+        => SaveNormalizedRgbRaster(grid, path, vis, vmin, vmax, FormatFromPath(path), upscaleMaxDim);
+
+    public static void SaveNormalizedRgbRaster(
+        FloatGrid grid,
+        string path,
+        GridVisualizationOptions vis,
+        double vmin,
+        double vmax,
+        GridImageFormat format,
+        int? upscaleMaxDim = null)
     {
-        using var g8 = new Mat(grid.Rows, grid.Cols, MatType.CV_8UC1);
+        EnsureParentDirectory(path);
         if (vmax <= vmin) vmax = vmin + 1e-9;
+        using var g8 = new Mat(grid.Rows, grid.Cols, MatType.CV_8UC1);
         for (int r = 0; r < grid.Rows; r++)
         {
             for (int c = 0; c < grid.Cols; c++)
@@ -161,9 +248,24 @@ public static class GridVisualizationService
                 g8.Set(r, c, b);
             }
         }
+
+        if (format == GridImageFormat.Bmp)
+        {
+            using var toSave = MaybeUpscale(g8, upscaleMaxDim);
+            Cv2.ImWrite(path, toSave);
+            return;
+        }
+
         using var bgr = new Mat();
         Cv2.CvtColor(g8, bgr, ColorConversionCodes.GRAY2BGR);
-        using var toSave = MaybeUpscale(bgr, upscaleMaxDim);
-        Cv2.ImWrite(path, toSave);
+        using var png = MaybeUpscale(bgr, upscaleMaxDim);
+        Cv2.ImWrite(path, png);
+    }
+
+    private static void EnsureParentDirectory(string path)
+    {
+        var dir = Path.GetDirectoryName(path);
+        if (!string.IsNullOrEmpty(dir))
+            Directory.CreateDirectory(dir);
     }
 }

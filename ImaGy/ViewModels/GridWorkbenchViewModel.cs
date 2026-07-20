@@ -74,7 +74,8 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
         OpenDiffCsvCommand = new RelayCommand(() => _ = OpenDiffCsvAsync(), () => !IsGridBusy);
         RunPipelineCommand = new RelayCommand(() => _ = RunPipelineAsync(), () => File.Exists(PathA) && File.Exists(PathB) && !IsGridBusy);
         SaveDiffCsvCommand = new RelayCommand(SaveDiffCsv, () => _lastResult != null && !IsGridBusy);
-        SaveHeatmapsCommand = new RelayCommand(() => _ = SaveHeatmapsAsync(), () => _lastResult != null && !IsGridBusy);
+        SaveHeatmapsCommand = new RelayCommand(() => _ = SaveHeatmapsAsync(GridImageFormat.Png), () => _lastResult != null && !IsGridBusy);
+        SaveHeatmapsBmpCommand = new RelayCommand(() => _ = SaveHeatmapsAsync(GridImageFormat.Bmp), () => _lastResult != null && !IsGridBusy);
         SaveScottPlotCommand = new RelayCommand(() => _ = SaveScottPlotAsync(), () => _lastResult != null && !IsGridBusy);
         OpenHistogramCommand = new RelayCommand(OpenHistogram, () => _lastResult != null);
         OpenLineProfileCommand = new RelayCommand(OpenLineProfile, () => _lastResult != null);
@@ -247,6 +248,7 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
     public ICommand RunPipelineCommand { get; }
     public ICommand SaveDiffCsvCommand { get; }
     public ICommand SaveHeatmapsCommand { get; }
+    public ICommand SaveHeatmapsBmpCommand { get; }
     public ICommand SaveScottPlotCommand { get; }
     public ICommand OpenHistogramCommand { get; }
     public ICommand OpenLineProfileCommand { get; }
@@ -480,9 +482,9 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
                     byte[] pngA;
                     byte[] pngB;
                     using (var ma = GridVisualizationService.ToGray8Preview(result.ProcessedA, vis, aLo, aHi))
-                        pngA = GridMatPng.EncodePng(ma);
+                        pngA = GridVisualizationService.EncodePng(ma);
                     using (var mb = GridVisualizationService.ToGray8Preview(result.ProcessedB, vis, bLo, bHi))
-                        pngB = GridMatPng.EncodePng(mb);
+                        pngB = GridVisualizationService.EncodePng(mb);
                     return (result, pngA, pngB, (Exception?)null);
                 }
                 catch (Exception ex)
@@ -527,7 +529,7 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
         }
     }
 
-    private async Task SaveHeatmapsAsync()
+    private async Task SaveHeatmapsAsync(GridImageFormat format = GridImageFormat.Png)
     {
         if (_lastResult == null) return;
         string dir = OutputFolder;
@@ -544,7 +546,9 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
         var cmapDf = CmapDiff;
         var combine = BuildCombine();
         var vis = new GridVisualizationOptions();
-        BeginGridBusy("히트맵 PNG 저장…");
+        string ext = GridVisualizationService.ExtensionFor(format);
+        string label = format == GridImageFormat.Bmp ? "BMP" : "PNG";
+        BeginGridBusy($"히트맵 {label} 저장…");
         try
         {
             await Task.Run(() =>
@@ -553,11 +557,11 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
                 var (bLo, bHi) = GridVisualizationService.GetNormalizeRange(result.ProcessedB, vis);
                 var (dmin, dmax) = GridCombineService.GetDisplayRange(result.Diff, combine);
                 string baseName = Path.GetFileNameWithoutExtension(pathA) + "__" + Path.GetFileNameWithoutExtension(pathB);
-                GridVisualizationService.SaveHeatmapPng(result.ProcessedA, Path.Combine(dir, $"{baseName}_A_cmap-{cmapIn}.png"), aLo, aHi, cmapIn, vis);
-                GridVisualizationService.SaveHeatmapPng(result.ProcessedB, Path.Combine(dir, $"{baseName}_B_cmap-{cmapIn}.png"), bLo, bHi, cmapIn, vis);
-                GridVisualizationService.SaveHeatmapPng(result.Diff, Path.Combine(dir, $"{baseName}_Diff_cmap-{cmapDf}.png"), dmin, dmax, cmapDf, vis);
+                GridVisualizationService.SaveHeatmap(result.ProcessedA, Path.Combine(dir, $"{baseName}_A_cmap-{cmapIn}{ext}"), aLo, aHi, cmapIn, vis, format);
+                GridVisualizationService.SaveHeatmap(result.ProcessedB, Path.Combine(dir, $"{baseName}_B_cmap-{cmapIn}{ext}"), bLo, bHi, cmapIn, vis, format);
+                GridVisualizationService.SaveHeatmap(result.Diff, Path.Combine(dir, $"{baseName}_Diff_cmap-{cmapDf}{ext}"), dmin, dmax, cmapDf, vis, format);
             }).ConfigureAwait(true);
-            _log.AddLog($"Saved heatmaps to {dir}");
+            _log.AddLog($"Saved heatmaps ({label}) to {dir}");
         }
         finally
         {
@@ -1046,10 +1050,10 @@ public sealed class GridWorkbenchViewModel : BaseViewModel
                 if (mode == "그레이스케일")
                 {
                     using var m = GridVisualizationService.ToGray8Preview(diffGrid, vis, dLo, dHi);
-                    return (GridMatPng.EncodePng(m), dLo, dHi);
+                    return (GridVisualizationService.EncodePng(m), dLo, dHi);
                 }
                 using var md = GridVisualizationService.RenderHeatmapBgra(diffGrid, dLo, dHi, cmap, vis);
-                return (GridMatPng.EncodePng(md), dLo, dHi);
+                return (GridVisualizationService.EncodePng(md), dLo, dHi);
             }).ConfigureAwait(true);
 
             if (token != Volatile.Read(ref _diffPreviewToken))
